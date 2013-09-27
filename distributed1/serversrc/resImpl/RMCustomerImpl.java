@@ -43,7 +43,7 @@ public class RMCustomerImpl implements RMCustomer{
 	/**
 	 * Must remove all reserved items of that customer as well. 
 	 */
-	public boolean deleteCustomer(int id) throws RemoteException {
+	public boolean deleteCustomer(int id, int customer) throws RemoteException {
         Customer curObj = (Customer) getCustomer(id);
 		if ( curObj == null ) {
             
@@ -67,6 +67,12 @@ public class RMCustomerImpl implements RMCustomer{
 
 	public Object getCustomer(Integer id){
 		return customers.get(id);
+	}
+
+	public String queryCustomerInfo(int id, int customer)
+			throws RemoteException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 

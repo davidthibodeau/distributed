@@ -5,15 +5,19 @@ import java.rmi.RemoteException;
 
 public interface RMCustomer extends Remote {
     
-	public int newCustomer(int id) 
+    /* new customer just returns a unique customer identifier */
+    public int newCustomer(int id) 
 	throws RemoteException; 
     
-    /** Delete Customer with ID = id
-     *
-     * @return success
-     */		    
-    public boolean deleteCustomer(int id) 
-	throws RemoteException; 
+    /* new customer with providing id */
+    public boolean newCustomer(int id, int cid)
+	throws RemoteException;
     
-	boolean newCustomer(int id, int cid) throws RemoteException;
+    /* deleteCustomer removes the customer and associated reservations */
+    public boolean deleteCustomer(int id,int customer) 
+	throws RemoteException; 
+
+    /* return a bill */
+    public String queryCustomerInfo(int id,int customer) 
+	throws RemoteException; 
 }

@@ -13,15 +13,16 @@ public class Middleware implements ResourceManager {
 	RMCar rmCar;
 	RMFlight rmFlight;
 	RMHotel rmHotel;
+	RMCustomer rmCustomer;
 	
 	public static void main(String args[]) {
         // Figure out where server is running
         String server = "localhost";
         int port = 1099;
         Registry registry;
-        if (args.length == 4) {
-            server = server + ":" + args[3];
-            port = Integer.parseInt(args[3]); 
+        if (args.length == 5) {
+            server = server + ":" + args[4];
+            port = Integer.parseInt(args[4]); 
         } else {
             System.err.println ("Wrong usage");
             System.out.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel [port]");
@@ -39,6 +40,7 @@ public class Middleware implements ResourceManager {
             obj.rmCar = (ResourceManager) registry.lookup(args[0]);
             obj.rmFlight = (ResourceManager) registry.lookup(args[1]);
             obj.rmHotel = (ResourceManager) registry.lookup(args[2]);
+            obj.rmCustomer = (ResourceManager) registry.lookup(args[3]);
             if(obj.rmCar!=null && obj.rmFlight != null && obj.rmHotel!=null)
             {
             	System.out.println("Successful");
@@ -87,14 +89,14 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int newCustomer(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		return rmCustomer.newCustomer(id);
 	}
 
 	@Override
 	public boolean newCustomer(int id, int cid) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+		
+		return rmCustomer.newCustomer(id, cid);
 	}
 
 	@Override
@@ -117,8 +119,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteCustomer(int id, int customer) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+		return rmCustomer.deleteCustomer(id, customer);
 	}
 
 	@Override
@@ -142,8 +143,7 @@ public class Middleware implements ResourceManager {
 	@Override
 	public String queryCustomerInfo(int id, int customer)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
+		return rmCustomer.queryCustomerInfo(id, customer);
 	}
 
 	@Override
@@ -189,7 +189,6 @@ public class Middleware implements ResourceManager {
 	@Override
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws RemoteException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
