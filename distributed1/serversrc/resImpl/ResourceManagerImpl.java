@@ -2,18 +2,18 @@
 // adapted from Kevin T. Manley
 // CSE 593
 //
-package resImpl;
+package serversrc.resImpl;
 
 
 import java.util.*;
+import serversrc.resInterface.*;
+
 
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
-
-import resInterface.*;
 
 public class ResourceManagerImpl implements ResourceManager 
 {

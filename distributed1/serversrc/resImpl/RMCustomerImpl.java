@@ -1,10 +1,9 @@
-package resImpl;
+package serversrc.resImpl;
 
 import java.rmi.RemoteException;
-import java.util.Enumeration;
+import serversrc.resInterface.*;
 
-import resInterface.RMCustomer;
-import resInterface.ResourceManager;
+import java.util.Enumeration;
 
 
 public class RMCustomerImpl implements RMCustomer{
@@ -65,16 +64,12 @@ public class RMCustomerImpl implements RMCustomer{
         }
 	}
 
-	@Override
-	public boolean reserveItem(int id, ReservableItem item)
-			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	public Object getCustomer(Integer id){
 		return customers.get(id);
 	}
+
+
 
 
 }

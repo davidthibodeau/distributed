@@ -1,14 +1,13 @@
-package resImpl;
+package serversrc.resImpl;
 
 
 import java.rmi.registry.Registry;
+import serversrc.resInterface.*;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
-
-import resInterface.RMCar;
-import resInterface.ResourceManager;
 
 public class RMCarImpl extends RMBase implements RMCar {
 

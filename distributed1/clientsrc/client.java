@@ -1,6 +1,6 @@
 package clientsrc;
 
-import resInterface.*;
+import serversrc.resInterface.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RMISecurityManager;

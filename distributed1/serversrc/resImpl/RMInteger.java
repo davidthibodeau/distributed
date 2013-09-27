@@ -2,7 +2,7 @@
 // adapted Kevin T. Manley
 // CSE 593
 // -------------------------------
-package resImpl;
+package serversrc.resImpl;
 
 import java.io.*;
 
@@ -26,6 +26,7 @@ public class RMInteger extends RMItem implements Serializable
 			m_value = value;
 		}
 
+		@Override
 		public String toString()
 		{
 			return String.valueOf(m_value);

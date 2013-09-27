@@ -1,4 +1,4 @@
-package resInterface;
+package serversrc.resInterface;
 
 
 import java.rmi.Remote;
