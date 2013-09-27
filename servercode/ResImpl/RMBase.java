@@ -1,4 +1,4 @@
-package ResImpl;
+package resImpl;
 
 import java.rmi.RemoteException;
 

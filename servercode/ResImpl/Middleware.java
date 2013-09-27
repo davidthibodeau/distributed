@@ -1,4 +1,4 @@
-package ResImpl;
+package resImpl;
 
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
@@ -8,6 +8,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Vector;
 
 import ResInterface.*;
+import ResInterface.ResourceManager;
 
 public class Middleware implements ResourceManager {
 	

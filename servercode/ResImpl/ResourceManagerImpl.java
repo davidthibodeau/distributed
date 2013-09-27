@@ -2,7 +2,7 @@
 // adapted from Kevin T. Manley
 // CSE 593
 //
-package ResImpl;
+package resImpl;
 
 import ResInterface.*;
 

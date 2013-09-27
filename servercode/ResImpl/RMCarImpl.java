@@ -1,4 +1,4 @@
-package ResImpl;
+package resImpl;
 
 import ResInterface.RMCar;
 import ResInterface.ResourceManager;
