@@ -4,7 +4,6 @@
 //
 package resImpl;
 
-import resInterface.*;
 
 import java.util.*;
 
@@ -13,6 +12,8 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
+
+import resInterface.*;
 
 public class ResourceManagerImpl implements ResourceManager 
 {

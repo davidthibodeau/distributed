@@ -9,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 import resInterface.RMHotel;
 import resInterface.ResourceManager;
 
+
 public class RMHotelImpl extends RMBase implements RMHotel {
 
 	public static void main(String args[]) {

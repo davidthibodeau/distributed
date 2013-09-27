@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import resInterface.*;
 
+
 public class Middleware implements ResourceManager {
 	
 	RMCar rmCar;
