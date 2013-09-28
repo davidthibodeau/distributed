@@ -28,9 +28,5 @@ public interface RMHotel extends Remote, RMBase {
     /* return the price of a room at a location */
     public int queryRoomsPrice(int id, String location) 
 	throws RemoteException; 
- 
-    /* reserve a room certain at this location */
-    public boolean reserveRoom(int id, int customer, String locationd) 
-	throws RemoteException; 
     
 }

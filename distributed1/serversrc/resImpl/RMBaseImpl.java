@@ -1,6 +1,7 @@
 package serversrc.resImpl;
 
 import java.rmi.RemoteException;
+
 import serversrc.resInterface.*;
 
 public class RMBaseImpl implements RMBase {
@@ -87,8 +88,22 @@ public class RMBaseImpl implements RMBase {
     }
     
     // reserve an item
-    protected boolean reserveItem(int id, int customerID, String key, String location) {
-    	//TODO: Implement it
-       return true;
+    // Synchronized: We don't want two client to reserve the last item
+    // Returns the price of the item in a nullable integer using RMInteger.
+    public synchronized RMInteger reserveItem(int id, int customerID, String key, String location)
+    	throws RemoteException {
+    	ReservableItem item = (ReservableItem)readData(id, key);
+        if ( item == null ) {
+            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
+            return null;
+        } else if (item.getCount()==0) {
+            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
+            return null;
+        } else {            
+            // decrease the number of available items in the storage
+            item.setCount(item.getCount() - 1);
+            item.setReserved(item.getReserved()+1);
+            return new RMInteger(item.getPrice());
+        }
     }
 }

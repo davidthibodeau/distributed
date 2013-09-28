@@ -2,6 +2,8 @@ package serversrc.resInterface;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
+import serversrc.resImpl.Customer;
 import serversrc.resImpl.RMHashtable;
 
 /**
@@ -26,4 +28,10 @@ public interface RMCustomer extends Remote {
     /* return a bill */
     public String queryCustomerInfo(int id,int customer) 
 	throws RemoteException; 
+    
+    public Customer getCustomer(int id, int customerID)
+    throws RemoteException;	
+    
+    public boolean reserve(int id, Customer cust)
+    throws RemoteException;
 }

@@ -114,11 +114,5 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
         return queryPrice(id, Hotel.getKey(location));
     }
 
-    // Adds room reservation to this customer. 
-    public boolean reserveRoom(int id, int customerID, String location)
-        throws RemoteException
-    {
-        return reserveItem(id, customerID, Hotel.getKey(location), location);
-    }
 
 }

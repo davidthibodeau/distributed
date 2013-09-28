@@ -140,7 +140,8 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
         } // if
     }
 
-	public Customer getCustomer(int id, int customerID){
+	public Customer getCustomer(int id, int customerID)
+		throws RemoteException {
 		return (Customer) readData( id, Customer.getKey(customerID) );
 	}
 
@@ -161,7 +162,11 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
         } // if
     }
 
-
+    public boolean reserve(int id, Customer cust)
+    throws RemoteException {
+    	writeData( id, cust.getKey(), cust );
+    	return true;
+    }
 
 
 }

@@ -28,8 +28,5 @@ public interface RMCar extends RMBase, Remote {
     /* return the price of a car at a location */
     public int queryCarsPrice(int id, String location) 
 	throws RemoteException;   
-    
-    /* reserve a car at this location */
-    public boolean reserveCar(int id, int customer, String location) 
-	throws RemoteException; 
+   
 }

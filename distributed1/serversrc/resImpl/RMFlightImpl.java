@@ -92,7 +92,6 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
         return(true);
     }
 
-    @Override
     public boolean deleteFlight(int id, int flightNum)
     		throws RemoteException
 	{
@@ -113,12 +112,6 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
         return queryPrice(id, Flight.getKey(flightNum));
     }
 
-    // Adds flight reservation to this customer.  
-    public boolean reserveFlight(int id, int customerID, int flightNum)
-        throws RemoteException
-    {
-        return reserveItem(id, customerID, Flight.getKey(flightNum), String.valueOf(flightNum));
-    }
 
 
 }

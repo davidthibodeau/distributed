@@ -110,11 +110,5 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 		return queryPrice(id, Car.getKey(location));
 	}
 
-	@Override
-	public boolean reserveCar(int id, int customerID, String location)
-			throws RemoteException {
-		
-		return reserveItem(id, customerID, Car.getKey(location), location);
-	}
 
 }
