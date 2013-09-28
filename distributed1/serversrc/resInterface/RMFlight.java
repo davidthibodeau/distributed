@@ -36,7 +36,4 @@ public interface RMFlight extends Remote, RMBase {
     public int queryFlightPrice(int id, int flightNumber) 
 	throws RemoteException;
     
-    /* Reserve a seat on this flight*/
-    public boolean reserveFlight(int id, int customer, int flightNumber) 
-	throws RemoteException; 
 }

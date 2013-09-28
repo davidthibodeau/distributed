@@ -207,14 +207,71 @@ public class Middleware implements ResourceManager {
 	@Override
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws RemoteException {
-		return false;
+		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+					", " + Car + ", " + Room + " ) called" );        
+        // Read customer object if it exists (and read lock it)
+        Customer cust = rmCustomer.getCustomer(id, customer);
+        if ( cust == null ) {
+        	Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+					", " + Car + ", " + Room + " ) -- Customer non existent, adding it." );
+        	rmCustomer.newCustomer(id, customer);
+        	cust = rmCustomer.getCustomer(id, customer);
+        }
+        
+        if (Car){
+        	if (reserveCar(id, customer, location)) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + Car + ", " + Room + " ) -- Car could not have been reserved." );
+        		return false;
+        	}
+        }
+        if (Room){
+        	if (reserveRoom(id, customer, location)) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + Car + ", " + Room + " ) -- Room could not have been reserved." );
+        		return false;
+        	}
+        }
+        for (Enumeration e = flightNumbers.elements(); e.hasMoreElements();) {
+        	int flightnum = 0;
+        	try {
+        		flightnum = getInt(e.nextElement());
+        	} catch(Exception ex) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + Car + ", " + Room + " ) -- Expected FlightNumber was not a valid integer. Exception "
+    					+ ex + " cached");
+        		return false;
+        	}
+        	if (reserveFlight(id, customer, flightnum)){
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
+    					", " + Car + ", " + Room + " ) -- flight could not have been reserved." );
+        		return false;
+        	}
+        		
+        }
+        	
+		return true;
 	}
+	
+	/*Since the client sends a Vector of objects, we need this 
+	 * unsafe function that retrieves the int from the vector.
+	 * 
+	 */ 
+	public static int getInt(Object temp) throws Exception {
+	    try {
+	        return (new Integer((String)temp)).intValue();
+	        }
+	    catch(Exception e) {
+	        throw e;
+	        }
+	    }
+	
 	/*
 	 * Call RMCust to obtain customer, if it exists.
 	 * Verify if item exists and is available. (Call RM*obj*)
 	 * Reserve with RMCustomer
 	 * Tell RM*obj* to reduce the number of available
-	 * NOTE: between read and modification, the number of available items might change?
+
 	 */
 	 protected boolean reserveItem(int id, int customerID, String key, String location, ReservedItem.rType rtype)
 	 	throws RemoteException {
