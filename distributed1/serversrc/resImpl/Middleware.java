@@ -57,6 +57,7 @@ public class Middleware implements ResourceManager {
             }
 
             // Bind the remote object's stub in the registry
+	    registry = LocateRegistry.getRegistry(port);
             registry.rebind("Group2Middleware", rm);
 
             System.err.println("Server ready");
