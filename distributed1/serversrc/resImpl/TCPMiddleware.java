@@ -75,7 +75,7 @@ public class TCPMiddleware {
 	 * @throws RemoteException 
 	 * @throws NumberFormatException 
 	 */
-	private void methodSelector(String methodInvocation) throws Exception {
+	private String methodSelector(String methodInvocation) throws Exception {
 		String params[] = methodInvocation.split("[,()]");
 		BufferedReader in = null;
 		PrintWriter out = null;
@@ -85,16 +85,14 @@ public class TCPMiddleware {
 				out = new PrintWriter(flightSocket.getOutputStream(),true);
 				in = new BufferedReader(new InputStreamReader(flightSocket.getInputStream()));
 				out.println(methodInvocation);
-				//return in.readLine().contentEquals("true");
+				return in.readLine();
 			} catch (IOException e) {
-			//	return false;
-				return;
+				return "ERROR: IOException in method invocation: " + methodInvocation;
 			}
 			finally{
 				in.close();
 				out.close();
 			}
-			return;
 			//return flight manager's response			return;
 		}
 		if(params[0].contains("Cars")){
@@ -102,46 +100,46 @@ public class TCPMiddleware {
 				out = new PrintWriter(carsSocket.getOutputStream(),true);
 				in = new BufferedReader(new InputStreamReader(carsSocket.getInputStream()));
 				out.println(methodInvocation);
-				//return in.readLine().contentEquals("true");
+				return in.readLine();
 			} catch (IOException e) {
-			//	return false;
+				return "ERROR: IOException in method invocation: " + methodInvocation;
 			}
 			finally{
 				in.close();
 				out.close();
 			}
-			return;
 		}
 		if(params[0].contains("Rooms")){
 			try {
 				out = new PrintWriter(hotelSocket.getOutputStream(),true);
 				in = new BufferedReader(new InputStreamReader(hotelSocket.getInputStream()));
 				out.println(methodInvocation);
-				//return in.readLine().contentEquals("true");
+				return in.readLine();
 			} catch (IOException e) {
-			//	return false;
+				return "ERROR: IOException in method invocation: " + methodInvocation;
 			}
 			finally{
 				in.close();
 				out.close();
 			}
-			return;
 		}
 		if(params[0].contains("Customer")){
+			/* TODO: Since Customer returns objects, this needs to be supported */
 			try {
 				out = new PrintWriter(customerSocket.getOutputStream(),true);
 				in = new BufferedReader(new InputStreamReader(customerSocket.getInputStream()));
 				out.println(methodInvocation);
-				//return in.readLine().contentEquals("true");
+				return in.readLine();
 			} catch (IOException e) {
-			//	return false;
+				return "ERROR: IOException in method invocation: " + methodInvocation;
 			}
 			finally{
 				in.close();
 				out.close();
 			}
-			return;
-		}		
+		}
+		
+		return "ERROR: No Function Found. Aborting";
 	}
 /*
 	
