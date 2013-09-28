@@ -16,7 +16,7 @@ import java.util.Vector;
 
 import serversrc.resInterface.*;
 
-public class TCPMiddleware implements TCPResourceManager {
+public class TCPMiddleware {
 
 	RMCar rmCar;
 	RMFlight rmFlight;
@@ -77,82 +77,74 @@ public class TCPMiddleware implements TCPResourceManager {
 	 */
 	private void methodSelector(String methodInvocation) throws Exception {
 		String params[] = methodInvocation.split("[,()]");
-		if(params[0].compareTo("addFlight") == 0){
-			this.addFlight(Integer.parseInt(params[1]),Integer.parseInt(params[2]),Integer.parseInt(params[3]),Integer.parseInt(params[4]));
+		BufferedReader in = null;
+		PrintWriter out = null;
+		if(params[0].contains("Flight")){
+			//send method to flight manager and get response
+			try {
+				out = new PrintWriter(flightSocket.getOutputStream(),true);
+				in = new BufferedReader(new InputStreamReader(flightSocket.getInputStream()));
+				out.println(methodInvocation);
+				//return in.readLine().contentEquals("true");
+			} catch (IOException e) {
+			//	return false;
+				return;
+			}
+			finally{
+				in.close();
+				out.close();
+			}
+			return;
+			//return flight manager's response			return;
+		}
+		if(params[0].contains("Cars")){
+			try {
+				out = new PrintWriter(carsSocket.getOutputStream(),true);
+				in = new BufferedReader(new InputStreamReader(carsSocket.getInputStream()));
+				out.println(methodInvocation);
+				//return in.readLine().contentEquals("true");
+			} catch (IOException e) {
+			//	return false;
+			}
+			finally{
+				in.close();
+				out.close();
+			}
 			return;
 		}
-		if(params[0].contains("addCars")){
-			this.addCars(Integer.parseInt(params[1]),params[2],Integer.parseInt(params[3]),Integer.parseInt(params[4]));
+		if(params[0].contains("Rooms")){
+			try {
+				out = new PrintWriter(hotelSocket.getOutputStream(),true);
+				in = new BufferedReader(new InputStreamReader(hotelSocket.getInputStream()));
+				out.println(methodInvocation);
+				//return in.readLine().contentEquals("true");
+			} catch (IOException e) {
+			//	return false;
+			}
+			finally{
+				in.close();
+				out.close();
+			}
 			return;
 		}
-		if(params[0].contains("addRooms")){
-			this.addRooms(Integer.parseInt(params[1]),params[2],Integer.parseInt(params[3]),Integer.parseInt(params[4]));
-			return;
-		}
-		if(params[0].contains("newCustomer")){
-			this.newCustomer(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("deleteFlight")){
-			this.deleteFlight(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("deleteCars")){
-			this.deleteCars(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("deleteRooms")){
-			this.deleteRooms(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("deleteCustomer")){
-			this.deleteCustomer(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("queryFlight")){
-			this.queryFlight(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("queryCars")){
-			this.queryCars(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("queryRooms")){
-			this.queryRooms(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("queryCustomerInfo")){
-			this.queryCustomerInfo(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("queryFlightPrice")){
-			this.queryFlightPrice(Integer.parseInt(params[1]),Integer.parseInt(params[2]));
-			return;
-		}
-		if(params[0].contains("queryCarsPrice")){
-			this.queryCarsPrice(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("queryRoomsPrice")){
-			this.queryRoomsPrice(Integer.parseInt(params[1]),params[2]);
-			return;
-		}
-		if(params[0].contains("reserveFlight")){
-			this.reserveFlight(Integer.parseInt(params[1]),Integer.parseInt(params[2]),Integer.parseInt(params[3]));
-			return;
-		}
-		if(params[0].contains("reserveCar")){
-			this.reserveCar(Integer.parseInt(params[1]),Integer.parseInt(params[2]),params[3]);
-			return;
-		}
-		if(params[0].contains("reserveRoom")){
-			this.reserveRoom(Integer.parseInt(params[1]),Integer.parseInt(params[2]),params[3]);
+		if(params[0].contains("Customer")){
+			try {
+				out = new PrintWriter(customerSocket.getOutputStream(),true);
+				in = new BufferedReader(new InputStreamReader(customerSocket.getInputStream()));
+				out.println(methodInvocation);
+				//return in.readLine().contentEquals("true");
+			} catch (IOException e) {
+			//	return false;
+			}
+			finally{
+				in.close();
+				out.close();
+			}
 			return;
 		}		
-		
 	}
-
-	@Override
+/*
+	
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws IOException{
 		//send method to flight manager
@@ -172,119 +164,9 @@ public class TCPMiddleware implements TCPResourceManager {
 		}
 		//return flight manager's response
 	}
-
-	@Override
-	public boolean addCars(int id, String location, int numCars, int price)
-			throws RemoteException {
-
-		return rmCar.addCars(id, location, numCars, price);
-	}
-
-	@Override
-	public boolean addRooms(int id, String location, int numRooms, int price)
-			throws RemoteException {
-
-		return rmHotel.addRooms(id, location, numRooms, price);
-	}
-
-	@Override
-	public int newCustomer(int id) throws RemoteException {
-
-		return rmCustomer.newCustomer(id);
-	}
-
-	@Override
-	public boolean newCustomer(int id, int cid) throws RemoteException {
-
-		return rmCustomer.newCustomer(id, cid);
-	}
-
-	@Override
-	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
-
-		return rmFlight.deleteFlight(id, flightNum);
-	}
-
-	@Override
-	public boolean deleteCars(int id, String location) throws RemoteException {
-
-		return rmCar.deleteCars(id, location);
-	}
-
-	@Override
-	public boolean deleteRooms(int id, String location) throws RemoteException {
-
-		return rmHotel.deleteRooms(id, location);
-	}
-
-	@Override
-	public boolean deleteCustomer(int id, int customer) throws RemoteException {
-
-		RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
-		for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {
-			String reservedkey = (String) (e.nextElement());
-			ReservedItem reserveditem = (ReservedItem) reservationHT
-					.get(reservedkey);
-			Trace.info("RM::deleteCustomer(" + id + ", " + customer
-					+ ") has reserved " + reserveditem.getKey() + " "
-					+ reserveditem.getCount() + " times");
-
-			if (reserveditem.getrType() == ReservedItem.rType.FLIGHT)
-				rmFlight.unreserveItem(id, reserveditem);
-			else if (reserveditem.getrType() == ReservedItem.rType.CAR)
-				rmCar.unreserveItem(id, reserveditem);
-			else if (reserveditem.getrType() == ReservedItem.rType.ROOM)
-				rmHotel.unreserveItem(id, reserveditem);
-
-		}
-
-		return true;
-	}
-
-	@Override
-	public int queryFlight(int id, int flightNumber) throws RemoteException {
-
-		return rmFlight.queryFlight(id, flightNumber);
-	}
-
-	@Override
-	public int queryCars(int id, String location) throws RemoteException {
-
-		return rmCar.queryCars(id, location);
-	}
-
-	@Override
-	public int queryRooms(int id, String location) throws RemoteException {
-
-		return rmHotel.queryRooms(id, location);
-	}
-
-	@Override
-	public String queryCustomerInfo(int id, int customer)
-			throws RemoteException {
-		return rmCustomer.queryCustomerInfo(id, customer);
-	}
-
-	@Override
-	public int queryFlightPrice(int id, int flightNumber)
-			throws RemoteException {
-
-		return rmFlight.queryFlightPrice(id, flightNumber);
-	}
-
-	@Override
-	public int queryCarsPrice(int id, String location) throws RemoteException {
-
-		return rmCar.queryCarsPrice(id, location);
-	}
-
-	@Override
-	public int queryRoomsPrice(int id, String location) throws RemoteException {
-
-		return rmHotel.queryRoomsPrice(id, location);
-	}
-
-	@Override
+*/
+	
+	
 	public boolean reserveFlight(int id, int customer, int flightNum)
 			throws RemoteException {
 
@@ -292,7 +174,7 @@ public class TCPMiddleware implements TCPResourceManager {
 				String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
 	}
 
-	@Override
+
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException {
 
@@ -300,7 +182,7 @@ public class TCPMiddleware implements TCPResourceManager {
 				ReservedItem.rType.CAR);
 	}
 
-	@Override
+
 	public boolean reserveRoom(int id, int customer, String location)
 			throws RemoteException {
 
@@ -308,7 +190,7 @@ public class TCPMiddleware implements TCPResourceManager {
 				ReservedItem.rType.ROOM);
 	}
 
-	@Override
+
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws RemoteException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
