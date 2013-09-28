@@ -3,7 +3,6 @@ package serversrc.resInterface;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-
 import java.util.*;
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -19,13 +18,35 @@ import java.util.*;
  * return values in the interface generously to allow flexibility in 
  * implementation.  But don't forget to return true when the operation
  * has succeeded.
+ * 
+ **********
+ *
+ * Extends the individual RM methods that provide functionalities for
+ * rooms, cars, and flight seats. It does not extend RMCustomer since
+ * the methods from RMCustomer differ from the ones provided to the
+ * client due to the need to coordinate the cancellations when removing
+ * a customer.
+ * 
  */
 
-public interface ResourceManager extends RMCar, RMFlight, RMHotel, RMCustomer, Remote
+public interface ResourceManager extends RMCar, RMFlight, RMHotel, Remote
 {
+	/* new customer just returns a unique customer identifier */
+    public int newCustomer(int id) 
+	throws RemoteException; 
+    
+    /* new customer with providing id */
+    public boolean newCustomer(int id, int cid)
+	throws RemoteException;
+    
+    /* deleteCustomer removes the customer and associated reservations */
+    public boolean deleteCustomer(int id,int customer) 
+	throws RemoteException; 
+
+    /* return a bill */
+    public String queryCustomerInfo(int id,int customer) 
+	throws RemoteException; 
 			    			    
-
-
     /* reserve an itinerary */
     public boolean itinerary(int id,int customer,Vector flightNumbers,String location, boolean Car, boolean Room)
 	throws RemoteException; 

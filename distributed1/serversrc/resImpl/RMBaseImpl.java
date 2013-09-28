@@ -1,8 +1,9 @@
 package serversrc.resImpl;
 
 import java.rmi.RemoteException;
+import serversrc.resInterface.*;
 
-public class RMBase {
+public class RMBaseImpl implements RMBase {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 
@@ -52,6 +53,14 @@ public class RMBase {
         } // if
     }
     
+    public boolean unreserveItem(int id, ReservedItem reserveditem)
+    	throws RemoteException{
+    	ReservableItem item = (ReservableItem) readData(id, reserveditem.getKey());
+    	Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+    	item.setReserved(item.getReserved()-reserveditem.getCount());
+    	item.setCount(item.getCount()+reserveditem.getCount());
+    	return true;
+    }
 
     // query the number of available seats/rooms/cars
     protected int queryNum(int id, String key) {
@@ -79,32 +88,7 @@ public class RMBase {
     
     // reserve an item
     protected boolean reserveItem(int id, int customerID, String key, String location) {
-        Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ ", "+location+" ) called" );        
-        // Read customer object if it exists (and read lock it)
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );        
-        if ( cust == null ) {
-            Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key + ", "+location+")  failed--customer doesn't exist" );
-            return false;
-        } 
-        
-        // check if the item is available
-        ReservableItem item = (ReservableItem)readData(id, key);
-        if ( item == null ) {
-            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
-            return false;
-        } else if (item.getCount()==0) {
-            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
-            return false;
-        } else {            
-            cust.reserve( key, location, item.getPrice());        
-            writeData( id, cust.getKey(), cust );
-            
-            // decrease the number of available items in the storage
-            item.setCount(item.getCount() - 1);
-            item.setReserved(item.getReserved()+1);
-            
-            Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") succeeded" );
-            return true;
-        }        
+    	//TODO: Implement it
+       return true;
     }
 }

@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public interface RMHotel extends Remote {
+public interface RMHotel extends Remote, RMBase {
 
 	/* Add rooms to a location.  
      * This should look a lot like addFlight, only keyed on a string location

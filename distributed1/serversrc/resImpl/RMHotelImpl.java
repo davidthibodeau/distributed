@@ -5,10 +5,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+
 import serversrc.resInterface.*;
 
 
-public class RMHotelImpl extends RMBase implements RMHotel {
+public class RMHotelImpl extends RMBaseImpl implements RMHotel {
 
 	public static void main(String args[]) {
         // Figure out where server is running

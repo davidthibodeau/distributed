@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
 
-public class RMCarImpl extends RMBase implements RMCar {
+public class RMCarImpl extends RMBaseImpl implements RMCar {
 
 	//protected RMHashtable m_itemHT = new RMHashtable();
 	

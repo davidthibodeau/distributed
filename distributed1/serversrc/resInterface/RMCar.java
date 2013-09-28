@@ -4,7 +4,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public interface RMCar extends Remote {
+public interface RMCar extends RMBase, Remote {
 
     /* Add cars to a location.  
      * This should look a lot like addFlight, only keyed on a string location

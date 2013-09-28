@@ -12,7 +12,7 @@ import java.util.Calendar;
 import java.util.Enumeration;
 
 
-public class RMCustomerImpl extends RMBase implements RMCustomer{
+public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	
 	public static void main(String args[]) {
         // Figure out where server is running
@@ -104,32 +104,22 @@ public class RMCustomerImpl extends RMBase implements RMCustomer{
 	/**
 	 * Must remove all reserved items of that customer as well. 
 	 */
-	public boolean deleteCustomer(int id, int customerID) throws RemoteException {
+	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException {
 		
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
         Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
         if ( cust == null ) {
             Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return false;
+            return null;
         } else {            
             // Increase the reserved numbers of all reservable items which the customer reserved. 
             RMHashtable reservationHT = cust.getReservations();
-            for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
-                String reservedkey = (String) (e.nextElement());
-                ReservedItem reserveditem = cust.getReservedItem(reservedkey);
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
-                //TODO: Need to readData in particular RM through middleware
-                ReservableItem item  = (ReservableItem) readData(id, reserveditem.getKey());
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-                item.setReserved(item.getReserved()-reserveditem.getCount());
-                item.setCount(item.getCount()+reserveditem.getCount());
-            }
             
             // remove the customer from the storage
             removeData(id, cust.getKey());
             
             Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
-            return true;
+            return reservationHT;
         } // if
 
 	}

@@ -326,21 +326,24 @@ public class ResourceManagerImpl implements ResourceManager
         return queryPrice(id, Car.getKey(location));
     }
 
-    // Returns data structure containing customer reservation info. Returns null if the
-    //  customer doesn't exist. Returns empty RMHashtable if customer exists but has no
-    //  reservations.
-    public RMHashtable getCustomerReservations(int id, int customerID)
-        throws RemoteException
-    {
-        Trace.info("RM::getCustomerReservations(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
-        if ( cust == null ) {
-            Trace.warn("RM::getCustomerReservations failed(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return null;
-        } else {
-            return cust.getReservations();
-        } // if
-    }
+	// Returns data structure containing customer reservation info. Returns null
+	// if the
+	// customer doesn't exist. Returns empty RMHashtable if customer exists but
+	// has no
+	// reservations.
+	public RMHashtable getCustomerReservations(int id, int customerID)
+			throws RemoteException {
+		Trace.info("RM::getCustomerReservations(" + id + ", " + customerID
+				+ ") called");
+		Customer cust = (Customer) readData(id, Customer.getKey(customerID));
+		if (cust == null) {
+			Trace.warn("RM::getCustomerReservations failed(" + id + ", "
+					+ customerID + ") failed--customer doesn't exist");
+			return null;
+		} else {
+			return cust.getReservations();
+		} // if
+	}
 
     // return a bill
     public String queryCustomerInfo(int id, int customerID)

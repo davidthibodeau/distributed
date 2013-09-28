@@ -5,10 +5,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+
 import serversrc.resInterface.*;
 
 
-public class RMFlightImpl extends RMBase implements RMFlight {
+public class RMFlightImpl extends RMBaseImpl implements RMFlight {
 
 	
 	public static void main(String args[]) {

@@ -5,7 +5,9 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Enumeration;
 import java.util.Vector;
+
 import serversrc.resInterface.*;
 
 public class Middleware implements ResourceManager {
@@ -37,10 +39,10 @@ public class Middleware implements ResourceManager {
             // get a reference to the rmiregistry
             registry = LocateRegistry.getRegistry(port);
             // get the proxy and the remote reference by rmiregistry lookup
-            obj.rmCar = (ResourceManager) registry.lookup(args[0]);
-            obj.rmFlight = (ResourceManager) registry.lookup(args[1]);
-            obj.rmHotel = (ResourceManager) registry.lookup(args[2]);
-            obj.rmCustomer = (ResourceManager) registry.lookup(args[3]);
+            obj.rmCar = (RMCar) registry.lookup(args[0]);
+            obj.rmFlight = (RMFlight) registry.lookup(args[1]);
+            obj.rmHotel = (RMHotel) registry.lookup(args[2]);
+            obj.rmCustomer = (RMCustomer) registry.lookup(args[3]);
             if(obj.rmCar!=null && obj.rmFlight != null && obj.rmHotel!=null)
             {
             	System.out.println("Successful");
@@ -119,7 +121,23 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteCustomer(int id, int customer) throws RemoteException {
-		return rmCustomer.deleteCustomer(id, customer);
+		
+		RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
+		 for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
+             String reservedkey = (String) (e.nextElement());
+             ReservedItem reserveditem = (ReservedItem) reservationHT.get( reservedkey );
+             Trace.info("RM::deleteCustomer(" + id + ", " + customer + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
+             
+             if (reserveditem.getrType() == ReservedItem.rType.FLIGHT)
+            	 rmFlight.unreserveItem(id, reserveditem);
+             else if (reserveditem.getrType() == ReservedItem.rType.CAR)
+            	 rmCar.unreserveItem(id, reserveditem);
+             else if (reserveditem.getrType() == ReservedItem.rType.ROOM)
+            	 rmHotel.unreserveItem(id, reserveditem);
+             
+         }
+		
+		return true;
 	}
 
 	@Override
@@ -189,6 +207,13 @@ public class Middleware implements ResourceManager {
 	@Override
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws RemoteException {
+		return false;
+	}
+
+	@Override
+	public boolean unreserveItem(int id, ReservedItem reserveditem)
+			throws RemoteException {
+		// TODO Auto-generated method stub
 		return false;
 	}
 
