@@ -260,7 +260,7 @@ public class Middleware implements ResourceManager {
 	 * unsafe function that retrieves the int from the vector.
 	 * 
 	 */ 
-	public static int getInt(Object temp) throws Exception {
+	public int getInt(Object temp) throws Exception {
 	    try {
 	        return (new Integer((String)temp)).intValue();
 	        }
