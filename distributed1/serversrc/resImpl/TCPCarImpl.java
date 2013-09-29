@@ -75,6 +75,13 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 		return output;
 	}
 
+	private String addCars(String[] args) throws NumberFormatException,
+			RemoteException {
+		return String.valueOf(this.addCars(Integer.parseInt(args[1]), args[2],
+				Integer.parseInt(args[3]), Integer.parseInt(args[4])));
+
+	}
+
 	private String queryCarsPrice(String[] args) throws NumberFormatException,
 			RemoteException {
 		return String.valueOf(this.queryCarsPrice(Integer.parseInt(args[1]),
@@ -138,13 +145,6 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 					+ price);
 		} // else
 		return (true);
-	}
-
-	private String addCars(String[] args) throws NumberFormatException,
-			RemoteException {
-		return String.valueOf(this.addCars(Integer.parseInt(args[1]), args[2],
-				Integer.parseInt(args[3]), Integer.parseInt(args[4])));
-
 	}
 
 	@Override
