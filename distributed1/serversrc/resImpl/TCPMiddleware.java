@@ -34,7 +34,6 @@ public class TCPMiddleware {
 		ServerSocket serverSocket;
 
 		Socket clientSocket;
-		Registry registry;
 		if (args.length == 5) {
 			server = server + ":" + args[4];
 			port = Integer.parseInt(args[4]);
@@ -60,7 +59,7 @@ public class TCPMiddleware {
 			TCPMiddleware obj = new TCPMiddleware();
 			
 			while((methodInvocation = in.readLine()) != null){
-				obj.methodSelector(methodInvocation);
+				out.println(obj.methodSelector(methodInvocation));
 				//TODO: send response to client (may need to change methodSelector)
 			}
 		} catch (Exception e) {
