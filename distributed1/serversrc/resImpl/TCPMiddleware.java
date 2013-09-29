@@ -22,10 +22,10 @@ public class TCPMiddleware {
 	RMFlight rmFlight;
 	RMHotel rmHotel;
 	RMCustomer rmCustomer;
-	static Socket flightSocket;
-	static Socket carsSocket;
-	static Socket hotelSocket;
-	static Socket customerSocket;
+	Socket flightSocket;
+	Socket carsSocket;
+	Socket hotelSocket;
+	Socket customerSocket;
 	
 	public static void main(String args[]) {
 		// Figure out where server is running
@@ -45,18 +45,18 @@ public class TCPMiddleware {
 		}
 
 		try {
+			TCPMiddleware obj = new TCPMiddleware();
 			// Listens for clients messages.
 			serverSocket = new ServerSocket(port);
 			// Where to write to the client
 			clientSocket = serverSocket.accept();
-			flightSocket = new Socket(server, port);
-			carsSocket = new Socket(server, port);
-			hotelSocket = new Socket(server, port);
-			customerSocket = new Socket(server, port);
+			obj.flightSocket = new Socket(server, port);
+			obj.carsSocket = new Socket(server, port);
+			obj.hotelSocket = new Socket(server, port);
+			obj.customerSocket = new Socket(server, port);
 			String methodInvocation;
 			BufferedReader in = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()));
 			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-			TCPMiddleware obj = new TCPMiddleware();
 			
 			while((methodInvocation = in.readLine()) != null){
 				out.println(obj.methodSelector(methodInvocation));
@@ -137,32 +137,13 @@ public class TCPMiddleware {
 				out.close();
 			}
 		}
+		if (params[0].equalsIgnoreCase("intnerary")){
+			
+		}
 		
 		return "ERROR: No Function Found. Aborting";
 	}
-/*
-	
-	public boolean addFlight(int id, int flightNum, int flightSeats,
-			int flightPrice) throws IOException{
-		//send method to flight manager
-		BufferedReader in = null;
-		PrintWriter out = null;
-		try {
-			out = new PrintWriter(flightSocket.getOutputStream(),true);
-			in = new BufferedReader(new InputStreamReader(flightSocket.getInputStream()));
-			out.println("addFlight(" + id +","+flightNum + "," + flightSeats + "," + flightPrice);
-			return in.readLine().contentEquals("true");
-		} catch (IOException e) {
-			return false;
-		}
-		finally{
-			in.close();
-			out.close();
-		}
-		//return flight manager's response
-	}
-*/
-	
+
 	
 	public boolean reserveFlight(int id, int customer, int flightNum)
 			throws RemoteException {
