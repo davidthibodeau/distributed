@@ -2,6 +2,8 @@ package serversrc.resImpl;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,8 +17,8 @@ import java.rmi.RMISecurityManager;
 import java.util.Vector;
 
 public class TCPCarImpl extends RMBaseImpl implements RMCar {
-
-	// protected RMHashtable m_itemHT = new RMHashtable();
+	ObjectInputStream in;
+	ObjectOutputStream out;
 
 	public static void main(String args[]) {
 		// Figure out where server is running
@@ -42,14 +44,12 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 			carSocket = new ServerSocket(port);
 			middlewareSocket = carSocket.accept();
 			System.err.println("Server ready");
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					middlewareSocket.getInputStream()));
-			PrintWriter out = new PrintWriter(
-					middlewareSocket.getOutputStream());
-			String method;
-			while ((method = in.readLine()) != null) {
-				//out.println(obj.methodSelect(method));
-				//TODO: method selector
+			obj.in = new ObjectInputStream(middlewareSocket.getInputStream());
+			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			Vector method;
+
+			while ((method = (Vector) obj.in.readObject()) != null) {
+				obj.methodSelect(method);
 			}
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -57,38 +57,36 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 		}
 	}
 
-	private void methodSelect(Vector method) throws NumberFormatException,
-			RemoteException {
-		//TODO: selectorMethod
+	public void methodSelect(Vector input) throws Exception {
+
+		if (((String) input.elementAt(0)).equalsIgnoreCase("addCars")) {
+			boolean added = addCars(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)), getInt(input.elementAt(3)),
+					getInt(input.elementAt(4)));
+			out.writeBoolean(added);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCars")) {
+			boolean deleted = deleteCars(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeBoolean(deleted);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCars")) {
+			int emptySeats = queryCars(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeInt(emptySeats);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCarsPrice")) {
+			int price = queryCarsPrice(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeInt(price);
+
+		}
+
+		return;
 	}
-
-	private String addCars(String[] args) throws NumberFormatException,
-			RemoteException {
-		return String.valueOf(this.addCars(Integer.parseInt(args[1]), args[2],
-				Integer.parseInt(args[3]), Integer.parseInt(args[4])));
-
-	}
-
-	private String queryCarsPrice(String[] args) throws NumberFormatException,
-			RemoteException {
-		return String.valueOf(this.queryCarsPrice(Integer.parseInt(args[1]),
-				args[2]));
-
-	}
-
-	private String queryCars(String[] args) throws NumberFormatException,
-			RemoteException {
-		return String
-				.valueOf(this.queryCars(Integer.parseInt(args[1]), args[2]));
-	}
-
-	private String deleteCars(String[] args) throws NumberFormatException,
-			RemoteException {
-
-		return String.valueOf(this.deleteCars(Integer.parseInt(args[1]),
-				args[2]));
-	}
-
 	// Reads a data item
 	private RMItem readData(int id, String key) {
 		synchronized (m_itemHT) {
@@ -150,6 +148,31 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 	public int queryCarsPrice(int id, String location) throws RemoteException {
 
 		return queryPrice(id, Car.getKey(location));
+	}
+	
+
+	public int getInt(Object temp) throws Exception {
+		try {
+			return (new Integer((String) temp)).intValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public boolean getBoolean(Object temp) throws Exception {
+		try {
+			return (new Boolean((String) temp)).booleanValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public String getString(Object temp) throws Exception {
+		try {
+			return (String) temp;
+		} catch (Exception e) {
+			throw e;
+		}
 	}
 
 }

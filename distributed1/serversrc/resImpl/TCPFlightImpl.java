@@ -2,11 +2,17 @@ package serversrc.resImpl;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Vector;
 
 public class TCPFlightImpl extends RMBaseImpl {
+
+	ObjectInputStream in;
+	ObjectOutputStream out;
 
 	public static void main(String args[]) {
 		// Figure out where server is running
@@ -32,13 +38,12 @@ public class TCPFlightImpl extends RMBaseImpl {
 			flightSocket = new ServerSocket(port);
 			middlewareSocket = flightSocket.accept();
 			System.err.println("Server ready");
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					middlewareSocket.getInputStream()));
-			PrintWriter out = new PrintWriter(
-					middlewareSocket.getOutputStream());
-			String method;
-			while ((method = in.readLine()) != null) {
-				out.println(obj.methodSelect(method));
+			obj.in = new ObjectInputStream(middlewareSocket.getInputStream());
+			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			Vector method;
+
+			while ((method = (Vector) obj.in.readObject()) != null) {
+				obj.methodSelect(method);
 			}
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -46,47 +51,35 @@ public class TCPFlightImpl extends RMBaseImpl {
 		}
 	}
 
-	private String methodSelect(String input) throws NumberFormatException {
-		String output = "";
-		String[] args = input.split("[,()]"); // may cause trouble with location
-		if (input.startsWith("addCars")) {
-			output = this.addFlight(args);
+	public void methodSelect(Vector input) throws Exception {
+
+		if (((String) input.elementAt(0)).equalsIgnoreCase("addFlight")) {
+			boolean added = addFlight(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)), getInt(input.elementAt(3)),
+					getInt(input.elementAt(4)));
+			out.writeBoolean(added);
+
 		}
-		if (input.startsWith("deleteCars")) {
-			output = this.deleteFlight(args);
+		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteFlight")) {
+			boolean deleted = deleteFlight(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)));
+			out.writeBoolean(deleted);
+
 		}
-		if (input.startsWith("queryCars")) {
-			output = this.queryFlight(args);
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryFlight")) {
+			int emptySeats = queryFlight(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)));
+			out.writeInt(emptySeats);
+
 		}
-		if (input.startsWith("queryCarsPrice")) {
-			output = this.queryFlightPrice(args);
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryFlightPrice")) {
+			int price = queryFlightPrice(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)));
+			out.writeInt(price);
+
 		}
 
-		return output;
-	}
-
-	private String addFlight(String[] args) throws NumberFormatException {
-		return String.valueOf(this.addFlight(Integer.parseInt(args[1]),
-				Integer.parseInt(args[2]), Integer.parseInt(args[3]),
-				Integer.parseInt(args[4])));
-
-	}
-
-	private String queryFlightPrice(String[] args) throws NumberFormatException {
-		return String.valueOf(this.queryFlightPrice(Integer.parseInt(args[1]),
-				Integer.parseInt(args[2])));
-
-	}
-
-	private String queryFlight(String[] args) throws NumberFormatException {
-		return String.valueOf(this.queryFlight(Integer.parseInt(args[1]),
-				Integer.parseInt(args[2])));
-	}
-
-	private String deleteFlight(String[] args) throws NumberFormatException {
-
-		return String.valueOf(this.deleteFlight(Integer.parseInt(args[1]),
-				Integer.parseInt(args[2])));
+		return;
 	}
 
 	public TCPFlightImpl() {
@@ -147,6 +140,30 @@ public class TCPFlightImpl extends RMBaseImpl {
 	// Returns price of this flight
 	public int queryFlightPrice(int id, int flightNum) {
 		return queryPrice(id, Flight.getKey(flightNum));
+	}
+
+	public int getInt(Object temp) throws Exception {
+		try {
+			return (new Integer((String) temp)).intValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public boolean getBoolean(Object temp) throws Exception {
+		try {
+			return (new Boolean((String) temp)).booleanValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public String getString(Object temp) throws Exception {
+		try {
+			return (String) temp;
+		} catch (Exception e) {
+			throw e;
+		}
 	}
 
 }

@@ -1,51 +1,91 @@
 package serversrc.resImpl;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Vector;
 
 import serversrc.resInterface.*;
 
 
 public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
+	ObjectInputStream in;
+	ObjectOutputStream out;
 
 	public static void main(String args[]) {
-        // Figure out where server is running
-        String server = "localhost";
-        int port = 1099;
+		// Figure out where server is running
+		ServerSocket flightSocket = null;
+		Socket middlewareSocket = null;
 
-        if (args.length == 1) {
-            server = server + ":" + args[0];
-            port = Integer.parseInt(args[0]);
-        } else if (args.length != 0 &&  args.length != 1) {
-            System.err.println ("Wrong usage");
-            System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
-            System.exit(1);
-        }
+		String server = "localhost";
+		int port = 1099;
 
-        try {
-            // create a new Server object
-            TCPHotelImpl obj = new TCPHotelImpl();
-            // dynamically generate the stub (client proxy)
-            RMHotel rm = (RMHotel) UnicastRemoteObject.exportObject(obj, 0);
+		if (args.length == 1) {
+			server = server + ":" + args[0];
+			port = Integer.parseInt(args[0]);
+		} else if (args.length != 0 && args.length != 1) {
+			System.err.println("Wrong usage");
+			System.out
+					.println("Usage: java ResImpl.ResourceManagerImpl [port]");
+			System.exit(1);
+		}
 
-            // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.getRegistry(port);
-            registry.rebind("Group2RMHotel", rm);
+		try {
+			// create a new Server object
+			TCPFlightImpl obj = new TCPFlightImpl();
+			flightSocket = new ServerSocket(port);
+			middlewareSocket = flightSocket.accept();
+			System.err.println("Server ready");
+			obj.in = new ObjectInputStream(middlewareSocket.getInputStream());
+			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			Vector method;
 
-            System.err.println("Server ready");
-        } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
-            e.printStackTrace();
-        }
+			while ((method = (Vector) obj.in.readObject()) != null) {
+				obj.methodSelect(method);
+			}
+		} catch (Exception e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
+	}
 
-        // Create and install a security manager
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
-        }
-    }
+	public void methodSelect(Vector input) throws Exception {
+
+		if (((String) input.elementAt(0)).equalsIgnoreCase("addRooms")) {
+			boolean added = addRooms(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)), getInt(input.elementAt(3)),
+					getInt(input.elementAt(4)));
+			out.writeBoolean(added);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteRooms")) {
+			boolean deleted = deleteRooms(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeBoolean(deleted);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRooms")) {
+			int emptySeats = queryRooms(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeInt(emptySeats);
+
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoomsPrice")) {
+			int price = queryRoomsPrice(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeInt(price);
+
+		}
+
+		return;
+	}
+
 	
 	public TCPHotelImpl() throws RemoteException {
 	
@@ -114,5 +154,28 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
         return queryPrice(id, Hotel.getKey(location));
     }
 
+	public int getInt(Object temp) throws Exception {
+		try {
+			return (new Integer((String) temp)).intValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public boolean getBoolean(Object temp) throws Exception {
+		try {
+			return (new Boolean((String) temp)).booleanValue();
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public String getString(Object temp) throws Exception {
+		try {
+			return (String) temp;
+		} catch (Exception e) {
+			throw e;
+		}
+	}
 
 }
