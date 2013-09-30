@@ -104,23 +104,23 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	/**
 	 * Must remove all reserved items of that customer as well. 
 	 */
-	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException {
+	public synchronized RMHashtable deleteCustomer(int id, int customerID) throws RemoteException {
 		
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
-        if ( cust == null ) {
-            Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return null;
-        } else {            
-            // Increase the reserved numbers of all reservable items which the customer reserved. 
-            RMHashtable reservationHT = cust.getReservations();
-            
-            // remove the customer from the storage
-            removeData(id, cust.getKey());
-            
-            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
-            return reservationHT;
-        } // if
+		RMHashtable reservationHT = null;
+		Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+		if ( cust == null ) {
+			Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+		} else {            
+			// Increase the reserved numbers of all reservable items which the customer reserved. 
+			reservationHT = cust.getReservations();
+
+			// remove the customer from the storage
+			removeData(id, cust.getKey());
+
+			Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
+		} // if
+		return reservationHT;
 
 	}
 
@@ -162,13 +162,21 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
         } // if
     }
 
-    public synchronized boolean reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
+    public boolean reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     throws RemoteException {
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
     	if (cust == null)
     		return false;
     	cust.reserve(key, location, price, rtype);
-    	writeData( id, cust.getKey(), cust );
+    	return true;
+    }
+    
+    public boolean unreserve(int id, int cid, String key)
+    throws RemoteException {
+    	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	if (cust == null)
+    		return false;
+    	cust.unreserve(key);
     	return true;
     }
 
