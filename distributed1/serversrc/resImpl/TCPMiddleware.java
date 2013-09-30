@@ -1,32 +1,39 @@
 package serversrc.resImpl;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Vector;
 
 import serversrc.resInterface.*;
 
+@SuppressWarnings("rawtypes")
 public class TCPMiddleware {
 
 	RMCar rmCar;
 	RMFlight rmFlight;
 	RMHotel rmHotel;
 	RMCustomer rmCustomer;
-	Socket flightSocket;
-	Socket carsSocket;
-	Socket hotelSocket;
-	Socket customerSocket;
-	
+	static Socket flightSocket;
+	static Socket carsSocket;
+	static Socket hotelSocket;
+	static Socket customerSocket;
+	ObjectInputStream flightIn;
+	ObjectOutputStream flightOut;
+
+	ObjectInputStream carsIn;
+	ObjectOutputStream carsOut;
+
+	ObjectInputStream hotelIn;
+	ObjectOutputStream hotelOut;
+
+	ObjectInputStream customersIn;
+	ObjectOutputStream customersOut;
+
 	public static void main(String args[]) {
 		// Figure out where server is running
 		String server = "localhost";
@@ -45,22 +52,39 @@ public class TCPMiddleware {
 		}
 
 		try {
-			TCPMiddleware obj = new TCPMiddleware();
 			// Listens for clients messages.
 			serverSocket = new ServerSocket(port);
 			// Where to write to the client
 			clientSocket = serverSocket.accept();
-			obj.flightSocket = new Socket(server, port);
-			obj.carsSocket = new Socket(server, port);
-			obj.hotelSocket = new Socket(server, port);
-			obj.customerSocket = new Socket(server, port);
-			String methodInvocation;
-			BufferedReader in = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()));
-			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-			
-			while((methodInvocation = in.readLine()) != null){
-				out.println(obj.methodSelector(methodInvocation));
-				//TODO: send response to client (may need to change methodSelector)
+			flightSocket = new Socket(server, port);
+			carsSocket = new Socket(server, port);
+			hotelSocket = new Socket(server, port);
+			customerSocket = new Socket(server, port);
+			Vector methodInvocation;
+			ObjectInputStream in = new ObjectInputStream(
+					clientSocket.getInputStream());
+			ObjectOutputStream out = new ObjectOutputStream(
+					clientSocket.getOutputStream());
+			TCPMiddleware obj = new TCPMiddleware();
+
+			obj.flightIn = new ObjectInputStream(flightSocket.getInputStream());
+			obj.flightOut = new ObjectOutputStream(
+					flightSocket.getOutputStream());
+
+			obj.carsIn = new ObjectInputStream(flightSocket.getInputStream());
+			obj.carsOut = new ObjectOutputStream(flightSocket.getOutputStream());
+
+			obj.hotelIn = new ObjectInputStream(flightSocket.getInputStream());
+			obj.hotelOut = new ObjectOutputStream(
+					flightSocket.getOutputStream());
+
+			obj.customersIn = new ObjectInputStream(
+					flightSocket.getInputStream());
+			obj.customersOut = new ObjectOutputStream(
+					flightSocket.getOutputStream());
+
+			while ((methodInvocation = (Vector) in.readObject()) != null) {
+				out.writeObject(obj.methodSelector(methodInvocation));
 			}
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -70,107 +94,99 @@ public class TCPMiddleware {
 
 	/**
 	 * parses a string into a method invocation
-	 * @param methodInvocation the string to be parsed
-	 * @throws RemoteException 
-	 * @throws NumberFormatException 
+	 * 
+	 * @param methodInvocation
+	 *            the string to be parsed
+	 * @throws RemoteException
+	 * @throws NumberFormatException
 	 */
-	private String methodSelector(String methodInvocation) throws Exception {
-		String params[] = methodInvocation.split("[,()]");
-		BufferedReader in = null;
-		PrintWriter out = null;
-		if(params[0].contains("Flight")){
-			//send method to flight manager and get response
+	private Object methodSelector(Vector methodInvocation) throws Exception {
+		Vector args = methodInvocation;
+		String method = getString(args.elementAt(0));
+		if (method.contains("Flight")) {
+			// send method to flight manager and get response
 			try {
-				out = new PrintWriter(flightSocket.getOutputStream(),true);
-				in = new BufferedReader(new InputStreamReader(flightSocket.getInputStream()));
-				out.println(methodInvocation);
-				return in.readLine();
+				flightOut.writeObject(methodInvocation);
+				return flightIn.readObject();
 			} catch (IOException e) {
-				return "ERROR: IOException in method invocation: " + methodInvocation;
+				return "ERROR: IOException in method invocation: "
+						+ getString(method);
 			}
-			finally{
-				in.close();
-				out.close();
-			}
-			//return flight manager's response			return;
+
+			// return flight manager's response return;
 		}
-		if(params[0].contains("Cars")){
-			try {
-				out = new PrintWriter(carsSocket.getOutputStream(),true);
-				in = new BufferedReader(new InputStreamReader(carsSocket.getInputStream()));
-				out.println(methodInvocation);
-				return in.readLine();
-			} catch (IOException e) {
-				return "ERROR: IOException in method invocation: " + methodInvocation;
+		if (!method.contains("reserve")) {
+			if (method.contains("Cars")) {
+				try {
+					carsOut.writeObject(methodInvocation);
+					return carsIn.readObject();
+				} catch (IOException e) {
+					return "ERROR: IOException in method invocation: "
+							+ getString(method);
+				}
 			}
-			finally{
-				in.close();
-				out.close();
+			if (method.contains("Rooms")) {
+				try {
+					hotelOut.writeObject(methodInvocation);
+					return hotelIn.readObject();
+				} catch (IOException e) {
+					return "ERROR: IOException in method invocation: "
+							+ getString(method);
+				}
+			}
+			if (method.contains("Customer")) {
+
+				try {
+					customersOut.writeObject(methodInvocation);
+
+					// TODO: deleteCustomer and others.
+					return customersIn.readObject();
+				} catch (IOException e) {
+					return "ERROR: IOException in method invocation: "
+							+ getString(method);
+				}
+			}
+		} else {
+			if (method.equalsIgnoreCase("reserveFlight")) {
+				reserveFlight(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getInt(args.elementAt(3)));
+			}
+			if (method.equalsIgnoreCase("reserveCar")) {
+				reserveCar(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getString(args.elementAt(3)));
+			}
+			if (method.equalsIgnoreCase("reserveRoom")) {
+				reserveRoom(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getString(args.elementAt(3)));
 			}
 		}
-		if(params[0].contains("Rooms")){
-			try {
-				out = new PrintWriter(hotelSocket.getOutputStream(),true);
-				in = new BufferedReader(new InputStreamReader(hotelSocket.getInputStream()));
-				out.println(methodInvocation);
-				return in.readLine();
-			} catch (IOException e) {
-				return "ERROR: IOException in method invocation: " + methodInvocation;
-			}
-			finally{
-				in.close();
-				out.close();
-			}
-		}
-		if(params[0].contains("Customer")){
-			/* TODO: Since Customer returns objects, this needs to be supported */
-			try {
-				out = new PrintWriter(customerSocket.getOutputStream(),true);
-				in = new BufferedReader(new InputStreamReader(customerSocket.getInputStream()));
-				out.println(methodInvocation);
-				return in.readLine();
-			} catch (IOException e) {
-				return "ERROR: IOException in method invocation: " + methodInvocation;
-			}
-			finally{
-				in.close();
-				out.close();
-			}
-		}
-		if (params[0].equalsIgnoreCase("intnerary")){
-			
-		}
-		
+
 		return "ERROR: No Function Found. Aborting";
 	}
 
-	
 	public boolean reserveFlight(int id, int customer, int flightNum)
-			throws RemoteException {
+			throws IOException {
 
 		return reserveItem(id, customer, Flight.getKey(flightNum),
 				String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
 	}
 
-
 	public boolean reserveCar(int id, int customer, String location)
-			throws RemoteException {
+			throws IOException {
 
 		return reserveItem(id, customer, Car.getKey(location), location,
 				ReservedItem.rType.CAR);
 	}
 
-
 	public boolean reserveRoom(int id, int customer, String location)
-			throws RemoteException {
+			throws IOException {
 
 		return reserveItem(id, customer, Hotel.getKey(location), location,
 				ReservedItem.rType.ROOM);
 	}
 
-
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
-			String location, boolean Car, boolean Room) throws RemoteException {
+			String location, boolean Car, boolean Room) throws IOException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
 				+ flightNumbers + ", " + location + ", " + Car + ", " + Room
 				+ " ) called");
@@ -237,6 +253,70 @@ public class TCPMiddleware {
 	}
 
 	/*
+	 * Call RMCust to obtain customer, if it exists. Verify if item exists and
+	 * is available. (Call RM*obj*) Reserve with RMCustomer Tell RM*obj* to
+	 * reduce the number of available
+	 */
+	protected boolean reserveItem(int id, int customerID, String key,
+			String location, ReservedItem.rType rtype) throws IOException {
+		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
+				+ key + ", " + location + " ) called");
+
+		Vector<Object> args = new Vector<Object>();
+		args.add("getCustomer");
+		args.add(id);
+		args.add(customerID);
+		args.add(key);
+		args.add(location);
+		args.add(rtype);
+		customersOut.writeObject(args);
+		Customer cust;
+		try {
+			cust = (Customer) customersIn.readObject();
+		} catch (ClassNotFoundException e) {
+			Trace.error("Object returned was not a Customer ");
+			return false;
+		}
+		if (cust == null) {
+			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key
+					+ ", " + location + ")  failed--customer doesn't exist");
+			return false;
+		}
+
+		RMInteger price = null;
+		// check if the item is available
+		args.set(0, "reserveItem");
+		try {
+			if (rtype == ReservedItem.rType.CAR) {
+				carsOut.writeObject(args);
+				price = (RMInteger) carsIn.readObject();
+			} else if (rtype == ReservedItem.rType.FLIGHT) {
+				flightOut.writeObject(args);
+				price = (RMInteger) flightIn.readObject();
+			} else if (rtype == ReservedItem.rType.ROOM) {
+				hotelOut.writeObject(args);
+				price = (RMInteger) hotelIn.readObject();
+			}
+		} catch (ClassNotFoundException e) {
+			Trace.error("Expected an RMInteger, In TCPMiddleware reserveItem");
+			
+		}
+		if (price == null) {
+			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", "
+					+ key + ", " + location
+					+ ") failed-- Object RM returned false.");
+			return false;
+		} else {
+			cust.reserve(key, location, price.getValue(), rtype);
+			//rmCustomer.reserve(id, cust);
+
+			Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
+					+ key + ", " + location + ") succeeded");
+			return true;
+		}
+	}
+
+	/*
 	 * Since the client sends a Vector of objects, we need this unsafe function
 	 * that retrieves the int from the vector.
 	 */
@@ -248,44 +328,19 @@ public class TCPMiddleware {
 		}
 	}
 
-	/*
-	 * Call RMCust to obtain customer, if it exists. Verify if item exists and
-	 * is available. (Call RM*obj*) Reserve with RMCustomer Tell RM*obj* to
-	 * reduce the number of available
-	 */
-	protected boolean reserveItem(int id, int customerID, String key,
-			String location, ReservedItem.rType rtype) throws RemoteException {
-		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
-				+ key + ", " + location + " ) called");
-		// Read customer object if it exists (and read lock it)
-		Customer cust = rmCustomer.getCustomer(id, customerID);
-		if (cust == null) {
-			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key
-					+ ", " + location + ")  failed--customer doesn't exist");
-			return false;
+	public boolean getBoolean(Object temp) throws Exception {
+		try {
+			return (new Boolean((String) temp)).booleanValue();
+		} catch (Exception e) {
+			throw e;
 		}
+	}
 
-		RMInteger price = null;
-		// check if the item is available
-		if (rtype == ReservedItem.rType.CAR)
-			price = rmCar.reserveItem(id, customerID, key, location);
-		else if (rtype == ReservedItem.rType.FLIGHT)
-			price = rmFlight.reserveItem(id, customerID, key, location);
-		else if (rtype == ReservedItem.rType.ROOM)
-			price = rmHotel.reserveItem(id, customerID, key, location);
-
-		if (price == null) {
-			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", "
-					+ key + ", " + location
-					+ ") failed-- Object RM returned false.");
-			return false;
-		} else {
-			cust.reserve(key, location, price.getValue(), rtype);
-			rmCustomer.reserve(id, cust);
-
-			Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
-					+ key + ", " + location + ") succeeded");
-			return true;
+	public String getString(Object temp) throws Exception {
+		try {
+			return (String) temp;
+		} catch (Exception e) {
+			throw e;
 		}
 	}
 
