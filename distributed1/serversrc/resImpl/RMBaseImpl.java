@@ -37,41 +37,48 @@ public class RMBaseImpl implements RMBase {
     {
         Trace.info("RM::deleteItem(" + id + ", " + key + ") called" );
         ReservableItem curObj = (ReservableItem) readData( id, key );
-        // Check if there is such an item in the storage
-        if ( curObj == null ) {
-            Trace.warn("RM::deleteItem(" + id + ", " + key + ") failed--item doesn't exist" );
-            return false;
-        } else {
-            if (curObj.getReserved()==0) {
-                removeData(id, curObj.getKey());
-                Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
-                return true;
-            }
-            else {
-                Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
-                return false;
-            }
-        } // if
+        synchronized (curObj) {
+        	// Check if there is such an item in the storage
+        	if ( curObj == null ) {
+        		Trace.warn("RM::deleteItem(" + id + ", " + key + ") failed--item doesn't exist" );
+        		return false;
+        	} else {
+        		if (curObj.getReserved()==0) {
+        			removeData(id, curObj.getKey());
+        			curObj.setDeleted(true);
+        			Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
+        			return true;
+        		}
+        		else {
+        			Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
+        			return false;
+        		}
+        	} // if
+        }
     }
     
-    public synchronized boolean unreserveItem(int id, ReservedItem reserveditem)
-    	throws RemoteException{
+    public boolean unreserveItem(int id, ReservedItem reserveditem)
+    		throws RemoteException{
     	ReservableItem item = (ReservableItem) readData(id, reserveditem.getKey());
-    	Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-    	item.setReserved(item.getReserved()-reserveditem.getCount());
-    	item.setCount(item.getCount()+reserveditem.getCount());
-    	return true;
+    	synchronized (item) {
+    		Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+    		item.setReserved(item.getReserved()-reserveditem.getCount());
+    		item.setCount(item.getCount()+reserveditem.getCount());
+    		return true;
+    	}
     }
     
     //This function is called to cancel a reservation done at the same time the customer is deleted
-    public synchronized boolean unreserveItem(int id, String key)
-        	throws RemoteException{
-        	ReservableItem item = (ReservableItem) readData(id, key);
-        	Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-        	item.setReserved(item.getReserved()-1);
-        	item.setCount(item.getCount()+1);
-        	return true;
-        }
+    public boolean unreserveItem(int id, String key)
+    		throws RemoteException{
+    	ReservableItem item = (ReservableItem) readData(id, key);
+    	synchronized (item) {
+    		Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+    		item.setReserved(item.getReserved()-1);
+    		item.setCount(item.getCount()+1);
+    		return true;
+    	}
+    }
 
     // query the number of available seats/rooms/cars
     protected int queryNum(int id, String key) {
@@ -100,20 +107,25 @@ public class RMBaseImpl implements RMBase {
     // reserve an item
     // Synchronized: We don't want two client to reserve the last item
     // Returns the price of the item in a nullable integer using RMInteger.
-    public synchronized RMInteger reserveItem(int id, int customerID, String key, String location)
+    public RMInteger reserveItem(int id, int customerID, String key, String location)
     	throws RemoteException {
     	ReservableItem item = (ReservableItem)readData(id, key);
-        if ( item == null ) {
-            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
-            return null;
-        } else if (item.getCount()==0) {
-            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
-            return null;
-        } else {            
-            // decrease the number of available items in the storage
-            item.setCount(item.getCount() - 1);
-            item.setReserved(item.getReserved()+1);
-            return new RMInteger(item.getPrice());
-        }
+    	synchronized (item) {
+    		if ( item == null ) {
+    			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
+    			return null;
+    		} else if (item.getCount()==0) {
+    			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
+    			return null;
+    		} else if (item.isDeleted()) {
+    			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--item has been deleted" );
+    			return null;
+    		} else {            
+    			// decrease the number of available items in the storage
+    			item.setCount(item.getCount() - 1);
+    			item.setReserved(item.getReserved()+1);
+    			return new RMInteger(item.getPrice());
+    		}
+    	}
     }
 }

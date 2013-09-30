@@ -318,4 +318,40 @@ public class Middleware implements ResourceManager {
 		}        
 	}
 
+	/*
+	 * unreserveItem is used by the itinerary class to cancel a reserved item when the whole reservation failed.
+	 */
+	protected boolean unreserveItem(int id, int customerID, String key, ReservedItem.rType rtype)
+			throws RemoteException {
+		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ " ) called" );        
+		// Verifies if customer exists
+		Customer cust = rmCustomer.getCustomer(id, customerID);
+		if ( cust == null ) {
+			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key + ")  failed--customer doesn't exist" );
+			return false;
+		} 
+
+		boolean done = false;
+		// check if the item is available
+		if (rtype == ReservedItem.rType.CAR)
+			done = rmCar.unreserveItem(id, key);
+		else if (rtype == ReservedItem.rType.FLIGHT)
+			done = rmFlight.unreserveItem(id, key);
+		else if (rtype == ReservedItem.rType.ROOM)
+			done = rmHotel.unreserveItem(id, key);
+
+		if (!done) {
+			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+" ) failed-- Object RM returned false." );
+			return false;
+		} else {                   
+			if(rmCustomer.unreserve(id, customerID, key)){
+				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ") succeeded" );
+				return true;
+			} else
+				return false;
+
+		}        
+	}
+
+	
 }

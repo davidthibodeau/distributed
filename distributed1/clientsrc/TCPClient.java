@@ -65,7 +65,9 @@ public class TCPClient
 				System.out.println("Unable to read from standard in");
 				System.exit(1);
 			}
+			
 			obj.execute(command);
+			
 		}//end of while(true)
 	}
 
