@@ -162,8 +162,12 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
         } // if
     }
 
-    public boolean reserve(int id, Customer cust)
+    public synchronized boolean reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     throws RemoteException {
+    	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	if (cust == null)
+    		return false;
+    	cust.reserve(key, location, price, rtype);
     	writeData( id, cust.getKey(), cust );
     	return true;
     }

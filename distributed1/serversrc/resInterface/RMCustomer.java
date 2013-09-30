@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 
 import serversrc.resImpl.Customer;
 import serversrc.resImpl.RMHashtable;
+import serversrc.resImpl.ReservedItem;
 
 /**
  *	This Interface is made to guarantee to the middleware the 
@@ -32,6 +33,6 @@ public interface RMCustomer extends Remote {
     public Customer getCustomer(int id, int customerID)
     throws RemoteException;	
     
-    public boolean reserve(int id, Customer cust)
+    public boolean reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     throws RemoteException;
 }

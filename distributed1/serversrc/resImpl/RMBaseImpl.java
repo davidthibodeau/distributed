@@ -54,7 +54,7 @@ public class RMBaseImpl implements RMBase {
         } // if
     }
     
-    public boolean unreserveItem(int id, ReservedItem reserveditem)
+    public synchronized boolean unreserveItem(int id, ReservedItem reserveditem)
     	throws RemoteException{
     	ReservableItem item = (ReservableItem) readData(id, reserveditem.getKey());
     	Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
@@ -62,6 +62,16 @@ public class RMBaseImpl implements RMBase {
     	item.setCount(item.getCount()+reserveditem.getCount());
     	return true;
     }
+    
+    //This function is called to cancel a reservation done at the same time the customer is deleted
+    public synchronized boolean unreserveItem(int id, String key)
+        	throws RemoteException{
+        	ReservableItem item = (ReservableItem) readData(id, key);
+        	Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+        	item.setReserved(item.getReserved()-1);
+        	item.setCount(item.getCount()+1);
+        	return true;
+        }
 
     // query the number of available seats/rooms/cars
     protected int queryNum(int id, String key) {
