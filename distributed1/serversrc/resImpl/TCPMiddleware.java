@@ -22,6 +22,10 @@ public class TCPMiddleware {
 	static Socket carsSocket;
 	static Socket hotelSocket;
 	static Socket customerSocket;
+	
+	ObjectInputStream clientIn;
+	ObjectOutputStream clientOut;
+	
 	ObjectInputStream flightIn;
 	ObjectOutputStream flightOut;
 
@@ -61,11 +65,14 @@ public class TCPMiddleware {
 			hotelSocket = new Socket(server, port);
 			customerSocket = new Socket(server, port);
 			Vector methodInvocation;
-			ObjectInputStream in = new ObjectInputStream(
-					clientSocket.getInputStream());
-			ObjectOutputStream out = new ObjectOutputStream(
-					clientSocket.getOutputStream());
+			
 			TCPMiddleware obj = new TCPMiddleware();
+			
+			obj.clientIn = new ObjectInputStream(
+					clientSocket.getInputStream());
+			obj.clientOut = new ObjectOutputStream(
+					clientSocket.getOutputStream());
+			
 
 			obj.flightIn = new ObjectInputStream(flightSocket.getInputStream());
 			obj.flightOut = new ObjectOutputStream(
@@ -83,8 +90,8 @@ public class TCPMiddleware {
 			obj.customersOut = new ObjectOutputStream(
 					flightSocket.getOutputStream());
 
-			while ((methodInvocation = (Vector) in.readObject()) != null) {
-				out.writeObject(obj.methodSelector(methodInvocation));
+			while ((methodInvocation = (Vector) obj.clientIn.readObject()) != null) {
+				obj.methodSelector(methodInvocation);
 			}
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -100,17 +107,18 @@ public class TCPMiddleware {
 	 * @throws RemoteException
 	 * @throws NumberFormatException
 	 */
-	private Object methodSelector(Vector methodInvocation) throws Exception {
+	private void methodSelector(Vector methodInvocation) throws Exception {
 		Vector args = methodInvocation;
 		String method = getString(args.elementAt(0));
 		if (method.contains("Flight")) {
 			// send method to flight manager and get response
 			try {
 				flightOut.writeObject(methodInvocation);
-				return flightIn.readObject();
+				clientOut.writeObject(flightIn.readObject());
 			} catch (IOException e) {
-				return "ERROR: IOException in method invocation: "
-						+ getString(method);
+				Trace.error("IOException in method invocation: "
+						+ getString(method));
+				return;
 			}
 
 			// return flight manager's response return;
@@ -119,19 +127,19 @@ public class TCPMiddleware {
 			if (method.contains("Cars")) {
 				try {
 					carsOut.writeObject(methodInvocation);
-					return carsIn.readObject();
+					clientOut.writeObject(carsIn.readObject());
 				} catch (IOException e) {
-					return "ERROR: IOException in method invocation: "
-							+ getString(method);
+					Trace.error("IOException in method invocation: "
+							+ getString(method));
 				}
 			}
 			if (method.contains("Rooms")) {
 				try {
 					hotelOut.writeObject(methodInvocation);
-					return hotelIn.readObject();
+					clientOut.writeObject(hotelIn.readObject());
 				} catch (IOException e) {
-					return "ERROR: IOException in method invocation: "
-							+ getString(method);
+					Trace.error("IOException in method invocation: "
+							+ getString(method));
 				}
 			}
 			if (method.contains("Customer")) {
@@ -139,29 +147,27 @@ public class TCPMiddleware {
 				try {
 					customersOut.writeObject(methodInvocation);
 
-					// TODO: deleteCustomer and others.
-					return customersIn.readObject();
+					// TODO: deleteCustomer
+					clientOut.writeObject(customersIn.readObject());
 				} catch (IOException e) {
-					return "ERROR: IOException in method invocation: "
-							+ getString(method);
+					Trace.error("IOException in method invocation: "
+							+ getString(method));
 				}
 			}
 		} else {
 			if (method.equalsIgnoreCase("reserveFlight")) {
-				reserveFlight(getInt(args.elementAt(1)),
-						getInt(args.elementAt(2)), getInt(args.elementAt(3)));
+				clientOut.writeObject(reserveFlight(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getInt(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveCar")) {
-				reserveCar(getInt(args.elementAt(1)),
-						getInt(args.elementAt(2)), getString(args.elementAt(3)));
+				clientOut.writeObject(reserveCar(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getString(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveRoom")) {
-				reserveRoom(getInt(args.elementAt(1)),
-						getInt(args.elementAt(2)), getString(args.elementAt(3)));
+				clientOut.writeObject(reserveRoom(getInt(args.elementAt(1)),
+						getInt(args.elementAt(2)), getString(args.elementAt(3))));
 			}
 		}
-
-		return "ERROR: No Function Found. Aborting";
 	}
 
 	public boolean reserveFlight(int id, int customer, int flightNum)
@@ -187,6 +193,7 @@ public class TCPMiddleware {
 
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws IOException {
+		//TODO: Convert To TCP
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
 				+ flightNumbers + ", " + location + ", " + Car + ", " + Room
 				+ " ) called");
@@ -261,7 +268,7 @@ public class TCPMiddleware {
 			String location, ReservedItem.rType rtype) throws IOException {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
 				+ key + ", " + location + " ) called");
-
+		Boolean result = false;
 		Vector<Object> args = new Vector<Object>();
 		args.add("getCustomer");
 		args.add(id);
@@ -285,7 +292,7 @@ public class TCPMiddleware {
 
 		RMInteger price = null;
 		// check if the item is available
-		args.set(0, "reserveItem");
+		args.set(0, "reserve");
 		try {
 			if (rtype == ReservedItem.rType.CAR) {
 				carsOut.writeObject(args);
@@ -299,7 +306,7 @@ public class TCPMiddleware {
 			}
 		} catch (ClassNotFoundException e) {
 			Trace.error("Expected an RMInteger, In TCPMiddleware reserveItem");
-			
+
 		}
 		if (price == null) {
 			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", "
@@ -307,12 +314,20 @@ public class TCPMiddleware {
 					+ ") failed-- Object RM returned false.");
 			return false;
 		} else {
-			cust.reserve(key, location, price.getValue(), rtype);
-			//rmCustomer.reserve(id, cust);
+			args.set(0, "reserve");
+			args.add(5, price.getValue());
+			customersOut.writeObject(args);
+			try {
+				result = getBoolean(customersIn.readObject());
+				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
+						+ key + ", " + location + ") succeeded");
+			} catch (Exception e) {
+				Trace.error("Something wrong happened in reserve");
+				return false;
+			}
+			// rmCustomer.reserve(id, cust);
 
-			Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
-					+ key + ", " + location + ") succeeded");
-			return true;
+			return result;
 		}
 	}
 

@@ -12,6 +12,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
+import java.util.Vector;
 
 public class TCPCarImpl extends RMBaseImpl implements RMCar {
 
@@ -47,7 +48,8 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 					middlewareSocket.getOutputStream());
 			String method;
 			while ((method = in.readLine()) != null) {
-				out.println(obj.methodSelect(method));
+				//out.println(obj.methodSelect(method));
+				//TODO: method selector
 			}
 		} catch (Exception e) {
 			System.err.println("Server exception: " + e.toString());
@@ -55,24 +57,9 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 		}
 	}
 
-	private String methodSelect(String input) throws NumberFormatException,
+	private void methodSelect(Vector method) throws NumberFormatException,
 			RemoteException {
-		String output = "";
-		String[] args = input.split("[,()]"); // may cause trouble with location
-		if (input.startsWith("addCars")) {
-			output = this.addCars(args);
-		}
-		if (input.startsWith("deleteCars")) {
-			output = this.deleteCars(args);
-		}
-		if (input.startsWith("queryCars")) {
-			output = this.queryCars(args);
-		}
-		if (input.startsWith("queryCarsPrice")) {
-			output = this.queryCarsPrice(args);
-		}
-
-		return output;
+		//TODO: selectorMethod
 	}
 
 	private String addCars(String[] args) throws NumberFormatException,
