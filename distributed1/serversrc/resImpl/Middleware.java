@@ -40,11 +40,11 @@ public class Middleware implements ResourceManager {
             registry = LocateRegistry.getRegistry(args[0], port);
             // get the proxy and the remote reference by rmiregistry lookup
             obj.rmCar = (RMCar) registry.lookup("Group2RMCar");
-	    registry = LocateRegistry.getRegistry(args[1], port);
+            registry = LocateRegistry.getRegistry(args[1], port);
             obj.rmFlight = (RMFlight) registry.lookup("Group2RMFlight");
-	    registry = LocateRegistry.getRegistry(args[2], port);
+            registry = LocateRegistry.getRegistry(args[2], port);
             obj.rmHotel = (RMHotel) registry.lookup("Group2RMHotel");
-	    registry = LocateRegistry.getRegistry(args[3], port);
+            registry = LocateRegistry.getRegistry(args[3], port);
             obj.rmCustomer = (RMCustomer) registry.lookup("Group2RMCustomer");
             if(obj.rmCar!=null && obj.rmFlight != null && obj.rmHotel!=null)
             {
@@ -58,6 +58,7 @@ public class Middleware implements ResourceManager {
 
             // Bind the remote object's stub in the registry
 	    registry = LocateRegistry.getRegistry(port);
+            registry = LocateRegistry.getRegistry(port);
             registry.rebind("Group2Middleware", rm);
 
             System.err.println("Server ready");
