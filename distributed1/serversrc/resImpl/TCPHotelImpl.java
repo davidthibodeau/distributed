@@ -107,6 +107,11 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 					(ReservedItem)input.elementAt(2));
 			out.writeBoolean(answer);
 		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveKey")) {
+			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+					getString(input.elementAt(2)));
+			out.writeBoolean(answer);
+		}
 
 		return;
 	}
