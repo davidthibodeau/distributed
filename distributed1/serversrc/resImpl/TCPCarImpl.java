@@ -37,6 +37,7 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 			connection = new ServerSocket(port);
 			while (true) {
 				TCPCarImpl obj;
+				System.out.println("Waiting for connection");
 				middlewareSocket = connection.accept();
 				obj = new TCPCarImpl(middlewareSocket);
 				Thread t = new Thread(obj);
@@ -57,12 +58,16 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 	@Override
 	public void run() {
 		try {
+		    System.out.println("Thread started.");
 			in = new ObjectInputStream(middlewareSocket.getInputStream());
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
-
-			while ((method = (Vector) in.readObject()) != null) {
+			System.out.println("Waiting for query.");
+			while (true){
+			    method = (Vector) in.readObject();
+			    if (method != null) {
 				methodSelect(method);
+			    }
 			}
 		} catch (Exception e) {
 			Trace.error("Cannot Connect");
@@ -72,20 +77,22 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 
 	public void methodSelect(Vector input) throws Exception {
 
-		if (((String) input.elementAt(0)).equalsIgnoreCase("addCars")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("newCar")) {
 			boolean added = addCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)), getInt(input.elementAt(3)),
 					getInt(input.elementAt(4)));
+			
+			System.out.println("newCar returned " + added);
 			out.writeBoolean(added);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCars")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCar")) {
 			boolean deleted = deleteCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeBoolean(deleted);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCars")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCar")) {
 			int emptySeats = queryCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeInt(emptySeats);
@@ -113,6 +120,7 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 					getString(input.elementAt(2)));
 			out.writeBoolean(answer);
 		}
+		System.out.println("methodselect returned");
 	}
 	// Reads a data item
 	private RMItem readData(int id, String key) {

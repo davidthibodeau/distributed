@@ -47,6 +47,10 @@ public class TCPClient
 			{
 				System.out.println("Unsuccessful");
 			}
+			obj.serverIn = new ObjectInputStream(obj.serverSocket.getInputStream());
+			obj.serverOut = new ObjectOutputStream(obj.serverSocket.getOutputStream());
+			System.out.println("ObjectStreams connected");
+			
 			// make call on remote method
 		} 
 		catch (Exception e) 
@@ -67,13 +71,7 @@ public class TCPClient
 				System.out.println("Unable to read from standard in");
 				System.exit(1);
 			}
-			try {
-				obj.serverOut = new ObjectOutputStream(obj.serverSocket.getOutputStream());
-				obj.serverIn = new ObjectInputStream(obj.serverSocket.getInputStream());
-			} catch (IOException e){
-				System.out.println("Could not instantiate input and output stream.\n" + e);
-				System.exit(1);
-			}
+			
 
 			obj.execute(command);
 			

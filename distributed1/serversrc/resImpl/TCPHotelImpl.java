@@ -37,6 +37,7 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 			connection = new ServerSocket(port);
 			while (true) {
 				TCPHotelImpl obj;
+				System.out.println("Waiting for connection.");
 				middlewareSocket = connection.accept();
 				obj = new TCPHotelImpl(middlewareSocket);
 				Thread t = new Thread(obj);
@@ -57,12 +58,17 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 	@Override
 	public void run() {
 		try {
+		    System.out.println("Thread Started");
 			in = new ObjectInputStream(middlewareSocket.getInputStream());
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
 
-			while ((method = (Vector) in.readObject()) != null) {
+			System.out.println("Waiting for query.");
+			while (true) {
+			    method = (Vector) in.readObject();
+			    if (method != null) {
 				methodSelect(method);
+			    }
 			}
 		} catch (Exception e) {
 			Trace.error("Cannot Connect");
@@ -72,20 +78,20 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 
 	public void methodSelect(Vector input) throws Exception {
 
-		if (((String) input.elementAt(0)).equalsIgnoreCase("addRooms")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("newRoom")) {
 			boolean added = addRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)), getInt(input.elementAt(3)),
 					getInt(input.elementAt(4)));
 			out.writeBoolean(added);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteRooms")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteRoom")) {
 			boolean deleted = deleteRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeBoolean(deleted);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRooms")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoom")) {
 			int emptySeats = queryRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeInt(emptySeats);

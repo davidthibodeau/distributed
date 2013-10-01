@@ -47,6 +47,7 @@ public class TCPMiddleware implements Runnable {
 		this.carsSocket = carsSocket;
 		this.flightSocket = flightSocket;
 		this.hotelSocket = hotelSocket;
+		this.customerSocket = customerSocket;
 	}
 
 	public static void main(String args[]) {
@@ -69,8 +70,11 @@ public class TCPMiddleware implements Runnable {
 			Socket clientSocket;
 			connection = new ServerSocket(port);
 
+			System.out.println("Waiting for connection");
 			while (true) {
 				clientSocket = connection.accept();
+				System.out.println("Client connected.");
+
 				Socket carsSocket = new Socket(args[0], port);
 				Socket flightSocket = new Socket(args[1], port);
 				Socket hotelSocket = new Socket(args[2], port);
@@ -84,6 +88,7 @@ public class TCPMiddleware implements Runnable {
 			}
 		} catch (Exception e) {
 			System.err.println("Connection issue");
+			e.printStackTrace();
 		}
 		finally{
 			try {
@@ -98,27 +103,35 @@ public class TCPMiddleware implements Runnable {
 	@Override
 	public void run() {
 		try {
+		    System.out.println("Thread started for connection.");
 
 
-			clientIn = new ObjectInputStream(clientSocket.getInputStream());
 			clientOut = new ObjectOutputStream(clientSocket.getOutputStream());
+			clientIn = new ObjectInputStream(clientSocket.getInputStream());
 
-			flightIn = new ObjectInputStream(flightSocket.getInputStream());
 			flightOut = new ObjectOutputStream(flightSocket.getOutputStream());
+			flightIn = new ObjectInputStream(flightSocket.getInputStream());
 
-			carsIn = new ObjectInputStream(carsSocket.getInputStream());
 			carsOut = new ObjectOutputStream(carsSocket.getOutputStream());
-
-			hotelIn = new ObjectInputStream(hotelSocket.getInputStream());
+			carsIn = new ObjectInputStream(carsSocket.getInputStream());
+	
 			hotelOut = new ObjectOutputStream(hotelSocket.getOutputStream());
-
-			customersIn = new ObjectInputStream(customerSocket.getInputStream());
+			hotelIn = new ObjectInputStream(hotelSocket.getInputStream());
+	
 			customersOut = new ObjectOutputStream(
 					customerSocket.getOutputStream());
+			customersIn = new ObjectInputStream(customerSocket.getInputStream());
+			
+
 
 			Vector methodInvocation;
-			while ((methodInvocation = (Vector) clientIn.readObject()) != null) {
+			System.out.println("Waiting for query.");
+			while (true){
+			    methodInvocation = (Vector) clientIn.readObject();
+			    if (methodInvocation != null) {
+				System.out.println("Query received");
 				methodSelector(methodInvocation);
+			    }
 			}
 		}
 
@@ -140,53 +153,58 @@ public class TCPMiddleware implements Runnable {
 	private void methodSelector(Vector methodInvocation) throws Exception {
 		Vector args = methodInvocation;
 		String method = getString(args.elementAt(0));
-		if (method.contains("Flight")) {
+		
+		if (!method.contains("reserve")) {  
+		    if (method.contains("flight")) {
 			// send method to flight manager and get response
 			try {
-				flightOut.writeObject(methodInvocation);
-				hotelOut.writeObject(methodInvocation);
-				if (method.contains("Add") || method.contains("Delete"))
-					clientOut.writeBoolean(flightIn.readBoolean());
-				else
+			    flightOut.writeObject(methodInvocation);
+			    if (method.contains("new") || method.contains("delete"))
+				clientOut.writeBoolean(flightIn.readBoolean());
+			    else
 					clientOut.writeInt(flightIn.readInt());
 			} catch (IOException e) {
-				Trace.error("IOException in method invocation: "
-						+ getString(method));
-				return;
+			    Trace.error("IOException in method invocation: "
+					+ getString(method));
+			    return;
 			}
-
+			
 			// return flight manager's response return;
-		}
-		if (!method.contains("reserve")) {  
-			if (method.contains("Cars")) {
-				try {
-					carsOut.writeObject(methodInvocation);
-					if (method.contains("Add") || method.contains("Delete"))
-						clientOut.writeBoolean(carsIn.readBoolean());
-					else
-						clientOut.writeInt(carsIn.readInt());
-				} catch (IOException e) {
-					Trace.error("IOException in method invocation: "
-							+ getString(method));
-				}
+		    }
+		    if (method.contains("car")) {
+			try {
+			    carsOut.writeObject(methodInvocation);
+			    if (method.contains("new") || method.contains("delete")){
+				System.out.println("Waiting for answer");
+				boolean output = carsIn.readBoolean();
+				System.out.println("RM car returned " + output);
+				clientOut.writeBoolean(output);
+			    } else {
+				System.out.println("reached else branch");
+				clientOut.writeInt(carsIn.readInt());
+			    }
+			} catch (IOException e) {
+			    Trace.error("IOException in method invocation: "
+					+ getString(method));
 			}
-			if (method.contains("Rooms")) {
-				try {
-					hotelOut.writeObject(methodInvocation);
-					if (method.contains("Add") || method.contains("Delete"))
-						clientOut.writeBoolean(hotelIn.readBoolean());
-					else
-						clientOut.writeInt(hotelIn.readInt());
-				} catch (IOException e) {
-					Trace.error("IOException in method invocation: "
+		    }
+		    if (method.contains("room")) {
+			try {
+			    hotelOut.writeObject(methodInvocation);
+			    if (method.contains("new") || method.contains("delete"))
+				clientOut.writeBoolean(hotelIn.readBoolean());
+			    else
+				clientOut.writeInt(hotelIn.readInt());
+			} catch (IOException e) {
+			    Trace.error("IOException in method invocation: "
 							+ getString(method));
-				}
 			}
-			if (method.contains("Customer")) {
-
+		    }
+		    if (method.contains("customer")) {
+			
 				try {
 					customersOut.writeObject(methodInvocation);
-					if (method.equalsIgnoreCase("deleteCustomer")) {
+					if (method.equalsIgnoreCase("deletecustomer")) {
 						RMHashtable reservationHT = (RMHashtable) customersIn
 								.readObject();
 						for (Enumeration e = reservationHT.keys(); e
@@ -251,6 +269,7 @@ public class TCPMiddleware implements Runnable {
 								getString(args.elementAt(3))));
 			}
 		}
+		System.out.println("Method Selector returned.");
 	}
 
 	public boolean reserveFlight(int id, int customer, int flightNum)

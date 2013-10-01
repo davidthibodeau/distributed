@@ -37,6 +37,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 			Socket middlewareSocket;
 
 			while (true) {
+			    System.out.println("Waiting for connection");
 				TCPCustomerImpl obj;
 				middlewareSocket = connection.accept();
 				obj = new TCPCustomerImpl(middlewareSocket);
@@ -58,12 +59,17 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 	@Override
 	public void run() {
 		try {
+		    System.out.println("Thread started.");
 			in = new ObjectInputStream(middlewareSocket.getInputStream());
+			System.out.println("Input stream obtained. Waiting for outputstream");
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
-
-			while ((method = (Vector) in.readObject()) != null) {
+			System.out.println("Waiting for query.");
+			while (true) {
+			    method = (Vector) in.readObject();
+			    if (method != null) {
 				methodSelect(method);
+			    }
 			}
 		} catch (Exception e) {
 			Trace.error("Cannot Connect");

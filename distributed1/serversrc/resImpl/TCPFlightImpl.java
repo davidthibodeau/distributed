@@ -35,6 +35,7 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 			connection = new ServerSocket(port);
 			while (true) {
 				TCPFlightImpl obj;
+				System.out.println("Waiting for connection.");
 				middlewareSocket = connection.accept();
 				obj = new TCPFlightImpl(middlewareSocket);
 				Thread t = new Thread(obj);
@@ -55,12 +56,16 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 	@Override
 	public void run() {
 		try {
+		    System.out.println("Thread started.");
 			in = new ObjectInputStream(middlewareSocket.getInputStream());
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
-
-			while ((method = (Vector) in.readObject()) != null) {
+			System.out.println("Waiting for query");
+			while (true) {
+			    method = (Vector) in.readObject();
+			    if (method != null) {
 				methodSelect(method);
+			    }
 			}
 		} catch (Exception e) {
 			Trace.error("Cannot Connect");
@@ -70,7 +75,7 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 
 	public void methodSelect(Vector input) throws Exception {
 
-		if (((String) input.elementAt(0)).equalsIgnoreCase("addFlight")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("newFlight")) {
 			boolean added = addFlight(getInt(input.elementAt(1)),
 					getInt(input.elementAt(2)), getInt(input.elementAt(3)),
 					getInt(input.elementAt(4)));
