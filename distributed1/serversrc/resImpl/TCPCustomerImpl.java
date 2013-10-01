@@ -78,7 +78,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 	}
 
 	public void methodSelect(Vector input) throws Exception {
-		if (((String) input.elementAt(0)).equalsIgnoreCase("newCustomer")) {
+		if (((String) input.elementAt(0)).toLowerCase().contains("newcustomer")) {
 			Boolean added;
 			if (input.size() == 3) {
 				added = newCustomer(getInt(input.elementAt(1)),
