@@ -10,6 +10,8 @@ public class TCPClient
 	static String message = "blank";
 	Socket serverSocket = null;
 	Vector arguments = null;
+	private ObjectOutputStream serverOut;
+	private ObjectInputStream serverIn;
 
 	public static void main(String args[])
 	{
@@ -65,7 +67,14 @@ public class TCPClient
 				System.out.println("Unable to read from standard in");
 				System.exit(1);
 			}
-			
+			try {
+				obj.serverOut = new ObjectOutputStream(obj.serverSocket.getOutputStream());
+				obj.serverIn = new ObjectInputStream(obj.serverSocket.getInputStream());
+			} catch (IOException e){
+				System.out.println("Could not instantiate input and output stream.\n" + e);
+				System.exit(1);
+			}
+
 			obj.execute(command);
 			
 		}//end of while(true)
@@ -388,19 +397,10 @@ public class TCPClient
 		int numRooms;
 		int numCars;
 		String location;
-		ObjectOutputStream serverOut = null;
-		ObjectInputStream serverIn = null;
 		
 		//remove heading and trailing white space
 		command=command.trim();
 		arguments= parse(command);
-		try {
-			serverOut = new ObjectOutputStream(serverSocket.getOutputStream());
-			serverIn = new ObjectInputStream(serverSocket.getInputStream());
-		} catch (IOException e){
-			System.out.println("Could not instantiate input and output stream.\n" + e);
-			System.exit(1);
-		}
 
 		//decide which of the commands this was
 		switch(findChoice((String)arguments.elementAt(0))){
