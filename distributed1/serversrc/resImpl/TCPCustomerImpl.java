@@ -108,7 +108,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 					getInt(input.elementAt(2)), getString(input.elementAt(3)),
 					getString(input.elementAt(4)), getInt(input.elementAt(5)),
 					(ReservedItem.rType) input.elementAt(6));
-			out.writeObject(reserved);
+			out.writeBoolean(reserved);
 		}
 
 		return;
