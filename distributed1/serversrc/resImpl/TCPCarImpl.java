@@ -1,28 +1,24 @@
 package serversrc.resImpl;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.registry.Registry;
 import serversrc.resInterface.*;
 
-import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.rmi.RMISecurityManager;
 import java.util.Vector;
 
-public class TCPCarImpl extends RMBaseImpl implements RMCar {
+@SuppressWarnings("rawtypes")
+public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 	ObjectInputStream in;
 	ObjectOutputStream out;
+	private Socket middlewareSocket;
 
 	public static void main(String args[]) {
 		// Figure out where server is running
-		ServerSocket carSocket = null;
+		ServerSocket connection = null;
 		Socket middlewareSocket = null;
 
 		String server = "localhost";
@@ -37,24 +33,41 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 					.println("Usage: java ResImpl.ResourceManagerImpl [port]");
 			System.exit(1);
 		}
-
 		try {
-			// create a new Server object
-			TCPCarImpl obj = new TCPCarImpl();
-			carSocket = new ServerSocket(port);
-			middlewareSocket = carSocket.accept();
-			System.err.println("Server ready");
-			obj.in = new ObjectInputStream(middlewareSocket.getInputStream());
-			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			connection = new ServerSocket(port);
+			while (true) {
+				TCPCarImpl obj;
+				middlewareSocket = connection.accept();
+				obj = new TCPCarImpl(middlewareSocket);
+				Thread t = new Thread(obj);
+				t.run();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				connection.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	@Override
+	public void run() {
+		try {
+			in = new ObjectInputStream(middlewareSocket.getInputStream());
+			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
 
-			while ((method = (Vector) obj.in.readObject()) != null) {
-				obj.methodSelect(method);
+			while ((method = (Vector) in.readObject()) != null) {
+				methodSelect(method);
 			}
 		} catch (Exception e) {
-			System.err.println("Server exception: " + e.toString());
-			e.printStackTrace();
+			Trace.error("Cannot Connect");
 		}
+
 	}
 
 	public void methodSelect(Vector input) throws Exception {
@@ -95,6 +108,7 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 	}
 
 	// Writes a data item
+	@SuppressWarnings("unchecked")
 	private void writeData(int id, String key, RMItem value) {
 		synchronized (m_itemHT) {
 			m_itemHT.put(key, value);
@@ -103,6 +117,10 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar {
 
 	public TCPCarImpl() throws RemoteException {
 
+	}
+
+	public TCPCarImpl(Socket middlewareSocket) {
+		this.middlewareSocket = middlewareSocket;
 	}
 
 	@Override

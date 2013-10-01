@@ -1,26 +1,24 @@
 package serversrc.resImpl;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Vector;
 
 import serversrc.resInterface.*;
 
-
-public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
+@SuppressWarnings("rawtypes")
+public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 	ObjectInputStream in;
 	ObjectOutputStream out;
+	private Socket middlewareSocket;
 
 	public static void main(String args[]) {
 		// Figure out where server is running
-		ServerSocket flightSocket = null;
+		ServerSocket connection = null;
 		Socket middlewareSocket = null;
 
 		String server = "localhost";
@@ -35,24 +33,41 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
 					.println("Usage: java ResImpl.ResourceManagerImpl [port]");
 			System.exit(1);
 		}
-
 		try {
-			// create a new Server object
-			TCPFlightImpl obj = new TCPFlightImpl();
-			flightSocket = new ServerSocket(port);
-			middlewareSocket = flightSocket.accept();
-			System.err.println("Server ready");
-			obj.in = new ObjectInputStream(middlewareSocket.getInputStream());
-			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			connection = new ServerSocket(port);
+			while (true) {
+				TCPHotelImpl obj;
+				middlewareSocket = connection.accept();
+				obj = new TCPHotelImpl(middlewareSocket);
+				Thread t = new Thread(obj);
+				t.run();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				connection.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	@Override
+	public void run() {
+		try {
+			in = new ObjectInputStream(middlewareSocket.getInputStream());
+			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
 
-			while ((method = (Vector) obj.in.readObject()) != null) {
-				obj.methodSelect(method);
+			while ((method = (Vector) in.readObject()) != null) {
+				methodSelect(method);
 			}
 		} catch (Exception e) {
-			System.err.println("Server exception: " + e.toString());
-			e.printStackTrace();
+			Trace.error("Cannot Connect");
 		}
+
 	}
 
 	public void methodSelect(Vector input) throws Exception {
@@ -91,6 +106,10 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
 	
 	}
 	
+	private TCPHotelImpl(Socket middlewareSocket) {
+		this.middlewareSocket = middlewareSocket;
+	}
+
 	// Reads a data item
     private RMItem readData( int id, String key )
     {
@@ -100,7 +119,8 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel {
     }
 
     // Writes a data item
-    private void writeData( int id, String key, RMItem value )
+    @SuppressWarnings("unchecked")
+	private void writeData( int id, String key, RMItem value )
     {
         synchronized(m_itemHT) {
             m_itemHT.put(key, value);

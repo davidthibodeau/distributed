@@ -1,31 +1,41 @@
 package serversrc.resImpl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.rmi.RemoteException;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 
 import serversrc.resInterface.*;
 
 @SuppressWarnings("rawtypes")
-public class TCPMiddleware {
+public class TCPMiddleware implements Runnable {
 
 	RMCar rmCar;
 	RMFlight rmFlight;
 	RMHotel rmHotel;
 	RMCustomer rmCustomer;
-	static Socket flightSocket;
-	static Socket carsSocket;
-	static Socket hotelSocket;
-	static Socket customerSocket;
-	
+	Socket flightSocket;
+	Socket carsSocket;
+	Socket hotelSocket;
+	Socket customerSocket;
+	Socket clientSocket;
+
 	ObjectInputStream clientIn;
 	ObjectOutputStream clientOut;
-	
+
 	ObjectInputStream flightIn;
 	ObjectOutputStream flightOut;
 
@@ -38,13 +48,19 @@ public class TCPMiddleware {
 	ObjectInputStream customersIn;
 	ObjectOutputStream customersOut;
 
+	String server;
+	int port;
+
+	private TCPMiddleware(String server, int port) {
+		this.server = server;
+		this.port = port;
+	}
+
 	public static void main(String args[]) {
 		// Figure out where server is running
 		String server = "localhost";
 		int port = 1099;
-		ServerSocket serverSocket;
-
-		Socket clientSocket;
+		
 		if (args.length == 5) {
 			server = server + ":" + args[4];
 			port = Integer.parseInt(args[4]);
@@ -55,47 +71,49 @@ public class TCPMiddleware {
 			System.exit(1);
 		}
 
+		while (true) {
+			TCPMiddleware obj = new TCPMiddleware(server, port);
+			Thread t = new Thread(obj);
+			t.start();
+
+		}
+	}
+
+	@Override
+	public void run() {
 		try {
-			// Listens for clients messages.
-			serverSocket = new ServerSocket(port);
-			// Where to write to the client
-			clientSocket = serverSocket.accept();
+			
 			flightSocket = new Socket(server, port);
 			carsSocket = new Socket(server, port);
 			hotelSocket = new Socket(server, port);
 			customerSocket = new Socket(server, port);
+			
+			clientIn = new ObjectInputStream(clientSocket.getInputStream());
+			clientOut = new ObjectOutputStream(clientSocket.getOutputStream());
+
+			flightIn = new ObjectInputStream(flightSocket.getInputStream());
+			flightOut = new ObjectOutputStream(flightSocket.getOutputStream());
+
+			carsIn = new ObjectInputStream(carsSocket.getInputStream());
+			carsOut = new ObjectOutputStream(carsSocket.getOutputStream());
+
+			hotelIn = new ObjectInputStream(hotelSocket.getInputStream());
+			hotelOut = new ObjectOutputStream(hotelSocket.getOutputStream());
+
+			customersIn = new ObjectInputStream(customerSocket.getInputStream());
+			customersOut = new ObjectOutputStream(customerSocket.getOutputStream());
+
+
+
 			Vector methodInvocation;
-			
-			TCPMiddleware obj = new TCPMiddleware();
-			
-			obj.clientIn = new ObjectInputStream(
-					clientSocket.getInputStream());
-			obj.clientOut = new ObjectOutputStream(
-					clientSocket.getOutputStream());
-			
-
-			obj.flightIn = new ObjectInputStream(flightSocket.getInputStream());
-			obj.flightOut = new ObjectOutputStream(
-					flightSocket.getOutputStream());
-
-			obj.carsIn = new ObjectInputStream(flightSocket.getInputStream());
-			obj.carsOut = new ObjectOutputStream(flightSocket.getOutputStream());
-
-			obj.hotelIn = new ObjectInputStream(flightSocket.getInputStream());
-			obj.hotelOut = new ObjectOutputStream(
-					flightSocket.getOutputStream());
-
-			obj.customersIn = new ObjectInputStream(
-					flightSocket.getInputStream());
-			obj.customersOut = new ObjectOutputStream(
-					flightSocket.getOutputStream());
-
-			while ((methodInvocation = (Vector) obj.clientIn.readObject()) != null) {
-				obj.methodSelector(methodInvocation);
+			while ((methodInvocation = (Vector) clientIn.readObject()) != null) {
+				methodSelector(methodInvocation);
 			}
-		} catch (Exception e) {
-			System.err.println("Server exception: " + e.toString());
-			e.printStackTrace();
+		}
+
+		catch (Exception e) {
+			Trace.error("Server connection failed");
+
 		}
 	}
 
@@ -160,12 +178,16 @@ public class TCPMiddleware {
 						getInt(args.elementAt(2)), getInt(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveCar")) {
-				clientOut.writeObject(reserveCar(getInt(args.elementAt(1)),
-						getInt(args.elementAt(2)), getString(args.elementAt(3))));
+				clientOut
+						.writeObject(reserveCar(getInt(args.elementAt(1)),
+								getInt(args.elementAt(2)),
+								getString(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveRoom")) {
-				clientOut.writeObject(reserveRoom(getInt(args.elementAt(1)),
-						getInt(args.elementAt(2)), getString(args.elementAt(3))));
+				clientOut
+						.writeObject(reserveRoom(getInt(args.elementAt(1)),
+								getInt(args.elementAt(2)),
+								getString(args.elementAt(3))));
 			}
 		}
 	}
@@ -193,7 +215,7 @@ public class TCPMiddleware {
 
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean Car, boolean Room) throws IOException {
-		//TODO: Convert To TCP
+		// TODO: Convert To TCP
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
 				+ flightNumbers + ", " + location + ", " + Car + ", " + Room
 				+ " ) called");

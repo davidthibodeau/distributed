@@ -1,21 +1,22 @@
 package serversrc.resImpl;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Vector;
 
-public class TCPCustomerImpl extends RMBaseImpl {
+@SuppressWarnings("rawtypes")
+public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 
 	ObjectInputStream in;
 	ObjectOutputStream out;
+	private Socket middlewareSocket;
+
 	public static void main(String args[]) {
-		ServerSocket customerSocket;
-		Socket middlewareSocket;
 
 		// Figure out where server is running
 		String server = "localhost";
@@ -26,40 +27,60 @@ public class TCPCustomerImpl extends RMBaseImpl {
 			port = Integer.parseInt(args[0]);
 		} else if (args.length != 0 && args.length != 1) {
 			System.err.println("Wrong usage");
-			System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
+			System.out
+					.println("Usage: java ResImpl.ResourceManagerImpl [port]");
 			System.exit(1);
 		}
-
+		ServerSocket connection = null;
 		try {
-			// create a new Server object
-			TCPCustomerImpl obj = new TCPCustomerImpl();
-			customerSocket = new ServerSocket(port);
-			middlewareSocket = customerSocket.accept();
-			System.err.println("Server ready");
-			obj.in = new ObjectInputStream( middlewareSocket.getInputStream());
-			obj.out = new ObjectOutputStream(middlewareSocket.getOutputStream());
+			connection = new ServerSocket(port);
+			Socket middlewareSocket;
+
+			while (true) {
+				TCPCustomerImpl obj;
+				middlewareSocket = connection.accept();
+				obj = new TCPCustomerImpl(middlewareSocket);
+				Thread t = new Thread(obj);
+				t.run();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				connection.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	@Override
+	public void run() {
+		try {
+			in = new ObjectInputStream(middlewareSocket.getInputStream());
+			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
-			
-			while ((method = (Vector) obj.in.readObject()) != null) {
-				obj.methodSelect(method);
+
+			while ((method = (Vector) in.readObject()) != null) {
+				methodSelect(method);
 			}
 		} catch (Exception e) {
-			System.err.println("Server exception: " + e.toString());
-			e.printStackTrace();
+			Trace.error("Cannot Connect");
 		}
+
 	}
 
 	public void methodSelect(Vector input) throws Exception {
-		String output = "";
 		if (((String) input.elementAt(0)).equalsIgnoreCase("newCustomer")) {
 			boolean added;
-			if (input.size() == 3){ 
+			if (input.size() == 3) {
 				added = newCustomer(getInt(input.elementAt(1)),
 						getInt(input.elementAt(2)));
 				out.writeBoolean(added);
-				
+
 			}
-			
+
 			else if (input.size() == 2) {
 				int cid = newCustomer(getInt(input.elementAt(1)));
 				out.writeInt(cid);
@@ -70,7 +91,6 @@ public class TCPCustomerImpl extends RMBaseImpl {
 			Customer cust = getCustomer(getInt(input.elementAt(1)),
 					getInt(input.elementAt(2)));
 			out.writeObject(cust);
-			
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCustomer")) {
@@ -95,7 +115,10 @@ public class TCPCustomerImpl extends RMBaseImpl {
 	}
 
 	public TCPCustomerImpl() throws RemoteException {
+	}
 
+	public TCPCustomerImpl(Socket custServer) {
+		this.middlewareSocket = custServer;
 	}
 
 	private RMItem readData(int id, String key) {
@@ -105,6 +128,7 @@ public class TCPCustomerImpl extends RMBaseImpl {
 	}
 
 	// Writes a data item
+	@SuppressWarnings("unchecked")
 	private void writeData(int id, String key, RMItem value) {
 		synchronized (m_itemHT) {
 			m_itemHT.put(key, value);
