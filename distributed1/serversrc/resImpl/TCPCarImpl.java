@@ -88,21 +88,21 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCar")) {
-			boolean deleted = deleteCars(getInt(input.elementAt(1)),
+			Boolean deleted = deleteCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeBoolean(deleted);
+			out.writeObject(deleted);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCar")) {
-			int emptySeats = queryCars(getInt(input.elementAt(1)),
+			Integer emptySeats = queryCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeInt(emptySeats);
+			out.writeObject(emptySeats);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCarsPrice")) {
-			int price = queryCarsPrice(getInt(input.elementAt(1)),
+			Integer price = queryCarsPrice(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeInt(price);
+			out.writeObject(price);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveItem")) {
@@ -112,14 +112,14 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 			out.writeObject(price);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveItem")) {
-			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+			Boolean answer = unreserveItem(getInt(input.elementAt(1)),
 					(ReservedItem)input.elementAt(2));
-			out.writeBoolean(answer);
+			out.writeObject(answer);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveKey")) {
-			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+			Boolean answer = unreserveItem(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeBoolean(answer);
+			out.writeObject(answer);
 		}
 		System.out.println("methodselect returned");
 	}

@@ -428,7 +428,7 @@ public class TCPClient
 				flightPrice = getInt(arguments.elementAt(4));
 				
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean)serverIn.readObject())
 					System.out.println("Flight added");
 				else
 					System.out.println("Flight could not be added");
@@ -484,7 +484,7 @@ public class TCPClient
 				price = getInt(arguments.elementAt(4));
 				
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean)serverIn.readObject())
 					System.out.println("Rooms added");
 				else
 					System.out.println("Rooms could not be added");
@@ -505,7 +505,7 @@ public class TCPClient
 			try{
 				Id = getInt(arguments.elementAt(1));
 				serverOut.writeObject(arguments);
-				int customer=serverIn.readInt();
+				int customer=(Integer) serverIn.readObject();
 				System.out.println("new customer id:"+customer);
 			}
 			catch(Exception e){
@@ -526,7 +526,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				flightNum = getInt(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Flight Deleted");
 				else
 					System.out.println("Flight could not be deleted");
@@ -549,7 +549,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Cars Deleted");
 				else
 					System.out.println("Cars could not be deleted");
@@ -572,7 +572,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Rooms Deleted");
 				else
 					System.out.println("Rooms could not be deleted");
@@ -595,7 +595,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				int customer = getInt(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Customer Deleted");
 				else
 					System.out.println("Customer could not be deleted");
@@ -618,7 +618,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				flightNum = getInt(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				int seats=serverIn.readInt();
+				int seats=(Integer) serverIn.readObject();
 				System.out.println("Number of seats available:"+seats);
 			}
 			catch(Exception e){
@@ -639,7 +639,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				numCars=serverIn.readInt();
+				numCars=(Integer) serverIn.readObject();
 				System.out.println("number of Cars at this location:"+numCars);
 			}
 			catch(Exception e){
@@ -660,7 +660,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				numRooms=serverIn.readInt();
+				numRooms=(Integer) serverIn.readObject();
 				System.out.println("number of Rooms at this location:"+numRooms);
 			}
 			catch(Exception e){
@@ -702,7 +702,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				flightNum = getInt(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				price=serverIn.readInt();
+				price=(Integer) serverIn.readObject();
 				System.out.println("Price of a seat:"+price);
 			}
 			catch(Exception e){
@@ -723,7 +723,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				price=serverIn.readInt();
+				price=(Integer) serverIn.readObject();
 				System.out.println("Price of a car at this location:"+price);
 			}
 			catch(Exception e){
@@ -744,7 +744,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				location = getString(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				price=serverIn.readInt();
+				price=(Integer) serverIn.readObject();
 				System.out.println("Price of Rooms at this location:"+price);
 			}
 			catch(Exception e){
@@ -767,7 +767,7 @@ public class TCPClient
 				int customer = getInt(arguments.elementAt(2));
 				flightNum = getInt(arguments.elementAt(3));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Flight Reserved");
 				else
 					System.out.println("Flight could not be reserved.");
@@ -793,7 +793,7 @@ public class TCPClient
 				int customer = getInt(arguments.elementAt(2));
 				location = getString(arguments.elementAt(3));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Car Reserved");
 				else
 					System.out.println("Car could not be reserved.");
@@ -818,7 +818,7 @@ public class TCPClient
 				int customer = getInt(arguments.elementAt(2));
 				location = getString(arguments.elementAt(3));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Room Reserved");
 				else
 					System.out.println("Room could not be reserved.");
@@ -852,7 +852,7 @@ public class TCPClient
 				Car = getBoolean(arguments.elementAt(arguments.size()-2));
 				Room = getBoolean(arguments.elementAt(arguments.size()-1));
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Itinerary Reserved");
 				else
 					System.out.println("Itinerary could not be reserved.");
@@ -883,7 +883,7 @@ public class TCPClient
 				Id = getInt(arguments.elementAt(1));
 				Cid = getInt(arguments.elementAt(2));
 				serverOut.writeObject(arguments);
-				boolean customer=serverIn.readBoolean();
+				boolean customer=(Boolean) serverIn.readObject();
 				System.out.println("new customer id:"+Cid);
 			}
 			catch(Exception e){

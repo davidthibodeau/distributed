@@ -153,9 +153,9 @@ public class TCPMiddleware implements Runnable {
 				try {
 					flightOut.writeObject(methodInvocation);
 					if (method.contains("new") || method.contains("delete"))
-						clientOut.writeBoolean(flightIn.readBoolean());
+						clientOut.writeObject(flightIn.readObject());
 					else
-						clientOut.writeInt(flightIn.readInt());
+						clientOut.writeObject(flightIn.readObject());
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
@@ -174,7 +174,7 @@ public class TCPMiddleware implements Runnable {
 						clientOut.writeObject(output);
 					} else {
 						System.out.println("reached else branch");
-						clientOut.writeInt(carsIn.readInt());
+						clientOut.writeObject(carsIn.readObject());
 					}
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
@@ -186,9 +186,9 @@ public class TCPMiddleware implements Runnable {
 				try {
 					hotelOut.writeObject(methodInvocation);
 					if (method.contains("new") || method.contains("delete"))
-						clientOut.writeBoolean(hotelIn.readBoolean());
+						clientOut.writeObject(hotelIn.readObject());
 					else
-						clientOut.writeInt(hotelIn.readInt());
+						clientOut.writeObject(hotelIn.readObject());
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
@@ -211,25 +211,25 @@ public class TCPMiddleware implements Runnable {
 							unreserve.add("unreserveItem");
 							unreserve.add(args.elementAt(1));
 							unreserve.add(reserveditem);
-							boolean success = false;
+							Boolean success = false;
 							if (reserveditem.getrType() == ReservedItem.rType.FLIGHT) {
 								flightOut.writeObject(unreserve);
-								success = flightIn.readBoolean();
+								success = (Boolean) flightIn.readObject();
 							} else if (reserveditem.getrType() == ReservedItem.rType.CAR) {
 								carsOut.writeObject(unreserve);
-								success = flightIn.readBoolean();
+								success = (Boolean) flightIn.readObject();
 							} else if (reserveditem.getrType() == ReservedItem.rType.ROOM) {
 								hotelOut.writeObject(unreserve);
-								success = flightIn.readBoolean();
+								success = (Boolean) flightIn.readObject();
 							}
 
-							clientOut.writeBoolean(success);
+							clientOut.writeObject(success);
 						}
 					} else if (method.equalsIgnoreCase("newCustomer")) {
 						if (args.size() == 3)
-							clientOut.writeInt(clientIn.readInt());
+							clientOut.writeObject(clientIn.readObject());
 						else
-							clientOut.writeBoolean(clientIn.readBoolean());
+							clientOut.writeObject(clientIn.readObject());
 						return;
 					} else if (method.equalsIgnoreCase("getCustomer")) {
 						clientOut.writeObject(customersIn.readObject());
@@ -244,18 +244,18 @@ public class TCPMiddleware implements Runnable {
 			}
 		} else {
 			if (method.equalsIgnoreCase("reserveFlight")) {
-				clientOut.writeBoolean(reserveFlight(getInt(args.elementAt(1)),
+				clientOut.writeObject(reserveFlight(getInt(args.elementAt(1)),
 						getInt(args.elementAt(2)), getInt(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveCar")) {
 				clientOut
-						.writeBoolean(reserveCar(getInt(args.elementAt(1)),
+						.writeObject(reserveCar(getInt(args.elementAt(1)),
 								getInt(args.elementAt(2)),
 								getString(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveRoom")) {
 				clientOut
-						.writeBoolean(reserveRoom(getInt(args.elementAt(1)),
+						.writeObject(reserveRoom(getInt(args.elementAt(1)),
 								getInt(args.elementAt(2)),
 								getString(args.elementAt(3))));
 			}
@@ -455,13 +455,13 @@ public class TCPMiddleware implements Runnable {
 					args.set(2, key);
 					if (rtype == ReservedItem.rType.CAR) {
 						carsOut.writeObject(args);
-						carsIn.readBoolean();
+						carsIn.readObject();
 					} else if (rtype == ReservedItem.rType.FLIGHT) {
 						flightOut.writeObject(args);
-						flightIn.readBoolean();
+						flightIn.readObject();
 					} else if (rtype == ReservedItem.rType.ROOM) {
 						hotelOut.writeObject(args);
-						hotelIn.readBoolean();
+						hotelIn.readObject();
 					}
 					return null;
 				}
@@ -502,21 +502,21 @@ public class TCPMiddleware implements Runnable {
 			return false;
 		}
 
-		boolean done = false;
+		Boolean done = false;
 		try {
 			if (rtype == ReservedItem.rType.CAR) {
 				carsOut.writeObject(args);
-				done = carsIn.readBoolean();
+				done = (Boolean) carsIn.readObject();
 			} else if (rtype == ReservedItem.rType.FLIGHT) {
 				flightOut.writeObject(args);
-				done = flightIn.readBoolean();
+				done = (Boolean) flightIn.readObject();
 			} else if (rtype == ReservedItem.rType.ROOM) {
 				hotelOut.writeObject(args);
-				done = hotelIn.readBoolean();
+				done = (Boolean) hotelIn.readObject();
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Trace.error("RM::unreserveItem( " + id + ", " + customerID + ", "
-					+ item + " ) failed -- IOException.");
+					+ item + " ) failed -- Exception.");
 			return false;
 		}
 		if (!done) {

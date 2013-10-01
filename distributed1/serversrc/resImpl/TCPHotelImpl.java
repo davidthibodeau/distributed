@@ -79,28 +79,28 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 	public void methodSelect(Vector input) throws Exception {
 
 		if (((String) input.elementAt(0)).equalsIgnoreCase("newRoom")) {
-			boolean added = addRooms(getInt(input.elementAt(1)),
+			Boolean added = addRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)), getInt(input.elementAt(3)),
 					getInt(input.elementAt(4)));
-			out.writeBoolean(added);
+			out.writeObject(added);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteRoom")) {
-			boolean deleted = deleteRooms(getInt(input.elementAt(1)),
+			Boolean deleted = deleteRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeBoolean(deleted);
+			out.writeObject(deleted);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoom")) {
-			int emptySeats = queryRooms(getInt(input.elementAt(1)),
+			Integer emptySeats = queryRooms(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeInt(emptySeats);
+			out.writeObject(emptySeats);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoomsPrice")) {
-			int price = queryRoomsPrice(getInt(input.elementAt(1)),
+			Integer price = queryRoomsPrice(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeInt(price);
+			out.writeObject(price);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveItem")) {
 			RMInteger price = reserveItem(getInt(input.elementAt(1)),
@@ -109,14 +109,14 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 			out.writeObject(price);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveItem")) {
-			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+			Boolean answer = unreserveItem(getInt(input.elementAt(1)),
 					(ReservedItem)input.elementAt(2));
-			out.writeBoolean(answer);
+			out.writeObject(answer);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveKey")) {
-			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+			Boolean answer = unreserveItem(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
-			out.writeBoolean(answer);
+			out.writeObject(answer);
 		}
 
 		return;
