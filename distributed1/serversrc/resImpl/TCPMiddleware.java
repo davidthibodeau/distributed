@@ -115,7 +115,8 @@ public class TCPMiddleware implements Runnable {
 			hotelOut = new ObjectOutputStream(hotelSocket.getOutputStream());
 			hotelIn = new ObjectInputStream(hotelSocket.getInputStream());
 
-			customersOut = new ObjectOutputStream(customerSocket.getOutputStream());
+			customersOut = new ObjectOutputStream(
+					customerSocket.getOutputStream());
 			customersIn = new ObjectInputStream(customerSocket.getInputStream());
 
 			Vector methodInvocation;
@@ -123,7 +124,8 @@ public class TCPMiddleware implements Runnable {
 				System.out.println("Waiting for query.");
 				methodInvocation = (Vector) clientIn.readObject();
 				if (methodInvocation != null) {
-					System.out.println("Query received: " + (String) methodInvocation.elementAt(0));
+					System.out.println("Query received: "
+							+ (String) methodInvocation.elementAt(0));
 					methodSelector(methodInvocation);
 				}
 			}
@@ -159,7 +161,7 @@ public class TCPMiddleware implements Runnable {
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
-					
+
 				}
 				return;
 				// return flight manager's response return;
@@ -357,9 +359,12 @@ public class TCPMiddleware implements Runnable {
 						+ room
 						+ " ) -- Expected FlightNumber was not a valid integer. Exception "
 						+ ex + " cached");
-				unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
-				unreserveItem(id, customer, reservedRoom,
-						ReservedItem.rType.ROOM);
+				if (reservedCar != null)
+					unreserveItem(id, customer, reservedCar,
+							ReservedItem.rType.CAR);
+				if (reservedRoom != null)
+					unreserveItem(id, customer, reservedRoom,
+							ReservedItem.rType.ROOM);
 				for (Enumeration f = flightsDone.elements(); f
 						.hasMoreElements();) {
 					unreserveItem(id, customer, (ReservedItem) f.nextElement(),
@@ -375,9 +380,12 @@ public class TCPMiddleware implements Runnable {
 						+ ", " + flightnum + ", " + location + ", " + car
 						+ ", " + room
 						+ " ) -- flight could not have been reserved.");
-				unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
-				unreserveItem(id, customer, reservedRoom,
-						ReservedItem.rType.ROOM);
+				if (reservedCar != null)
+					unreserveItem(id, customer, reservedCar,
+							ReservedItem.rType.CAR);
+				if (reservedRoom != null)
+					unreserveItem(id, customer, reservedRoom,
+							ReservedItem.rType.ROOM);
 				for (Enumeration f = flightsDone.elements(); f
 						.hasMoreElements();) {
 					unreserveItem(id, customer, (ReservedItem) f.nextElement(),
