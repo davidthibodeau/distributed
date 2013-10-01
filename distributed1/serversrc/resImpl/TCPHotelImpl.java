@@ -97,7 +97,7 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 			out.writeObject(emptySeats);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoomsPrice")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryRoomPrice")) {
 			Integer price = queryRoomsPrice(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeObject(price);
