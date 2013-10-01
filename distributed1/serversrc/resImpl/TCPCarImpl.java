@@ -62,8 +62,9 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 			in = new ObjectInputStream(middlewareSocket.getInputStream());
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
-			System.out.println("Waiting for query.");
 			while (true){
+				System.out.println("Waiting for query.");
+
 			    method = (Vector) in.readObject();
 			    if (method != null) {
 				methodSelect(method);

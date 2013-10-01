@@ -63,8 +63,8 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 			out = new ObjectOutputStream(middlewareSocket.getOutputStream());
 			Vector method;
 
-			System.out.println("Waiting for query.");
 			while (true) {
+				System.out.println("Waiting for query.");
 			    method = (Vector) in.readObject();
 			    if (method != null) {
 				methodSelect(method);
