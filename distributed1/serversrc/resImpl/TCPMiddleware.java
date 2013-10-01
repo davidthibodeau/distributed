@@ -1,28 +1,19 @@
 package serversrc.resImpl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.rmi.RemoteException;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.Vector;
 
 import serversrc.resInterface.*;
 
 @SuppressWarnings("rawtypes")
 public class TCPMiddleware implements Runnable {
-
+//TODO: Put the middleware, customer, flight, hotel, cars, and customer on different ports
 	RMCar rmCar;
 	RMFlight rmFlight;
 	RMHotel rmHotel;
@@ -51,16 +42,17 @@ public class TCPMiddleware implements Runnable {
 	String server;
 	int port;
 
-	private TCPMiddleware(String server, int port) {
+	private TCPMiddleware(Socket clientSocket, String server, int port) {
 		this.server = server;
 		this.port = port;
+		this.clientSocket = clientSocket;
 	}
 
 	public static void main(String args[]) {
 		// Figure out where server is running
 		String server = "localhost";
 		int port = 1099;
-		
+
 		if (args.length == 5) {
 			server = server + ":" + args[4];
 			port = Integer.parseInt(args[4]);
@@ -70,24 +62,33 @@ public class TCPMiddleware implements Runnable {
 					.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel [port]");
 			System.exit(1);
 		}
+		try {
+			Socket clientSocket;
+			ServerSocket connection = new ServerSocket(port);
 
-		while (true) {
-			TCPMiddleware obj = new TCPMiddleware(server, port);
-			Thread t = new Thread(obj);
-			t.start();
+			while (true) {
+				clientSocket = connection.accept();
 
+				TCPMiddleware obj = new TCPMiddleware(clientSocket, server,
+						port);
+				Thread t = new Thread(obj);
+				t.start();
+
+			}
+		} catch (Exception e) {
+			System.err.println("Connection issue");
 		}
 	}
 
 	@Override
 	public void run() {
 		try {
-			
+
 			flightSocket = new Socket(server, port);
 			carsSocket = new Socket(server, port);
 			hotelSocket = new Socket(server, port);
 			customerSocket = new Socket(server, port);
-			
+
 			clientIn = new ObjectInputStream(clientSocket.getInputStream());
 			clientOut = new ObjectOutputStream(clientSocket.getOutputStream());
 
@@ -101,9 +102,8 @@ public class TCPMiddleware implements Runnable {
 			hotelOut = new ObjectOutputStream(hotelSocket.getOutputStream());
 
 			customersIn = new ObjectInputStream(customerSocket.getInputStream());
-			customersOut = new ObjectOutputStream(customerSocket.getOutputStream());
-
-
+			customersOut = new ObjectOutputStream(
+					customerSocket.getOutputStream());
 
 			Vector methodInvocation;
 			while ((methodInvocation = (Vector) clientIn.readObject()) != null) {
