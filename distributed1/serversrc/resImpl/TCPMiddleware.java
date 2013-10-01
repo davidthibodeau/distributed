@@ -204,17 +204,19 @@ public class TCPMiddleware implements Runnable {
 							return;
 						}
 					}
-					if (method.equalsIgnoreCase("newCustomer")){
+					else if (method.equalsIgnoreCase("newCustomer")){
 						if (args.size() == 3) 
 							clientOut.writeInt(clientIn.readInt());
 						else
 							clientOut.writeBoolean(clientIn.readBoolean());
 						return;
 					}
-					if (method.equalsIgnoreCase("getCustomer")){
+					else if (method.equalsIgnoreCase("getCustomer")){
 						clientOut.writeObject(customersIn.readObject());
 						return;
 					}
+					else
+						clientOut.writeObject(customersIn.readObject());
 					
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
