@@ -204,29 +204,11 @@ public class TCPMiddleware implements Runnable {
 					if (method.equalsIgnoreCase("deletecustomer")) {
 						RMHashtable reservationHT = (RMHashtable) customersIn
 								.readObject();
-						for (Enumeration e = reservationHT.keys(); e
-								.hasMoreElements();) {
-							String reservedkey = (String) (e.nextElement());
-							ReservedItem reserveditem = (ReservedItem) reservationHT
-									.get(reservedkey);
-							Vector unreserve = new Vector();
-							unreserve.add("unreserveItem");
-							unreserve.add(args.elementAt(1));
-							unreserve.add(reserveditem);
-							Boolean success = false;
-							if (reserveditem.getrType() == ReservedItem.rType.FLIGHT) {
-								flightOut.writeObject(unreserve);
-								success = (Boolean) flightIn.readObject();
-							} else if (reserveditem.getrType() == ReservedItem.rType.CAR) {
-								carsOut.writeObject(unreserve);
-								success = (Boolean) flightIn.readObject();
-							} else if (reserveditem.getrType() == ReservedItem.rType.ROOM) {
-								hotelOut.writeObject(unreserve);
-								success = (Boolean) flightIn.readObject();
-							}
+						Boolean success = false;
+						success = deleteCustomer(getInt(args.elementAt(1)),
+								reservationHT, success);
+						clientOut.writeObject(success);
 
-							clientOut.writeObject(success);
-						}
 					} else if (method.toLowerCase().contains("newcustomer")) {
 						clientOut.writeObject(customersIn.readObject());
 						return;
@@ -260,6 +242,35 @@ public class TCPMiddleware implements Runnable {
 			}
 		}
 		System.out.println("Method Selector returned.");
+	}
+
+	private Boolean deleteCustomer(int id, RMHashtable reservationHT,
+			Boolean success) {
+		for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {
+			String reservedkey = (String) (e.nextElement());
+			ReservedItem reserveditem = (ReservedItem) reservationHT
+					.get(reservedkey);
+			Vector unreserve = new Vector();
+			unreserve.add("unreserveItem");
+			unreserve.add(id);
+			unreserve.add(reserveditem);
+			try {
+				if (reserveditem.getrType() == ReservedItem.rType.FLIGHT) {
+					flightOut.writeObject(unreserve);
+					success = (Boolean) flightIn.readObject();
+				} else if (reserveditem.getrType() == ReservedItem.rType.CAR) {
+					carsOut.writeObject(unreserve);
+					success = (Boolean) flightIn.readObject();
+				} else if (reserveditem.getrType() == ReservedItem.rType.ROOM) {
+					hotelOut.writeObject(unreserve);
+					success = (Boolean) flightIn.readObject();
+				}
+			} catch (Exception ex) {
+				System.out.println("unreserve error");
+			}
+
+		}
+		return success;
 	}
 
 	public boolean reserveFlight(int id, int customer, int flightNum)
