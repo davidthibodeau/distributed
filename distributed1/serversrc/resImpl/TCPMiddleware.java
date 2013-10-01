@@ -115,8 +115,7 @@ public class TCPMiddleware implements Runnable {
 			hotelOut = new ObjectOutputStream(hotelSocket.getOutputStream());
 			hotelIn = new ObjectInputStream(hotelSocket.getInputStream());
 
-			customersOut = new ObjectOutputStream(
-					customerSocket.getOutputStream());
+			customersOut = new ObjectOutputStream(customerSocket.getOutputStream());
 			customersIn = new ObjectInputStream(customerSocket.getInputStream());
 
 			Vector methodInvocation;
@@ -170,9 +169,9 @@ public class TCPMiddleware implements Runnable {
 					carsOut.writeObject(methodInvocation);
 					if (method.contains("new") || method.contains("delete")) {
 						System.out.println("Waiting for answer");
-						boolean output = carsIn.readBoolean();
+						Boolean output = (Boolean) carsIn.readObject();
 						System.out.println("RM car returned " + output);
-						clientOut.writeBoolean(output);
+						clientOut.writeObject(output);
 					} else {
 						System.out.println("reached else branch");
 						clientOut.writeInt(carsIn.readInt());

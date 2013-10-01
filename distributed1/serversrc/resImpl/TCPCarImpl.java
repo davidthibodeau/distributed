@@ -79,12 +79,12 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 	public void methodSelect(Vector input) throws Exception {
 
 		if (((String) input.elementAt(0)).equalsIgnoreCase("newCar")) {
-			boolean added = addCars(getInt(input.elementAt(1)),
+			Boolean added = addCars(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)), getInt(input.elementAt(3)),
 					getInt(input.elementAt(4)));
 			
 			System.out.println("newCar returned " + added);
-			out.writeBoolean(added);
+			out.writeObject(added);
 
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("deleteCar")) {

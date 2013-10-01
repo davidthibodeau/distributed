@@ -456,7 +456,7 @@ public class TCPClient
 				price = getInt(arguments.elementAt(4));
 				
 				serverOut.writeObject(arguments);
-				if(serverIn.readBoolean())
+				if((Boolean) serverIn.readObject())
 					System.out.println("Cars added");
 				else
 					System.out.println("Cars could not be added");
