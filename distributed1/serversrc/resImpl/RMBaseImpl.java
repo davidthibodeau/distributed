@@ -67,18 +67,6 @@ public class RMBaseImpl implements RMBase {
     		return true;
     	}
     }
-    
-    //This function is called to cancel a reservation done at the same time the customer is deleted
-    public boolean unreserveItem(int id, String key)
-    		throws RemoteException{
-    	ReservableItem item = (ReservableItem) readData(id, key);
-    	synchronized (item) {
-    		Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-    		item.setReserved(item.getReserved()-1);
-    		item.setCount(item.getCount()+1);
-    		return true;
-    	}
-    }
 
     // query the number of available seats/rooms/cars
     protected int queryNum(int id, String key) {
