@@ -27,7 +27,7 @@ public class Middleware implements ResourceManager {
             port = Integer.parseInt(args[4]); 
         } else {
             System.err.println ("Wrong usage");
-            System.out.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel [port]");
+            System.out.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel rmCustomer [port]");
             System.exit(1);
         }
 
