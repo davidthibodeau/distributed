@@ -84,9 +84,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 				added = newCustomer(getInt(input.elementAt(1)),
 						getInt(input.elementAt(2)));
 				out.writeObject(added);
-
 			}
-
 			else if (input.size() == 2) {
 				Integer cid = newCustomer(getInt(input.elementAt(1)));
 				out.writeObject(cid);

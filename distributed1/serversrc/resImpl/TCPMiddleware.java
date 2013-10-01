@@ -229,9 +229,9 @@ public class TCPMiddleware implements Runnable {
 						}
 					} else if (method.equalsIgnoreCase("newCustomer")) {
 						if (args.size() == 3)
-							clientOut.writeObject(clientIn.readObject());
+							clientOut.writeObject(customersIn.readObject());
 						else
-							clientOut.writeObject(clientIn.readObject());
+							clientOut.writeObject(customersIn.readObject());
 						return;
 					} else if (method.equalsIgnoreCase("getCustomer")) {
 						clientOut.writeObject(customersIn.readObject());
