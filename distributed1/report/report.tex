@@ -102,6 +102,27 @@
 
 \newcommand{\java}[1]{{\lstinline!#1!}} 
 
+\newenvironment{figureone}[1]{%
+  \def\deffigurecaption{#1}%
+  \begin{figure}[htbp]%
+  \begin{center}%
+  %\begin{scriptsize}%
+  \begin{minipage}{\columnwidth}%
+  \hrule \vspace*{2ex}%
+%   % reassign dimensions for prooftrees
+%   \proofrulebaseline=2ex%
+%   \proofrulebreadth=.05em%
+%   \proofdotseparation=1.25ex%
+}{%
+%\vspace{2ex} \hrule% 
+%\addvspace{2ex}%
+  \end{minipage}%
+  %\end{scriptsize}%
+  \end{center}%
+  \caption{\deffigurecaption}%
+  \end{figure}%
+}
+
 \begin{document}
 \maketitle
 
@@ -115,8 +136,15 @@ ressource. There are four ressources: cars, flights, rooms, and
 customers. Some operations such as adding a ressource, deleting a
 ressource (except for customers) or queries informations about them
 only requires the middleware to pass the query to the corresponding
-ressource manager. Other operations such as reservations and deletions
-of customers require an update, and so communication with both the
+ressource manager. 
+\begin{lstlisting}
+public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
+    throws RemoteException {
+  return rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
+}
+\end{lstlisting}
+Other operations such as reservations and deletions
+of customers require communicating with both the
 customer RM and the object RMs.
 
 \subsubsection*{Implementation using Java's RMI}
@@ -170,7 +198,21 @@ that the request is handled while the main thread continue listening
 for new connections. This implementation is then non-blocking but will
 not scale well to a large number of clients as the host might will
 most likely limit the possible number of threads a process can run.
-%Discuss that last sentence with Jason. Need also specify how it is run.
+%Discuss that last sentence with Jason. Need also specify how it is
+%run.
+\begin{lstlisting}
+Socket clientSocket;
+ServerSocket connection = new ServerSocket(port);
+
+while (true) {
+  clientSocket = connection.accept();
+  
+  TCPMiddleware obj = new TCPMiddleware(clientSocket, server, port);
+  Thread t = new Thread(obj);
+  t.start();
+}
+\end{lstlisting}
+
 
 \subsubsection*{Reservations}
 The functions interacting with reservations, such as
@@ -178,7 +220,10 @@ The functions interacting with reservations, such as
 \java{itinerary}, but also \java{deleteCustomer} which deletes all
 reservations from the customer to be deleted need to be handled by the
 middleware that needs to update the customer informations and then the
-RM dealing with the object to be reserved. The reserve functions will
+RM dealing with the object to be reserved. In order to avoid
+duplicating code, we use an \java{enum} called \java{rType} which
+indicates if the object to be reserved is a car, a flight seat or a
+room. The reserve functions will 
 first verify the existence of the customer. Then, it will call the
 corresponding RM to verify if the item can be reserved and do it
 altogether. In order to prevent concurrent execution to cause
@@ -188,7 +233,53 @@ reservation to the customer in its RM. Since another client could have
 deleted the customer during that time, it does the check and, if it
 passes, adds the reservation to the customer's reservations table. If
 the customer has been deleted, the middleware will query the RM of the
-reserved object to unreserve it. We needed to do it this way since we
+reserved object to unreserve it. 
+The code appears in figure~\ref{fig:reserve}. 
+\begin{figureone}{\java{reserveItem} method from the middleware. \label{fig:reserve}}
+\begin{lstlisting}
+protected ReservedItem reserveItem(int id, int customerID, String key, 
+                                      String location, ReservedItem.rType rtype)
+    throws RemoteException {
+  // Verifies if customer exists
+  Customer cust = rmCustomer.getCustomer(id, customerID);
+  if ( cust == null ) {
+    return null;
+  } 
+
+  RMInteger price = null;
+  // check if the item is available
+  if (rtype == ReservedItem.rType.CAR)
+    price = rmCar.reserveItem(id, customerID, key, location);
+  else if (rtype == ReservedItem.rType.FLIGHT)
+    price = rmFlight.reserveItem(id, customerID, key, location);
+  else if (rtype == ReservedItem.rType.ROOM)
+    price = rmHotel.reserveItem(id, customerID, key, location);
+
+  if ( price == null ) {
+    return null;
+  } else {  
+    // We do the following check in case the customer has been
+    // deleted between the first verification and now.
+    ReservedItem item = rmCustomer.reserve(id, customerID, key,
+                                           location, price.getValue(), rtype);
+    if(item != null){
+      return item;
+    } else {
+      if (rtype == ReservedItem.rType.CAR)
+        rmCar.unreserveItem(id, item);
+      else if (rtype == ReservedItem.rType.FLIGHT)
+        rmFlight.unreserveItem(id, item);
+      else if (rtype == ReservedItem.rType.ROOM)
+        rmHotel.unreserveItem(id, item);
+    }
+    return null;
+  }
+}
+
+\end{lstlisting}
+\end{figureone}
+
+We needed to do it this way since we
 could not synchronize the whole reservation as it involved three
 differents servers. Similarly, the \java{itinerary} functions does all the
 reservations one after the others but as soon as one fails, it undoes
@@ -197,7 +288,7 @@ must be valid or nothing is done. It would make little sense for the
 customer to have only partial itineraries. In order to do that, we
 made so that \java{reserveItem} returns a \java{ReservedItem} instead
 of a boolean so that one could easily unreserve it. We test
-success of the reservation by verifying if the \java{ReservedItem} is \java{null}
+success of the reservation by verifying if the \java{ReservedItem} is \java{null}.
 
  \java{deleteCustomer} will delete the
  customer and then receive from the customer RM the hashtable of
@@ -222,9 +313,22 @@ success of the reservation by verifying if the \java{ReservedItem} is \java{null
 
 We also put locks on items we reserve in \java{RMBaseImpl}. Without
 them, two customers could reserve the same last car, room, or flight
-seat. Moreover, \java{deleteItem} acquires the lock to make sure a
+seat. Concurrent reservations and unreservations could also lead to
+wrong assignments to the item's \java{nCount} or \java{nReserved}
+fields. Moreover, \java{deleteItem} acquires the lock to make sure a
 reservation will not be done on a deleted object.
 
+\begin{lstlisting}
+public boolean unreserveItem(int id, String key)
+    throws RemoteException{
+  ReservableItem item = (ReservableItem) readData(id, key);
+  synchronized (item) {
+    item.setReserved(item.getReserved()-1);
+    item.setCount(item.getCount()+1);
+    return true;
+  }
+}
+\end{lstlisting}
 \subsubsection*{Tests}
 We first did simple connection tests to make sure the implementations
 actually run. Then, we tested if the functions executed properly and
