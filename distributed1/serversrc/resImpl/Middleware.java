@@ -236,7 +236,8 @@ public class Middleware implements ResourceManager {
         	if (reservedRoom == null) {
         		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
     					", " + car + ", " + room + " ) -- Room could not have been reserved." );
-        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		if(reservedCar != null)
+        			unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
         		return false;
         	}
         }
@@ -249,8 +250,10 @@ public class Middleware implements ResourceManager {
         		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
     					", " + car + ", " + room + " ) -- Expected FlightNumber was not a valid integer. Exception "
     					+ ex + " cached");
-        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
-        		unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
+        		if(reservedCar != null)
+        			unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		if(reservedRoom != null)
+        			unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
         		for (Enumeration f = flightsDone.elements(); f.hasMoreElements();) {
         			unreserveItem(id, customer, (ReservedItem) f.nextElement(), ReservedItem.rType.ROOM);
         		}
@@ -260,8 +263,10 @@ public class Middleware implements ResourceManager {
         	if (reservedFlight == null){
         		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
     					", " + car + ", " + room + " ) -- flight could not have been reserved." );
-        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
-        		unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
+        		if(reservedCar != null)
+        			unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		if(reservedRoom != null)
+        			unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
         		for (Enumeration f = flightsDone.elements(); f.hasMoreElements();) {
         			unreserveItem(id, customer, (ReservedItem) f.nextElement(), ReservedItem.rType.ROOM);
         		}
