@@ -104,13 +104,17 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 			out.writeObject(info);
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("reserve")) {
-			Boolean reserved = reserve(getInt(input.elementAt(1)),
+			ReservedItem reserved = reserve(getInt(input.elementAt(1)),
 					getInt(input.elementAt(2)), getString(input.elementAt(3)),
 					getString(input.elementAt(4)), getInt(input.elementAt(5)),
 					(ReservedItem.rType) input.elementAt(6));
+			out.writeObject(reserved);
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserve")) {
+			boolean reserved = unreserve(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)), (ReservedItem)input.elementAt(3));
 			out.writeBoolean(reserved);
 		}
-
 		return;
 	}
 
@@ -218,16 +222,26 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 		} // if
 	}
 
-	public synchronized boolean reserve(int id, int cid, String key,
-			String location, int price, ReservedItem.rType rtype)
-			throws RemoteException {
-		Customer cust = (Customer) readData(id, Customer.getKey(cid));
-		if (cust == null)
-			return false;
-		cust.reserve(key, location, price, rtype);
-		writeData(id, cust.getKey(), cust);
-		return true;
-	}
+    public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
+    throws RemoteException {
+    	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	synchronized(cust){
+    		if (cust == null || cust.isDeleted())
+    			return null;
+    		return cust.reserve(key, location, price, rtype);
+    	}
+    }
+    
+    public boolean unreserve(int id, int cid, ReservedItem item)
+    throws RemoteException {
+    	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	synchronized(cust){
+    		if (cust == null || cust.isDeleted()) 
+    			return false;
+    		cust.unreserve(item.getKey());
+    		return true;
+    	}
+    }
 
 	public int getInt(Object temp) throws Exception {
 		try {

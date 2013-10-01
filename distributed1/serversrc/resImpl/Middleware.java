@@ -219,8 +219,7 @@ public class Middleware implements ResourceManager {
         if ( cust == null ) {
         	Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
 					", " + car + ", " + room + " ) -- Customer non existent, adding it." );
-        	rmCustomer.newCustomer(id, customer);
-        	cust = rmCustomer.getCustomer(id, customer);
+        	return false;
         }
         ReservedItem reservedCar = null;
         ReservedItem reservedRoom = null;
@@ -326,11 +325,11 @@ public class Middleware implements ResourceManager {
 			} else {
 				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") failed -- Customer has been deleted!" );
 				if (rtype == ReservedItem.rType.CAR)
-					rmCar.unreserveItem(id, item);
+					rmCar.unreserveItem(id, key);
 				else if (rtype == ReservedItem.rType.FLIGHT)
-					rmFlight.unreserveItem(id, item);
+					rmFlight.unreserveItem(id, key);
 				else if (rtype == ReservedItem.rType.ROOM)
-					rmHotel.unreserveItem(id, item);
+					rmHotel.unreserveItem(id, key);
 			}
 			return null;
 

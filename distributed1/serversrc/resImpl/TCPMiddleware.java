@@ -15,10 +15,7 @@ import serversrc.resInterface.*;
 public class TCPMiddleware implements Runnable {
 	// TODO: Put the middleware, customer, flight, hotel, cars, and customer on
 	// different ports
-	RMCar rmCar;
-	RMFlight rmFlight;
-	RMHotel rmHotel;
-	RMCustomer rmCustomer;
+
 	Socket flightSocket;
 	Socket carsSocket;
 	Socket hotelSocket;
@@ -246,102 +243,112 @@ public class TCPMiddleware implements Runnable {
 	public boolean reserveFlight(int id, int customer, int flightNum)
 			throws IOException {
 
-		return reserveItem(id, customer, Flight.getKey(flightNum),
+		 ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum),
 				String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
+		 return (item != null);
 	}
 
 	public boolean reserveCar(int id, int customer, String location)
 			throws IOException {
 
-		return reserveItem(id, customer, Car.getKey(location), location,
+		ReservedItem item = reserveItem(id, customer, Car.getKey(location), location,
 				ReservedItem.rType.CAR);
+		return (item != null);
 	}
 
 	public boolean reserveRoom(int id, int customer, String location)
 			throws IOException {
 
-		return reserveItem(id, customer, Hotel.getKey(location), location,
+		ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location,
 				ReservedItem.rType.ROOM);
+		return (item != null);
 	}
 
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
-			String location, boolean Car, boolean Room) throws IOException {
-		// TODO: Convert To TCP
+			String location, boolean car, boolean room) throws IOException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
-				+ flightNumbers + ", " + location + ", " + Car + ", " + Room
+				+ flightNumbers + ", " + location + ", " + car + ", " + room
 				+ " ) called");
 		// Read customer object if it exists (and read lock it)
-		Customer cust = rmCustomer.getCustomer(id, customer);
-		if (cust == null) {
-			Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
-					+ flightNumbers + ", " + location + ", " + Car + ", "
-					+ Room + " ) -- Customer non existent, adding it.");
-			rmCustomer.newCustomer(id, customer);
-			cust = rmCustomer.getCustomer(id, customer);
+        Customer cust = null;
+        Vector<Object> args = new Vector<Object>();
+		args.add("getCustomer");
+		args.add(id);
+		args.add(customer);
+		
+		customersOut.writeObject(args);
+        try {
+			cust = (Customer) customersIn.readObject();
+		} catch (ClassNotFoundException e) {
+			Trace.error("Object returned was not a Customer ");
+			return false;
 		}
-
-		if (Car) {
-			if (reserveCar(id, customer, location)) {
-				Trace.info("RM::itinerary( " + id + ", customer=" + customer
-						+ ", " + flightNumbers + ", " + location + ", " + Car
-						+ ", " + Room
-						+ " ) -- Car could not have been reserved.");
-				return false;
-			}
-		}
-		if (Room) {
-			if (reserveRoom(id, customer, location)) {
-				Trace.info("RM::itinerary( " + id + ", customer=" + customer
-						+ ", " + flightNumbers + ", " + location + ", " + Car
-						+ ", " + Room
-						+ " ) -- Room could not have been reserved.");
-				return false;
-			}
-		}
-		for (Enumeration e = flightNumbers.elements(); e.hasMoreElements();) {
-			int flightnum = 0;
-			try {
-				flightnum = getInt(e.nextElement());
-			} catch (Exception ex) {
-				Trace.info("RM::itinerary( "
-						+ id
-						+ ", customer="
-						+ customer
-						+ ", "
-						+ flightNumbers
-						+ ", "
-						+ location
-						+ ", "
-						+ Car
-						+ ", "
-						+ Room
-						+ " ) -- Expected FlightNumber was not a valid integer. Exception "
-						+ ex + " cached");
-				return false;
-			}
-			if (reserveFlight(id, customer, flightnum)) {
-				Trace.info("RM::itinerary( " + id + ", customer=" + customer
-						+ ", " + flightnum + ", " + location + ", " + Car
-						+ ", " + Room
-						+ " ) -- flight could not have been reserved.");
-				return false;
-			}
-
-		}
-
+        if ( cust == null ) {
+        	Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+					", " + car + ", " + room + " ) -- Customer non existent." );
+        	return false;
+        }
+        ReservedItem reservedCar = null;
+        ReservedItem reservedRoom = null;
+        if (car){
+        	reservedCar = reserveItem(id, customer, Car.getKey(location) ,location, ReservedItem.rType.CAR);
+        	if (reservedCar == null) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + car + ", " + room + " ) -- Car could not have been reserved." );
+        		return false;
+        	}
+        }
+        if (room){
+        	reservedRoom = reserveItem(id, customer, Hotel.getKey(location) ,location, ReservedItem.rType.ROOM);
+        	if (reservedRoom == null) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + car + ", " + room + " ) -- Room could not have been reserved." );
+        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		return false;
+        	}
+        }
+        Vector flightsDone = new Vector();
+        for (Enumeration e = flightNumbers.elements(); e.hasMoreElements();) {
+        	int flightnum = 0;
+        	try {
+        		flightnum = getInt(e.nextElement());
+        	} catch(Exception ex) {
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+    					", " + car + ", " + room + " ) -- Expected FlightNumber was not a valid integer. Exception "
+    					+ ex + " cached");
+        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
+        		for (Enumeration f = flightsDone.elements(); f.hasMoreElements();) {
+        			unreserveItem(id, customer, (ReservedItem) f.nextElement(), ReservedItem.rType.ROOM);
+        		}
+        		return false;
+        	}
+        	ReservedItem reservedFlight = reserveItem(id, customer, Flight.getKey(flightnum), String.valueOf(flightnum), ReservedItem.rType.FLIGHT);
+        	if (reservedFlight == null){
+        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
+    					", " + car + ", " + room + " ) -- flight could not have been reserved." );
+        		unreserveItem(id, customer, reservedCar, ReservedItem.rType.CAR);
+        		unreserveItem(id, customer, reservedRoom, ReservedItem.rType.ROOM);
+        		for (Enumeration f = flightsDone.elements(); f.hasMoreElements();) {
+        			unreserveItem(id, customer, (ReservedItem) f.nextElement(), ReservedItem.rType.ROOM);
+        		}
+        		return false;
+        	}
+        	flightsDone.add(reservedFlight);	
+        }
+        	
 		return true;
 	}
-
+	
 	/*
 	 * Call RMCust to obtain customer, if it exists. Verify if item exists and
 	 * is available. (Call RM*obj*) Reserve with RMCustomer Tell RM*obj* to
 	 * reduce the number of available
 	 */
-	protected boolean reserveItem(int id, int customerID, String key,
+	protected ReservedItem reserveItem(int id, int customerID, String key,
 			String location, ReservedItem.rType rtype) throws IOException {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
 				+ key + ", " + location + " ) called");
-		Boolean result = false;
 		Vector<Object> args = new Vector<Object>();
 		args.add("getCustomer");
 		args.add(id);
@@ -355,12 +362,12 @@ public class TCPMiddleware implements Runnable {
 			cust = (Customer) customersIn.readObject();
 		} catch (ClassNotFoundException e) {
 			Trace.error("Object returned was not a Customer ");
-			return false;
+			return null;
 		}
 		if (cust == null) {
 			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key
 					+ ", " + location + ")  failed--customer doesn't exist");
-			return false;
+			return null;
 		}
 
 		RMInteger price = null;
@@ -385,21 +392,80 @@ public class TCPMiddleware implements Runnable {
 			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", "
 					+ key + ", " + location
 					+ ") failed-- Object RM returned false.");
-			return false;
+			return null;
 		} else {
 			args.set(0, "reserve");
 			args.add(5, price.getValue());
 			customersOut.writeObject(args);
 			try {
-				result = customersIn.readBoolean();
-				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
-						+ key + ", " + location + ") succeeded");
+				ReservedItem result = (ReservedItem) customersIn.readObject();
+				if (result == null){
+					args.set(0, "unreserveKey");
+					args.set(2, key);
+					if (rtype == ReservedItem.rType.CAR) {
+						carsOut.writeObject(args);
+						carsIn.readBoolean();
+					} else if (rtype == ReservedItem.rType.FLIGHT) {
+						flightOut.writeObject(args);
+						flightIn.readBoolean();
+					} else if (rtype == ReservedItem.rType.ROOM) {
+						hotelOut.writeObject(args);
+						hotelIn.readBoolean();
+					}
+					return null;
+				}
+				return result;
 			} catch (Exception e) {
 				Trace.error("Something wrong happened in reserve");
+				return null;
+			}
+		}
+	}
+	
+	/*
+	 * unreserveItem is used by the itinerary class to cancel a reserved item when the whole reservation failed.
+	 */
+	protected boolean unreserveItem(int id, int customerID, ReservedItem item, ReservedItem.rType rtype) {
+		Trace.info("RM::unreserveItem( " + id + ", customer=" + customerID + ", " +item+ " ) called" );        
+		// Verifies if customer exists
+		Vector<Object> args = new Vector<Object>();
+		args.add("unreserve");
+		args.add(id);
+		args.add(customerID);
+		args.add(item);
+		try {
+			customersOut.writeObject(args);
+			Customer cust = (Customer) customersIn.readObject() ;
+			if(cust == null){
+				Trace.warn("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed -- Customer has been deleted." );
 				return false;
 			}
-			return result;
+		} catch (Exception e){
+			Trace.error("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed -- IOException." );
+			return false;
 		}
+
+		boolean done = false;
+		try {
+		if (rtype == ReservedItem.rType.CAR) {
+			carsOut.writeObject(args);
+			done = carsIn.readBoolean();
+		} else if (rtype == ReservedItem.rType.FLIGHT) {
+			flightOut.writeObject(args);
+			done = flightIn.readBoolean();
+		} else if (rtype == ReservedItem.rType.ROOM) {
+			hotelOut.writeObject(args);
+			done = hotelIn.readBoolean();
+		}
+		} catch (IOException e) {
+			Trace.error("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed -- IOException." );
+			return false;
+		}
+		if (!done) {
+			Trace.warn("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed-- Object RM returned false." );
+			return false;
+		}
+		return true;
 	}
 
 	/*

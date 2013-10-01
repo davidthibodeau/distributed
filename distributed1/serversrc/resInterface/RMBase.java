@@ -11,8 +11,8 @@ public interface RMBase extends Remote {
 	public boolean unreserveItem(int id, ReservedItem reserveditem)
 		throws RemoteException;
 	
-	//public boolean unreserveItem(int id, String key)
-	//		throws RemoteException;
+	public boolean unreserveItem(int id, String key)
+			throws RemoteException;
 	
 	public RMInteger reserveItem(int id, int customerID, String key, String location)
 	    	throws RemoteException;
