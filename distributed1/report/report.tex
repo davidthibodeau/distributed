@@ -127,7 +127,7 @@
 \maketitle
 
 %TODO: Put code examples
-Our implementation is split into three levels: the client which takes
+Our implementation is split into three layers: the client which takes
 user inputs and formats them into queries that it sends to the server;
 the middleware which receives queries from the client and then redirects and/or
 coordinates the execution of the queries with the ressource managers;
@@ -194,12 +194,8 @@ socket accept loops. Each time something connects to it (either the
 client to the middleware, or the middleware to one of the RMs), the
 server will create an object of its own class with the newly created
 socket as a field. Then, it will create a thread for this object so
-that the request is handled while the main thread continue listening
-for new connections. This implementation is then non-blocking but will
-not scale well to a large number of clients as the host might will
-most likely limit the possible number of threads a process can run.
-%Discuss that last sentence with Jason. Need also specify how it is
-%run.
+that the request is handled while the main thread continue to listen
+for new connections. 
 \begin{lstlisting}
 Socket clientSocket;
 ServerSocket connection = new ServerSocket(port);
@@ -212,7 +208,30 @@ while (true) {
   t.start();
 }
 \end{lstlisting}
-
+This thread will then obtain the input and output
+streams from this connection and wait for a vector to be passed to
+it. When it happens, it will read it and forward the query to the
+appropriate method and wait for an answer from it. Then, it will send
+back an answer to the client. In the case of some queries that need
+the attention of only one RM, the middleware will just forward the
+vector to the appropriate RM. 
+\begin{lstlisting}
+if (!method.contains("reserve")) {
+  if (method.contains("Cars")) {
+    try {
+      carsOut.writeObject(methodInvocation);
+      clientOut.writeObject(carsIn.readObject());
+    } catch (IOException e) {
+      Trace.error("IOException in method invocation: "
+      + getString(method));
+    }
+  }
+\end{lstlisting}
+This implementation is then non-blocking but will
+not scale well to a large number of clients as the host might will
+most likely limit the possible number of threads a process can run.
+%Discuss that last sentence with Jason. Need also specify how it is
+%run.
 
 \subsubsection*{Reservations}
 The functions interacting with reservations, such as
