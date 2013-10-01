@@ -106,6 +106,8 @@ public class RMBaseImpl implements RMBase {
     
     // reserve an item
     // Synchronized: We don't want two clients to reserve the last item
+    // The isDeleted field is to make sure the item was not deleted just before
+    // we acquired the lock (but after we retrieved the object).
     // Returns the price of the item in a nullable integer using RMInteger.
     public RMInteger reserveItem(int id, int customerID, String key, String location)
     	throws RemoteException {
