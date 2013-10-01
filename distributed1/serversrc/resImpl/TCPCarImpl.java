@@ -99,7 +99,7 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 			out.writeObject(emptySeats);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCarsPrice")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCarPrice")) {
 			Integer price = queryCarsPrice(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeObject(price);
