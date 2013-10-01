@@ -206,7 +206,7 @@ public class TCPMiddleware implements Runnable {
 								.readObject();
 						Boolean success = false;
 						success = deleteCustomer(getInt(args.elementAt(1)),
-								reservationHT, success);
+								reservationHT);
 						clientOut.writeObject(success);
 
 					} else if (method.toLowerCase().contains("newcustomer")) {
@@ -244,8 +244,8 @@ public class TCPMiddleware implements Runnable {
 		System.out.println("Method Selector returned.");
 	}
 
-	private Boolean deleteCustomer(int id, RMHashtable reservationHT,
-			Boolean success) {
+	private Boolean deleteCustomer(int id, RMHashtable reservationHT) {
+		Boolean success= false;
 		for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {
 			String reservedkey = (String) (e.nextElement());
 			ReservedItem reserveditem = (ReservedItem) reservationHT
@@ -270,7 +270,7 @@ public class TCPMiddleware implements Runnable {
 			}
 
 		}
-		return success;
+		return true;
 	}
 
 	public boolean reserveFlight(int id, int customer, int flightNum)
