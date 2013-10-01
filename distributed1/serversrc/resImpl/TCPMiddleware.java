@@ -40,10 +40,13 @@ public class TCPMiddleware implements Runnable {
 	String server;
 	int port;
 
-	private TCPMiddleware(Socket clientSocket, String server, int port) {
+	private TCPMiddleware(Socket flightSocket, Socket carsSocket, Socket hotelSocket, Socket customerSocket, Socket clientSocket, String server, int port) {
 		this.server = server;
 		this.port = port;
 		this.clientSocket = clientSocket;
+		this.carsSocket = carsSocket;
+		this.flightSocket = flightSocket;
+		this.hotelSocket = hotelSocket;
 	}
 
 	public static void main(String args[]) {
@@ -57,17 +60,23 @@ public class TCPMiddleware implements Runnable {
 		} else {
 			System.err.println("Wrong usage");
 			System.out
-					.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel [port]");
+					.println("Usage: java ResImpl.TCPMiddleware TCPCar TCPFlight TCPHotel TCPCustomer [port]");
 			System.exit(1);
 		}
+		ServerSocket connection = null;
+
 		try {
 			Socket clientSocket;
-			ServerSocket connection = new ServerSocket(port);
+			connection = new ServerSocket(port);
 
 			while (true) {
 				clientSocket = connection.accept();
-
-				TCPMiddleware obj = new TCPMiddleware(clientSocket, server,
+				Socket carsSocket = new Socket(args[0], port);
+				Socket flightSocket = new Socket(args[1], port);
+				Socket hotelSocket = new Socket(args[2], port);
+				Socket customerSocket = new Socket(args[3], port);
+				
+				TCPMiddleware obj = new TCPMiddleware(flightSocket, carsSocket, hotelSocket, customerSocket, clientSocket, server,
 						port);
 				Thread t = new Thread(obj);
 				t.start();
@@ -76,16 +85,20 @@ public class TCPMiddleware implements Runnable {
 		} catch (Exception e) {
 			System.err.println("Connection issue");
 		}
+		finally{
+			try {
+				connection.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
 	public void run() {
 		try {
 
-			flightSocket = new Socket(server, port);
-			carsSocket = new Socket(server, port);
-			hotelSocket = new Socket(server, port);
-			customerSocket = new Socket(server, port);
 
 			clientIn = new ObjectInputStream(clientSocket.getInputStream());
 			clientOut = new ObjectOutputStream(clientSocket.getOutputStream());
