@@ -228,7 +228,7 @@ if (!method.contains("reserve")) {
   }
 \end{lstlisting}
 This implementation is then non-blocking but will
-not scale well to a large number of clients as the host might will
+not scale well to a large number of clients as the host will
 most likely limit the possible number of threads a process can run.
 %Discuss that last sentence with Jason. Need also specify how it is
 %run.
@@ -356,7 +356,10 @@ reserving and deleting items. Deleting customers, creating
 itineraries. The analysis performed above eliminated the need to test
 for concurrent reservations and deletions. 
 
-We would have liked but did not have time to test the number of
-concurrent clients each of the two implementations can handle.
+We would have liked  to test the number of
+concurrent clients each of the two implementations can handle by
+making a large number of client connect and make queries on the server
+at the same time. Unfortunately, we ran out of time and could not
+finish that.
 %Finish tests section
 \end{document}
