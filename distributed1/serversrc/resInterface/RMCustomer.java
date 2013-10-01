@@ -33,9 +33,9 @@ public interface RMCustomer extends Remote {
 	public Customer getCustomer(int id, int customerID)
 			throws RemoteException;	
 
-	public boolean reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
+	public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
 			throws RemoteException;
 
-	public boolean unreserve(int id, int cid, String key)
+	public boolean unreserve(int id, int cid, ReservedItem item)
 			throws RemoteException;
 }
