@@ -1,0 +1,239 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{proof}
+\usepackage[margin=1in]{geometry}
+\usepackage{braket}
+
+\usepackage[square]{natbib}
+%\usepackage[parfill]{parskip}
+\author{David Thibodeau \and Jason Wiener}
+\title{COMP 512: Deliverable 1}
+\date{\today}
+
+%Declare formatting for theorems, definitions, etc.
+\theoremstyle{plain}% default 
+\newtheorem{thm}{Theorem}
+\newtheorem{lem}[thm]{Lemma} 
+\newtheorem{prop}[thm]{Proposition} 
+\newtheorem*{cor}{Corollary} 
+
+\theoremstyle{definition} 
+\newtheorem{defn}{Definition}[section] 
+\newtheorem{conj}{Conjecture}[section] 
+\newtheorem{exmp}{Example}[section]
+\newtheorem{exer}{Exercise}
+
+\theoremstyle{remark} 
+\newtheorem*{rem}{Remark} 
+\newtheorem*{note}{Note} 
+\newtheorem{case}{Case}
+
+\usepackage{srcltx}
+\usepackage{listings}
+\lstloadlanguages{Java}
+\lstset{language=Java}
+
+\newcommand{\veps}{\varepsilon}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\da}{\Downarrow}
+\newcommand{\mips}{{\ensuremath{\text{MIP}^*}} }
+\newcommand{\mipns}{{\ensuremath{\text{MIP}^{\text{ns}}}} }
+\newcommand{\z}{\mathbb{Z}}
+
+%
+% --------------------------------------------------------------------------- 
+%
+% Set up listings "literate" keyword stuff (for \lstset below)
+%
+\newdimen\zzlistingsize
+\newdimen\zzlistingsizedefault
+ \zzlistingsizedefault=11pt
+% \zzlistingsizedefault=10pt
+%\zzlistingsizedefault=11pt
+\zzlistingsize=\zzlistingsizedefault
+\global\def\InsideComment{0}
+\newcommand{\Lstbasicstyle}{\fontsize{\zzlistingsize}{1.05\zzlistingsize}\ttfamily}
+\newcommand{\keywordFmt}{\fontsize{1.0\zzlistingsize}{1.0\zzlistingsize}\bf}
+\newcommand{\smartkeywordFmt}{\if0\InsideComment\keywordFmt\fi}
+\newcommand{\commentFmt}{\def\InsideComment{1}\fontsize{0.95\zzlistingsize}{1.0\zzlistingsize}\rmfamily\slshape}
+
+\newcommand{\LST}{\setlistingsize{\zzlistingsizedefault}}
+
+\newlength{\zzlstwidth}
+\newcommand{\setlistingsize}[1]{\zzlistingsize=#1%
+\settowidth{\zzlstwidth}{{\Lstbasicstyle~}}}
+\setlistingsize{\zzlistingsizedefault}
+\lstset{literate={->}{{$\rightarrow~$}}2 %
+                               {→}{{$\rightarrow~$}}2 %
+                               {=>}{{$\Rightarrow~$}}2 %
+                               {id}{{{\smartkeywordFmt id}}}1 % 3 $~$
+                               {\\}{{$\lambda$}}1 %
+                               {\\n}{$\backslash n$}1 %
+                               {\\Pi}{{$\Pi$}}1 %
+                               {\\psi}{{$\psi$}}1 %
+                               {\\gamma}{{$\gamma$}}1 %
+                               {FN}{{$\Lambda$}}1 %
+                               {<<}{\color{mydblue}}1 %
+                               {<<r}{\color{dGreen}}1 %
+                               {<*}{\color{dRed}}1 %
+                               {<dim}{\color{dimgrey}}1 %
+                               {>>}{\color{black}}1 %
+                               {>>b}{\color{mydblue}}1 %
+                               {phi}{$\phi$}1 %
+                               {psi}{$\psi$}1 %
+                              % {..}{$\dots$}1 %
+               ,
+               columns=[l]fullflexible,
+               basewidth=\zzlstwidth,
+               basicstyle=\Lstbasicstyle,
+               keywordstyle=\keywordFmt,
+               identifierstyle=\relax,
+%               stringstyle=\relax,
+               commentstyle=\commentFmt,
+               breaklines=true,
+               breakatwhitespace=true,   % doesn't do anything (?!)
+               mathescape=true,   % interprets $...$ in listing as math mode
+%               tabsize=8,
+               texcl=false}
+
+\newcommand{\java}[1]{{\lstinline!#1!}} 
+
+\begin{document}
+\maketitle
+
+%TODO: Put code examples
+Our implementation is split into three levels: the client which takes
+user inputs and formats them into queries that it sends to the server;
+the middleware which receives queries from the client and then redirects and/or
+coordinates the execution of the queries with the ressource managers;
+the ressource managers which each keeps track of a particular
+ressource. There are four ressources: cars, flights, rooms, and
+customers. Some operations such as adding a ressource, deleting a
+ressource (except for customers) or queries informations about them
+only requires the middleware to pass the query to the corresponding
+ressource manager. Other operations such as reservations and deletions
+of customers require an update, and so communication with both the
+customer RM and the object RMs.
+
+\subsubsection*{Implementation using Java's RMI}
+We have two implementations of the project, one using Java's Remote
+Method Invocation while the other handles TCP sockets directly. The
+RMI implementation uses Java interfaces to indicate to the remote
+program what are the local methods it can use. The middleware
+implements the \java{ResourceManager} interface. The resource managers
+implement one of \java{RMCar}, \java{RMFlight}, \java{RMHotel}, or
+\java{RMCustomer} which all extend the base interface \java{RMBase}.
+\java{RMBase} is the interface used by the base class
+\java{RMBaseImpl} which as parent class for the implementations of
+each of the ressource managers. This class implements the hashtable
+and operations that are common to all the RMs like \java{readData},
+\java{writeData}, and \java{reserveItem}.
+
+To start the implementation, we first need to start the RMs. They take
+as optional input a port number. If none is provided, they assume the
+port 1099 is used for the rmiregistry (which needs to be started on
+the local machine). The middleware then takes as arguments the name of
+the machines running RMCar, RMFlight, RMHotel, and RMCustomer,
+respectively. It also takes a port number as an optional argument. For
+simplicity, it will take a single port number and will try to reach
+all the RMs on this port, in addition to setting himself to listen to
+that port. This limitation requires us to start all the rmiregistries
+on the same port. This, however, simplifies the parsing of the input
+for the middleware. We have had some trouble connecting to a
+rmiregistry that was not already started. In particular, it could not
+see the RMBase interface even if it was there. It seems to be linked to
+having the CLASSPATH variable set when the rmiregistry is started.
+Then, the client is started and takes the name of the server running
+the middleware together with an optional port number.
+
+\subsubsection*{Implementation using Sockets}
+The TCP implementation communicates using the Java's Sockets. The
+queries to the middleware or the RMs are done by sending a
+\java{Vector} whose first element is a string containing a particular
+keyword representing the operation to perform. The other elements in
+the vector are the arguments to be provided. The client makes sure the
+input provided by the user is correct before making the call. The
+middleware can then always assume the rest of the vector is properly
+formatted. Similarly, the middleware always sends properly formatted
+vectors to the RMs so that they don't have to do such verifications. 
+
+Both the middleware and the RMs create a Socket Server and enter
+socket accept loops. Each time something connects to it (either the
+client to the middleware, or the middleware to one of the RMs), the
+server will create an object of its own class with the newly created
+socket as a field. Then, it will create a thread for this object so
+that the request is handled while the main thread continue listening
+for new connections. This implementation is then non-blocking but will
+not scale well to a large number of clients as the host might will
+most likely limit the possible number of threads a process can run.
+%Discuss that last sentence with Jason. Need also specify how it is run.
+
+\subsubsection*{Reservations}
+The functions interacting with reservations, such as
+\java{reserveCar}, \java{reserveFlight}, \java{reserveRoom},
+\java{itinerary}, but also \java{deleteCustomer} which deletes all
+reservations from the customer to be deleted need to be handled by the
+middleware that needs to update the customer informations and then the
+RM dealing with the object to be reserved. The reserve functions will
+first verify the existence of the customer. Then, it will call the
+corresponding RM to verify if the item can be reserved and do it
+altogether. In order to prevent concurrent execution to cause
+problems, we lock the object that is being updated as it is retrieved
+from the hashtable. Then, it will get the information back and add the
+reservation to the customer in its RM. Since another client could have
+deleted the customer during that time, it does the check and, if it
+passes, adds the reservation to the customer's reservations table. If
+the customer has been deleted, the middleware will query the RM of the
+reserved object to unreserve it. We needed to do it this way since we
+could not synchronize the whole reservation as it involved three
+differents servers. Similarly, the \java{itinerary} functions does all the
+reservations one after the others but as soon as one fails, it undoes
+all the previous ones it did. The idea is that the whole itinerary
+must be valid or nothing is done. It would make little sense for the
+customer to have only partial itineraries. In order to do that, we
+made so that \java{reserveItem} returns a \java{ReservedItem} instead
+of a boolean so that one could easily unreserve it. We test
+success of the reservation by verifying if the \java{ReservedItem} is \java{null}
+
+ \java{deleteCustomer} will delete the
+ customer and then receive from the customer RM the hashtable of
+ reservations. Then, it will go through all the reservations and
+ unreserve them. We note that an object RM will never unreserve twice
+ the same object. First, the only two ways an object reservation is
+ cancelled is when the customer is deleted or when a reservation cannot
+ go through. If the reservation does not go through because the
+ customer is deleted (e.g. if it happens in \java{reserveCar}), then it
+ will never be placed in the customer's hashtable of reservations and
+ so will not be unreserved by the \java{deleteCustomer}. If the
+ reservation is cancelled because the whole itinerary cannot be
+ reserved, then each of them will have to lock the customer. If the
+ delete function has the lock first, it will set the customer field
+ \java{m\_deleted} to \java{true} and so unreserve will return \java{false},
+ cancelling the reservation on the RM of the object. If the unreserve
+ has the lock first, then it will remove the reservation from the
+ customer's hashtable of reservation before \java{deleteCustomer}
+ retrieves the hashtable. Hence, \java{deleteCustomer} will never see
+ the reservation and will not be able to cancel it. Thus, any
+ reservation will be cancelled at most once.
+
+We also put locks on items we reserve in \java{RMBaseImpl}. Without
+them, two customers could reserve the same last car, room, or flight
+seat. Moreover, \java{deleteItem} acquires the lock to make sure a
+reservation will not be done on a deleted object.
+
+\subsubsection*{Tests}
+We first did simple connection tests to make sure the implementations
+actually run. Then, we tested if the functions executed properly and
+if the expected answer was given. The simple tests included creating,
+reserving and deleting items. Deleting customers, creating
+itineraries. The analysis performed above eliminated the need to test
+for concurrent reservations and deletions. 
+
+We would have liked but did not have time to test the number of
+concurrent clients each of the two implementations can handle.
+%Finish tests section
+\end{document}
