@@ -372,7 +372,7 @@ public class TCPMiddleware implements Runnable {
 
 		RMInteger price = null;
 		// check if the item is available
-		args.set(0, "reserve");
+		args.set(0, "reserveItem");
 		try {
 			if (rtype == ReservedItem.rType.CAR) {
 				carsOut.writeObject(args);
