@@ -97,8 +97,17 @@ public class TCPCarImpl extends RMBaseImpl implements RMCar, Runnable {
 			out.writeInt(price);
 
 		}
-
-		return;
+		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveItem")) {
+			RMInteger price = reserveItem(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)),getString(input.elementAt(3)),
+					getString(input.elementAt(4)));
+			out.writeObject(price);
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveItem")) {
+			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+					(ReservedItem)input.elementAt(2));
+			out.writeBoolean(answer);
+		}
 	}
 	// Reads a data item
 	private RMItem readData(int id, String key) {

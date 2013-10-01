@@ -95,7 +95,17 @@ public class TCPHotelImpl extends RMBaseImpl implements RMHotel, Runnable {
 			int price = queryRoomsPrice(getInt(input.elementAt(1)),
 					getString(input.elementAt(2)));
 			out.writeInt(price);
-
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveItem")) {
+			RMInteger price = reserveItem(getInt(input.elementAt(1)),
+					getInt(input.elementAt(2)),getString(input.elementAt(3)),
+					getString(input.elementAt(4)));
+			out.writeObject(price);
+		}
+		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveItem")) {
+			boolean answer = unreserveItem(getInt(input.elementAt(1)),
+					(ReservedItem)input.elementAt(2));
+			out.writeBoolean(answer);
 		}
 
 		return;
