@@ -72,6 +72,7 @@ public class TCPClient
 	}
 
 	
+	@SuppressWarnings("unchecked")
 	public Vector parse(String command)
 	{
 		Vector arguments = new Vector();
@@ -373,6 +374,7 @@ public class TCPClient
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public boolean execute(String command) {
 		// These variables are just there to test if the input was correct
 		// Their instantiation is just there to call getInt, getString and getBoolean

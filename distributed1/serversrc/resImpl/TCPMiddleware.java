@@ -13,7 +13,8 @@ import serversrc.resInterface.*;
 
 @SuppressWarnings("rawtypes")
 public class TCPMiddleware implements Runnable {
-//TODO: Put the middleware, customer, flight, hotel, cars, and customer on different ports
+	// TODO: Put the middleware, customer, flight, hotel, cars, and customer on
+	// different ports
 	RMCar rmCar;
 	RMFlight rmFlight;
 	RMHotel rmHotel;
@@ -125,6 +126,7 @@ public class TCPMiddleware implements Runnable {
 	 * @throws RemoteException
 	 * @throws NumberFormatException
 	 */
+	@SuppressWarnings("unchecked")
 	private void methodSelector(Vector methodInvocation) throws Exception {
 		Vector args = methodInvocation;
 		String method = getString(args.elementAt(0));
@@ -132,7 +134,11 @@ public class TCPMiddleware implements Runnable {
 			// send method to flight manager and get response
 			try {
 				flightOut.writeObject(methodInvocation);
-				clientOut.writeObject(flightIn.readObject());
+				hotelOut.writeObject(methodInvocation);
+				if (method.contains("Add") || method.contains("Delete"))
+					clientOut.writeBoolean(flightIn.readBoolean());
+				else
+					clientOut.writeInt(flightIn.readInt());
 			} catch (IOException e) {
 				Trace.error("IOException in method invocation: "
 						+ getString(method));
@@ -141,11 +147,14 @@ public class TCPMiddleware implements Runnable {
 
 			// return flight manager's response return;
 		}
-		if (!method.contains("reserve")) {
+		if (!method.contains("reserve")) {  
 			if (method.contains("Cars")) {
 				try {
 					carsOut.writeObject(methodInvocation);
-					clientOut.writeObject(carsIn.readObject());
+					if (method.contains("Add") || method.contains("Delete"))
+						clientOut.writeBoolean(carsIn.readBoolean());
+					else
+						clientOut.writeInt(carsIn.readInt());
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
@@ -154,7 +163,10 @@ public class TCPMiddleware implements Runnable {
 			if (method.contains("Rooms")) {
 				try {
 					hotelOut.writeObject(methodInvocation);
-					clientOut.writeObject(hotelIn.readObject());
+					if (method.contains("Add") || method.contains("Delete"))
+						clientOut.writeBoolean(hotelIn.readBoolean());
+					else
+						clientOut.writeInt(hotelIn.readInt());
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
@@ -164,9 +176,46 @@ public class TCPMiddleware implements Runnable {
 
 				try {
 					customersOut.writeObject(methodInvocation);
-
-					// TODO: deleteCustomer
-					clientOut.writeObject(customersIn.readObject());
+					if (method.equalsIgnoreCase("deleteCustomer")) {
+						RMHashtable reservationHT = (RMHashtable) customersIn
+								.readObject();
+						for (Enumeration e = reservationHT.keys(); e
+								.hasMoreElements();) {
+							String reservedkey = (String) (e.nextElement());
+							ReservedItem reserveditem = (ReservedItem) reservationHT
+									.get(reservedkey);
+							Vector unreserve = new Vector();
+							unreserve.add("unreserveItem");
+							unreserve.add(args.elementAt(1));
+							unreserve.add(reserveditem);
+							boolean success = false;
+							if (reserveditem.getrType() == ReservedItem.rType.FLIGHT) {
+								flightOut.writeObject(unreserve);
+								success = flightIn.readBoolean();
+							} else if (reserveditem.getrType() == ReservedItem.rType.CAR) {
+								carsOut.writeObject(unreserve);
+								success = flightIn.readBoolean();
+							} else if (reserveditem.getrType() == ReservedItem.rType.ROOM) {
+								hotelOut.writeObject(unreserve);
+								success = flightIn.readBoolean();
+							}
+							
+							clientOut.writeBoolean(success);
+							return;
+						}
+					}
+					if (method.equalsIgnoreCase("newCustomer")){
+						if (args.size() == 3) 
+							clientOut.writeInt(clientIn.readInt());
+						else
+							clientOut.writeBoolean(clientIn.readBoolean());
+						return;
+					}
+					if (method.equalsIgnoreCase("getCustomer")){
+						clientOut.writeObject(customersIn.readObject());
+						return;
+					}
+					
 				} catch (IOException e) {
 					Trace.error("IOException in method invocation: "
 							+ getString(method));
@@ -174,18 +223,18 @@ public class TCPMiddleware implements Runnable {
 			}
 		} else {
 			if (method.equalsIgnoreCase("reserveFlight")) {
-				clientOut.writeObject(reserveFlight(getInt(args.elementAt(1)),
+				clientOut.writeBoolean(reserveFlight(getInt(args.elementAt(1)),
 						getInt(args.elementAt(2)), getInt(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveCar")) {
 				clientOut
-						.writeObject(reserveCar(getInt(args.elementAt(1)),
+						.writeBoolean(reserveCar(getInt(args.elementAt(1)),
 								getInt(args.elementAt(2)),
 								getString(args.elementAt(3))));
 			}
 			if (method.equalsIgnoreCase("reserveRoom")) {
 				clientOut
-						.writeObject(reserveRoom(getInt(args.elementAt(1)),
+						.writeBoolean(reserveRoom(getInt(args.elementAt(1)),
 								getInt(args.elementAt(2)),
 								getString(args.elementAt(3))));
 			}
@@ -340,15 +389,13 @@ public class TCPMiddleware implements Runnable {
 			args.add(5, price.getValue());
 			customersOut.writeObject(args);
 			try {
-				result = getBoolean(customersIn.readObject());
+				result = customersIn.readBoolean();
 				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", "
 						+ key + ", " + location + ") succeeded");
 			} catch (Exception e) {
 				Trace.error("Something wrong happened in reserve");
 				return false;
 			}
-			// rmCustomer.reserve(id, cust);
-
 			return result;
 		}
 	}

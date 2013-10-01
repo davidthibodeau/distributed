@@ -165,6 +165,7 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 		return queryPrice(id, Flight.getKey(flightNum));
 	}
 
+	
 	public int getInt(Object temp) throws Exception {
 		try {
 			return (new Integer((String) temp)).intValue();
