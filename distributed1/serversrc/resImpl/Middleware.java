@@ -342,14 +342,13 @@ public class Middleware implements ResourceManager {
 	 */
 	protected boolean unreserveItem(int id, int customerID, ReservedItem item, ReservedItem.rType rtype)
 			throws RemoteException {
-		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +item+ " ) called" );        
+		Trace.info("RM::unreserveItem( " + id + ", customer=" + customerID + ", " +item+ " ) called" );        
 		// Verifies if customer exists
-		Customer cust = rmCustomer.getCustomer(id, customerID);
-		if ( cust == null ) {
-			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + item + ")  failed--customer doesn't exist" );
+		if(!rmCustomer.unreserve(id, customerID, item)){
+			Trace.warn("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed -- Customer has been deleted." );
 			return false;
-		} 
-
+		}
+		
 		boolean done = false;
 		// check if the item is available
 		if (rtype == ReservedItem.rType.CAR)
@@ -360,17 +359,10 @@ public class Middleware implements ResourceManager {
 			done = rmHotel.unreserveItem(id, item);
 
 		if (!done) {
-			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " +item +" ) failed-- Object RM returned false." );
+			Trace.warn("RM::unreserveItem( " + id + ", " + customerID + ", " +item +" ) failed-- Object RM returned false." );
 			return false;
-		} else {                   
-			if(rmCustomer.unreserve(id, customerID, item)){
-				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + item + ") succeeded" );
-				return true;
-			} else
-				return false;
-
-		}        
+		}
+		return true;
 	}
-
 	
 }

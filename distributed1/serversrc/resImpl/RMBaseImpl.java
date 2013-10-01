@@ -105,7 +105,7 @@ public class RMBaseImpl implements RMBase {
     }
     
     // reserve an item
-    // Synchronized: We don't want two client to reserve the last item
+    // Synchronized: We don't want two clients to reserve the last item
     // Returns the price of the item in a nullable integer using RMInteger.
     public RMInteger reserveItem(int id, int customerID, String key, String location)
     	throws RemoteException {
