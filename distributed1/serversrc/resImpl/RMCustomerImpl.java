@@ -108,19 +108,19 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 		
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
 		Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+		if ( cust == null ) {
+			Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+			return null;
+		}
 		synchronized (cust){
-			RMHashtable reservationHT = null;
-			if ( cust == null ) {
-				Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-			} else {            
-				// Increase the reserved numbers of all reservable items which the customer reserved. 
-				reservationHT = cust.getReservations();
+			RMHashtable reservationHT = null;          
+			// Increase the reserved numbers of all reservable items which the customer reserved. 
+			reservationHT = cust.getReservations();
 
-				// remove the customer from the storage
-				removeData(id, cust.getKey());
-				cust.setDeleted(true);
-				Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
-			} // if
+			// remove the customer from the storage
+			removeData(id, cust.getKey());
+			cust.setDeleted(true);
+
 			return reservationHT;
 		}
 
@@ -167,8 +167,10 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     throws RemoteException {
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	if (cust == null)
+    		return null;
     	synchronized(cust){
-    		if (cust == null || cust.isDeleted())
+    		if (cust.isDeleted())
     			return null;
     		return cust.reserve(key, location, price, rtype);
     	}
@@ -177,8 +179,10 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     public boolean unreserve(int id, int cid, ReservedItem item)
     throws RemoteException {
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
+    	if (cust == null)
+    		return false;
     	synchronized(cust){
-    		if (cust == null || cust.isDeleted()) 
+    		if (cust.isDeleted()) 
     			return false;
     		cust.unreserve(item.getKey());
     		return true;
