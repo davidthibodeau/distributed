@@ -102,7 +102,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 					getInt(input.elementAt(1)), getInt(input.elementAt(2)));
 			out.writeObject(reservations);
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCustomerInfo")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("queryCustomer")) {
 			String info = queryCustomerInfo(getInt(input.elementAt(1)),
 					getInt(input.elementAt(2)));
 			out.writeObject(info);
