@@ -273,7 +273,7 @@ public class TCPMiddleware implements Runnable {
 		return true;
 	}
 
-	public boolean reserveFlight(int id, int customer, int flightNum)
+	public Boolean reserveFlight(int id, int customer, int flightNum)
 			throws IOException {
 
 		ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum),
@@ -281,7 +281,7 @@ public class TCPMiddleware implements Runnable {
 		return (item != null);
 	}
 
-	public boolean reserveCar(int id, int customer, String location)
+	public Boolean reserveCar(int id, int customer, String location)
 			throws IOException {
 
 		ReservedItem item = reserveItem(id, customer, Car.getKey(location),
@@ -289,7 +289,7 @@ public class TCPMiddleware implements Runnable {
 		return (item != null);
 	}
 
-	public boolean reserveRoom(int id, int customer, String location)
+	public Boolean reserveRoom(int id, int customer, String location)
 			throws IOException {
 
 		ReservedItem item = reserveItem(id, customer, Hotel.getKey(location),
@@ -297,7 +297,7 @@ public class TCPMiddleware implements Runnable {
 		return (item != null);
 	}
 
-	public boolean itinerary(int id, int customer, Vector flightNumbers,
+	public Boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean car, boolean room) throws IOException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
 				+ flightNumbers + ", " + location + ", " + car + ", " + room
@@ -493,7 +493,7 @@ public class TCPMiddleware implements Runnable {
 	 * unreserveItem is used by the itinerary class to cancel a reserved item
 	 * when the whole reservation failed.
 	 */
-	protected boolean unreserveItem(int id, int customerID, ReservedItem item,
+	protected Boolean unreserveItem(int id, int customerID, ReservedItem item,
 			ReservedItem.rType rtype) {
 		Trace.info("RM::unreserveItem( " + id + ", customer=" + customerID
 				+ ", " + item + " ) called");
