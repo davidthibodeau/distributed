@@ -440,7 +440,7 @@ public class TCPMiddleware implements Runnable {
 		RMInteger price = null;
 		// check if the item is available
 		args.set(0, "reserveItem");
-		System.out.println((String)args.elementAt(0));
+		System.out.println("ReserveITEMissues are here:::: " + (String)args.elementAt(0));
 		try {
 			if (rtype == ReservedItem.rType.CAR) {
 				carsOut.writeObject(args);
