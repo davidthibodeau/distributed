@@ -463,6 +463,8 @@ public class TCPMiddleware implements Runnable {
 			return null;
 		} else {
 			args.set(0, "reserve");
+			System.out.println("ReserveITEMissues are here:::: " + (String)args.elementAt(0));
+
 			args.add(5, price.getValue());
 			customersOut.writeObject(args);
 			try {
