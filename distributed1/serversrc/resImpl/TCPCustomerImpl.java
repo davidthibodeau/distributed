@@ -93,8 +93,8 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 		}
 
 		if (((String) input.elementAt(0)).equalsIgnoreCase("getCustomer")) {
-			Customer cust = getCustomer(getInt(input.elementAt(1)),
-					getInt(input.elementAt(2)));
+			Customer cust = getCustomer((Integer)input.elementAt(1),
+					(Integer)input.elementAt(2));
 			out.writeObject(cust);
 
 		}
