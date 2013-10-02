@@ -113,7 +113,7 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 		}
 		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveKey")) {
 			Boolean answer = unreserveItem((Integer)input.elementAt(1),
-					getString(input.elementAt(2)));
+					(String)input.elementAt(2));
 			out.writeObject(answer);
 		}
 

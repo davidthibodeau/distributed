@@ -484,6 +484,7 @@ public class TCPMiddleware implements Runnable {
 				return result;
 			} catch (Exception e) {
 				Trace.error("Something wrong happened in reserve");
+				e.printStackTrace();
 				return null;
 			}
 		}
