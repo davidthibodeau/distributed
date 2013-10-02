@@ -465,8 +465,8 @@ public class TCPMiddleware implements Runnable {
 			args.add(5, price.getValue());
 			customersOut.writeObject(args);
 			try {
-				ReservedItem result = (ReservedItem) customersIn.readObject();
-				if (result == null) {
+				Object obj = customersIn.readObject();
+				if (obj == null) {
 					args.set(0, "unreserveKey");
 					args.set(2, key);
 					if (rtype == ReservedItem.rType.CAR) {
@@ -481,7 +481,7 @@ public class TCPMiddleware implements Runnable {
 					}
 					return null;
 				}
-				return result;
+				return (ReservedItem) obj;
 			} catch (Exception e) {
 				Trace.error("Something wrong happened in reserve");
 				e.printStackTrace();
