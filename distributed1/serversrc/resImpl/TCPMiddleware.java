@@ -412,7 +412,7 @@ public class TCPMiddleware implements Runnable {
 	 * is available. (Call RM*obj*) Reserve with RMCustomer Tell RM*obj* to
 	 * reduce the number of available
 	 */
-	protected ReservedItem reserveItem(int id, int customerID, String key,
+	protected ReservedItem reserveItem(Integer id, Integer customerID, String key,
 			String location, ReservedItem.rType rtype) throws IOException {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
 				+ key + ", " + location + " ) called");
