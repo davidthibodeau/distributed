@@ -416,7 +416,7 @@ public class TCPMiddleware implements Runnable {
 			String location, ReservedItem.rType rtype) throws IOException {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", "
 				+ key + ", " + location + " ) called");
-		Vector<Object> args = new Vector<Object>();
+		Vector args = new Vector();
 		args.add("getCustomer");
 		args.add(id);
 		args.add(customerID);
@@ -498,7 +498,7 @@ public class TCPMiddleware implements Runnable {
 		Trace.info("RM::unreserveItem( " + id + ", customer=" + customerID
 				+ ", " + item + " ) called");
 		// Verifies if customer exists
-		Vector<Object> args = new Vector<Object>();
+		Vector args = new Vector();
 		args.add("unreserve");
 		args.add(id);
 		args.add(customerID);
