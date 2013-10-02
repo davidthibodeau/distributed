@@ -100,13 +100,13 @@ public class TCPFlightImpl extends RMBaseImpl implements Runnable {
 			out.writeObject(price);
 
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveItem")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("reserveFlight")) {
 			RMInteger price = reserveItem(getInt(input.elementAt(1)),
 					getInt(input.elementAt(2)),getString(input.elementAt(3)),
 					getString(input.elementAt(4)));
 			out.writeObject(price);
 		}
-		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveItem")) {
+		if (((String) input.elementAt(0)).equalsIgnoreCase("unreserveFlight")) {
 			Boolean answer = unreserveItem(getInt(input.elementAt(1)),
 					(ReservedItem)input.elementAt(2));
 			out.writeObject(answer);
