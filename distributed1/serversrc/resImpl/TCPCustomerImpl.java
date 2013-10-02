@@ -73,6 +73,7 @@ public class TCPCustomerImpl extends RMBaseImpl implements Runnable {
 			}
 		} catch (Exception e) {
 			Trace.error("Cannot Connect");
+			e.printStackTrace();
 		}
 
 	}
