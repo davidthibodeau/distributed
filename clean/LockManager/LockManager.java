@@ -62,14 +62,14 @@ public class LockManager
                          
                         if (bConvert.get(0) == true) {
                             // lock conversion 
-                            // *** ADD CODE HERE *** to carry out the lock conversion in the
-                            // lock table
-                        } else {
-                            // a lock request that is not lock conversion
-                            this.lockTable.add(trxnObj);
-                            this.lockTable.add(dataObj);
-                        }
-                    }
+                            this.lockTable.remove(trxnObj);
+			    this.lockTable.remove(dataObj);
+                        
+			}
+
+			this.lockTable.add(trxnObj);
+			this.lockTable.add(dataObj);
+		    }
                 }
                 if (bConflict) {
                     // lock conflict exists, wait
