@@ -1,0 +1,3 @@
+Lock manager is on Middleware
+
+RM keeps a hashtable with transactionID as keys and Hashtable containing objects as value. When writing, the change is writen to the hashtable for the corresponding object in the corresponding hashtable of transactions. When commiting, it writes all the objects from the Hashtable of the corresponding hashtable.
