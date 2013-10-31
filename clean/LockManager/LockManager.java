@@ -174,12 +174,12 @@ public class LockManager
     }
 
     
-    // returns true if the lock request on dataObj conflicts with already existing locks. If the lock request is a
-    // redundant one (for eg: if a transaction holds a read lock on certain data item and again requests for a read
-    // lock), then this is ignored. This is done by throwing RedundantLockRequestException which is handled 
-    // appropriately by the caller. If the lock request is a conversion from READ lock to WRITE lock, then bitset 
-    // is set. 
-    
+    /** returns true if the lock request on dataObj conflicts with already existing locks. If the lock request is a
+     redundant one (for eg: if a transaction holds a read lock on certain data item and again requests for a read
+     lock), then this is ignored. This is done by throwing RedundantLockRequestException which is handled 
+     appropriately by the caller. If the lock request is a conversion from READ lock to WRITE lock, then bitset 
+     is set. 
+    */
     private boolean LockConflict(DataObj dataObj, BitSet bitset) throws DeadlockException, RedundantLockRequestException {
         Vector vect = this.lockTable.elements(dataObj);
         DataObj dataObj2;
