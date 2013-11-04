@@ -151,7 +151,10 @@ public class RMBaseImpl implements RMBase {
     	}
     	for(Enumeration<Object> i = transaction.elements(); i.hasMoreElements(); ){
     		ReservableItem item = (ReservableItem) i.nextElement();
-    		writeData(id,item.getKey(), item);
+    		if(item.isDeleted())
+    			removeData(id, item.getKey());
+    		else
+    			writeData(id,item.getKey(), item);
     	}
     	return true;
     }
