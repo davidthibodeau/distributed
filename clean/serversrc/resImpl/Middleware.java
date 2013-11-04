@@ -7,6 +7,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Vector;
+import LockManager.*;
 
 import serversrc.resInterface.*;
 
@@ -16,6 +17,7 @@ public class Middleware implements ResourceManager {
 	RMFlight rmFlight;
 	RMHotel rmHotel;
 	RMCustomer rmCustomer;
+	LockManager lock;
 	
 	public static void main(String args[]) {
         // Figure out where server is running
@@ -35,6 +37,7 @@ public class Middleware implements ResourceManager {
             // create a new Server object
             // dynamically generate the stub (client proxy)
         	Middleware obj = new Middleware();
+        	obj.lock = new LockManager();
             ResourceManager rm = (ResourceManager) UnicastRemoteObject.exportObject(obj, 0);
             // get a reference to the rmiregistry
             registry = LocateRegistry.getRegistry(args[0], port);
