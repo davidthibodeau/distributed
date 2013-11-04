@@ -3,6 +3,9 @@ package serversrc.resInterface;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import serversrc.resImpl.InvalidTransactionException;
+import serversrc.resImpl.TransactionAbortedException;
+
 public interface TransactionManager extends Remote {
 	
 	/**
@@ -17,16 +20,19 @@ public interface TransactionManager extends Remote {
 	 * @param transactionID is the transaction to be committed
 	 * @return true if commit is a success. 
 	 * @throws RemoteException -rmi
+	 * @throws TransactionAbortedException 
+	 * @throws InvalidTransactionException 
 	 */
-	public boolean commit(int transactionID) throws RemoteException;
+	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
 	
 	/**
 	 * Aborts the transaction with transactionID
 	 * @param transactionID
 	 * @throws RemoteException -rmi
+	 * @throws InvalidTransactionException 
 	 */
-	public void abort(int transactionID) throws RemoteException;
+	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
 	
 	/**
 	 * Adds RM into transactionID list of RMs. 

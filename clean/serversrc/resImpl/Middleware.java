@@ -18,6 +18,7 @@ public class Middleware implements ResourceManager {
 	RMHotel rmHotel;
 	RMCustomer rmCustomer;
 	LockManager lock;
+	TransactionManager tm;
 	
 	public static void main(String args[]) {
         // Figure out where server is running

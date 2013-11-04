@@ -140,14 +140,14 @@ public class RMBaseImpl implements RMBase {
     	}
     }
     
-    protected boolean commit(int id){
+    public boolean commit(int id) throws RemoteException, InvalidTransactionException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
     	}
     	if (transaction == null){
     		Trace.warn("RM::commit( " + id + ") failed--Transaction does not exist." );
-    		return false;
+    		throw new InvalidTransactionException();
     	}
     	for(Enumeration<Object> i = transaction.elements(); i.hasMoreElements(); ){
     		ReservableItem item = (ReservableItem) i.nextElement();
@@ -159,15 +159,15 @@ public class RMBaseImpl implements RMBase {
     	return true;
     }
     
-    protected boolean abort(int id){
+    public void abort(int id) throws RemoteException, InvalidTransactionException{
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
     	}
     	if (transaction == null){
     		Trace.warn("RM::abort( " + id + ") failed--Transaction does not exist." );
-    		return false;
+    		throw new InvalidTransactionException();
     	}
-    	return true;
     }
+
 }
