@@ -390,4 +390,17 @@ public class Middleware implements ResourceManager {
 		return false;
 	}
 	
+	// This function should probably abort if lock cannot be obtained.
+	private boolean acquireLock(int id, RMType type, String object, int lockType){
+		try {
+			if (lock.Lock(id, type.toString() + object, lockType)) {
+			return true;
+			} else{
+				return false;
+			}
+		} catch (DeadlockException e) {
+			return false;
+		}
+	}
+	
 }
