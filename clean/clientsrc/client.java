@@ -615,10 +615,7 @@ public class client
         	System.out.println("Aborting transaction with id: "+arguments.elementAt(1));
         	try{
         		Id = obj.getInt(arguments.elementAt(1));
-        		if(rm.abort(Id))
-        			System.out.println("Abort successful.");
-        		else 
-        			System.out.println("Abort failed");
+        		rm.abort(Id);
 
         	} catch(Exception e){
         		System.out.println("EXCEPTION:");
