@@ -4,6 +4,9 @@ package serversrc.resInterface;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
+
+import serversrc.resImpl.InvalidTransactionException;
+import serversrc.resImpl.TransactionAbortedException;
 /** 
  * Simplified version from CSE 593 Univ. of Washington
  *
@@ -142,15 +145,18 @@ public interface ResourceManager extends Remote
 	 * @param transactionID is the transaction to be committed
 	 * @return true if commit is a success. 
 	 * @throws RemoteException -rmi
+	 * @throws TransactionAbortedException 
+	 * @throws InvalidTransactionException 
 	 */
-	public boolean commit(int id) throws RemoteException;
+	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
 	
 	/**
 	 * Aborts the transaction with transactionID
-	 * @return 
+	 * @param transactionID
 	 * @throws RemoteException -rmi
+	 * @throws InvalidTransactionException 
 	 */
-	public boolean abort(int id) throws RemoteException;
+	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
     			
 }

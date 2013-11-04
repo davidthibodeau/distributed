@@ -380,15 +380,14 @@ public class Middleware implements ResourceManager {
 	}
 
 	@Override
-	public boolean commit(int id) throws RemoteException {
+	public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public boolean abort(int id) throws RemoteException {
+	public void abort(int id) throws RemoteException, InvalidTransactionException {
 		// TODO Auto-generated method stub
-		return false;
 	}
 	
 	// This function should probably abort if lock cannot be obtained.
