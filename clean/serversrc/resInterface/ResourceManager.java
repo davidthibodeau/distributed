@@ -135,7 +135,7 @@ public interface ResourceManager extends Remote
 	 * Informs server that a transaction is starting
 	 * @return The id associated with this transaction. 
 	 */
-	public int start(int id) throws RemoteException;
+	public int start() throws RemoteException;
 	
 	/**
 	 * Commits the transaction with transactionID
@@ -143,15 +143,14 @@ public interface ResourceManager extends Remote
 	 * @return true if commit is a success. 
 	 * @throws RemoteException -rmi
 	 */
-	public boolean commit(int id, int transactionID) throws RemoteException;
+	public boolean commit(int id) throws RemoteException;
 	
 	
 	/**
 	 * Aborts the transaction with transactionID
-	 * @param transactionID
 	 * @return 
 	 * @throws RemoteException -rmi
 	 */
-	public boolean abort(int id, int transactionID) throws RemoteException;
+	public boolean abort(int id) throws RemoteException;
     			
 }

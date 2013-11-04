@@ -569,14 +569,14 @@ public class client
             break;
             
         case 23: //Start a new transaction
-        	if(arguments.size()!=2){
+        	if(arguments.size()!=1){
                 obj.wrongNumber();
                 break;
         	}
-        	System.out.println("Starting new transaction using id:"+arguments.elementAt(1));
+        	System.out.println("Starting new transaction");
         	try{
         		Id = obj.getInt(arguments.elementAt(1));
-        		int tid = rm.start(Id);
+        		int tid = rm.start();
         		System.out.println("new transaction id:"+tid);
         		
         	} catch(Exception e){
@@ -587,15 +587,15 @@ public class client
         	break;
         	
         case 24: //Commit a transaction
-        	if(arguments.size()!=3){
+        	if(arguments.size()!=2){
                 obj.wrongNumber();
                 break;
         	}
-        	System.out.println("Committing transaction with tid "  + arguments.elementAt(2) + " using id: "+arguments.elementAt(1));
+        	System.out.println("Committing transaction with id: "+arguments.elementAt(1));
         	try{
         		Id = obj.getInt(arguments.elementAt(1));
         		int tid = obj.getInt(arguments.elementAt(1));
-        		if(rm.commit(Id, tid))
+        		if(rm.commit(Id))
         			System.out.println("Commit successful.");
         		else 
         			System.out.println("Commit failed");
@@ -608,15 +608,14 @@ public class client
         	break;
         	
         case 25: //Abort a transaction
-        	if(arguments.size()!=3){
+        	if(arguments.size()!=2){
                 obj.wrongNumber();
                 break;
         	}
-        	System.out.println("Aborting transaction with tid "  + arguments.elementAt(2) + " using id: "+arguments.elementAt(1));
+        	System.out.println("Aborting transaction with id: "+arguments.elementAt(1));
         	try{
         		Id = obj.getInt(arguments.elementAt(1));
-        		int tid = obj.getInt(arguments.elementAt(1));
-        		if(rm.abort(Id, tid))
+        		if(rm.abort(Id))
         			System.out.println("Abort successful.");
         		else 
         			System.out.println("Abort failed");
@@ -905,7 +904,7 @@ public class client
         System.out.println("Purpose:");
         System.out.println("\tCreate a new transaction to be committed or aborted at once.");
         System.out.println("\nUsage:");
-        System.out.println("\tstart, <id>");
+        System.out.println("\tstart");
         break;
         
         case 24: //start a transaction
@@ -913,7 +912,7 @@ public class client
         System.out.println("Purpose:");
         System.out.println("\tRegister the transaction to be committed.");
         System.out.println("\nUsage:");
-        System.out.println("\tcommit, <id>, <tid>");
+        System.out.println("\tcommit, <id>");
         break;
         
         case 25: //start a transaction
@@ -921,7 +920,7 @@ public class client
         System.out.println("Purpose:");
         System.out.println("\tRequest the aborting of the transaction.");
         System.out.println("\nUsage:");
-        System.out.println("\tstart, <id>, <tid>");
+        System.out.println("\tstart, <id>");
         break;
         	
         default:
