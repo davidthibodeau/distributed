@@ -568,6 +568,66 @@ public class client
             }
             break;
             
+        case 23: //Start a new transaction
+        	if(arguments.size()!=2){
+                obj.wrongNumber();
+                break;
+        	}
+        	System.out.println("Starting new transaction using id:"+arguments.elementAt(1));
+        	try{
+        		Id = obj.getInt(arguments.elementAt(1));
+        		int tid = rm.start(Id);
+        		System.out.println("new transaction id:"+tid);
+        		
+        	} catch(Exception e){
+        		System.out.println("EXCEPTION:");
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+        	}
+        	break;
+        	
+        case 24: //Commit a transaction
+        	if(arguments.size()!=3){
+                obj.wrongNumber();
+                break;
+        	}
+        	System.out.println("Committing transaction with tid "  + arguments.elementAt(2) + " using id: "+arguments.elementAt(1));
+        	try{
+        		Id = obj.getInt(arguments.elementAt(1));
+        		int tid = obj.getInt(arguments.elementAt(1));
+        		if(rm.commit(Id, tid))
+        			System.out.println("Commit successful.");
+        		else 
+        			System.out.println("Commit failed");
+
+        	} catch(Exception e){
+        		System.out.println("EXCEPTION:");
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+        	}
+        	break;
+        	
+        case 25: //Abort a transaction
+        	if(arguments.size()!=3){
+                obj.wrongNumber();
+                break;
+        	}
+        	System.out.println("Aborting transaction with tid "  + arguments.elementAt(2) + " using id: "+arguments.elementAt(1));
+        	try{
+        		Id = obj.getInt(arguments.elementAt(1));
+        		int tid = obj.getInt(arguments.elementAt(1));
+        		if(rm.abort(Id, tid))
+        			System.out.println("Abort successful.");
+        		else 
+        			System.out.println("Abort failed");
+
+        	} catch(Exception e){
+        		System.out.println("EXCEPTION:");
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+        	}
+        	break;
+        	
         default:
             System.out.println("The interface does not support this command.");
             break;
@@ -634,6 +694,12 @@ public class client
         return 21;
     else if (argument.compareToIgnoreCase("newcustomerid")==0)
         return 22;
+    else if (argument.compareToIgnoreCase("start")==0)
+    	return 23;
+    else if (argument.compareToIgnoreCase("commit")==0)
+    	return 24;
+    else if (argument.compareToIgnoreCase("abort")==0)
+    	return 25;
     else
         return 666;
 
@@ -827,13 +893,37 @@ public class client
         break;
         
         case 22:  //new customer with id
-            System.out.println("Create new customer providing an id");
-            System.out.println("Purpose:");
-            System.out.println("\tCreates a new customer with the id provided");
-            System.out.println("\nUsage:");
-            System.out.println("\tnewcustomerid, <id>, <customerid>");
-            break;
+        System.out.println("Create new customer providing an id");
+        System.out.println("Purpose:");
+        System.out.println("\tCreates a new customer with the id provided");
+        System.out.println("\nUsage:");
+        System.out.println("\tnewcustomerid, <id>, <customerid>");
+        break;
 
+        case 23: //start a transaction
+        System.out.println("Start a new transaction");
+        System.out.println("Purpose:");
+        System.out.println("\tCreate a new transaction to be committed or aborted at once.");
+        System.out.println("\nUsage:");
+        System.out.println("\tstart, <id>");
+        break;
+        
+        case 24: //start a transaction
+        System.out.println("Commit a transaction");
+        System.out.println("Purpose:");
+        System.out.println("\tRegister the transaction to be committed.");
+        System.out.println("\nUsage:");
+        System.out.println("\tcommit, <id>, <tid>");
+        break;
+        
+        case 25: //start a transaction
+        System.out.println("Abort a new transaction");
+        System.out.println("Purpose:");
+        System.out.println("\tRequest the aborting of the transaction.");
+        System.out.println("\nUsage:");
+        System.out.println("\tstart, <id>, <tid>");
+        break;
+        	
         default:
         System.out.println(command);
         System.out.println("The interface does not support this command.");
