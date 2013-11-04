@@ -18,7 +18,30 @@ public class TMimpl implements TransactionManager {
 	private RMCustomer rmCustomer;
 	private RMHashtable transactionHT;
 	
-	public TMimpl(RMCar Car, RMFlight Flight,	RMHotel Hotel, RMCustomer Customer){
+    // Reads a data item
+    private Transaction readData( int id, String key )
+    {
+        synchronized(transactionHT) {
+            return (Transaction) transactionHT.get(key);
+        }
+    }
+
+    // Writes a data item
+    private void writeData( int id, String key, Transaction value )
+    {
+        synchronized(transactionHT) {
+            transactionHT.put(key, value);
+        }
+    }
+    
+    // Remove the item out of storage
+    protected Transaction removeData(int id, String key) {
+        synchronized(transactionHT) {
+            return (Transaction)transactionHT.remove(key);
+        }
+    }
+	
+	public TMimpl(RMCar Car, RMFlight Flight, RMHotel Hotel, RMCustomer Customer){
 		rmCar = Car;
 		rmFlight = Flight;
 		rmHotel = Hotel;
@@ -31,6 +54,7 @@ public class TMimpl implements TransactionManager {
 		// Generate a globally unique ID for the new transaction
         int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                                    String.valueOf( Math.round( Math.random() * 100 + 1 )));
+        
 		return 0;
 	}
 
