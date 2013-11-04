@@ -1,12 +1,14 @@
 package serversrc.resImpl;
 
 import java.rmi.RemoteException;
+import java.util.Enumeration;
 
 import serversrc.resInterface.*;
 
 public class RMBaseImpl implements RMBase {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
+	protected RMHashtable m_transactionHT = new RMHashtable();
 
     // Reads a data item
     private RMItem readData( int id, String key )
@@ -136,5 +138,33 @@ public class RMBaseImpl implements RMBase {
     			return new RMInteger(item.getPrice());
     		}
     	}
+    }
+    
+    protected boolean commit(int id){
+    	RMHashtable transaction = null;
+    	synchronized(m_transactionHT){
+    		transaction = (RMHashtable) m_transactionHT.remove(id);
+    	}
+    	if (transaction == null){
+    		Trace.warn("RM::commit( " + id + ") failed--Transaction does not exist." );
+    		return false;
+    	}
+    	for(Enumeration<Object> i = transaction.elements(); i.hasMoreElements(); ){
+    		ReservableItem item = (ReservableItem) i.nextElement();
+    		writeData(id,item.getKey(), item);
+    	}
+    	return true;
+    }
+    
+    protected boolean abort(int id){
+    	RMHashtable transaction = null;
+    	synchronized(m_transactionHT){
+    		transaction = (RMHashtable) m_transactionHT.remove(id);
+    	}
+    	if (transaction == null){
+    		Trace.warn("RM::abort( " + id + ") failed--Transaction does not exist." );
+    		return false;
+    	}
+    	return true;
     }
 }
