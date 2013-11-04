@@ -11,9 +11,9 @@ public class LockManager
     private static int TABLE_SIZE = 2039;
     private static int DEADLOCK_TIMEOUT = 10000;
     
-    private static TPHashTable lockTable = new TPHashTable(LockManager.TABLE_SIZE);
-    private static TPHashTable stampTable = new TPHashTable(LockManager.TABLE_SIZE);
-    private static TPHashTable waitTable = new TPHashTable(LockManager.TABLE_SIZE);
+    private TPHashTable lockTable = new TPHashTable(LockManager.TABLE_SIZE);
+    private TPHashTable stampTable = new TPHashTable(LockManager.TABLE_SIZE);
+    private TPHashTable waitTable = new TPHashTable(LockManager.TABLE_SIZE);
 
     public LockManager() {
     	super();
