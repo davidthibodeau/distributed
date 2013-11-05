@@ -61,6 +61,8 @@ public class TMimpl implements TransactionManager {
 	@Override
 	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		Transaction t = removeData(transactionID);
+		if(t == null)
+			throw new InvalidTransactionException();
 		if(t.isCarEnlisted())
 			rmCar.commit(transactionID);
 		if(t.isFlightEnlisted())
@@ -75,6 +77,8 @@ public class TMimpl implements TransactionManager {
 	@Override
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException {
 		Transaction t = removeData(transactionID);
+		if(t == null)
+			throw new InvalidTransactionException();
 		if(t.isCarEnlisted())
 			rmCar.abort(transactionID);
 		if(t.isFlightEnlisted())

@@ -27,7 +27,6 @@ public interface RMFlight extends Remote, RMBase {
      *
      * @return success.
      * @throws TransactionAbortedException 
-     * @throws InvalidTransactionException 
      */   
     public boolean deleteFlight(int id, int flightNum) 
 	throws RemoteException, TransactionAbortedException; 

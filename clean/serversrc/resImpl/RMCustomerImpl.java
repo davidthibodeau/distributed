@@ -102,13 +102,13 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	/**
 	 * Must remove all reserved items of that customer as well. 
 	 */
-	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException, InvalidTransactionException {
+	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException {
 		
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
 		Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
 		if ( cust == null ) {
 			Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-			throw new InvalidTransactionException();
+			return null;
 		}
 		RMHashtable reservationHT = null;          
 		// Increase the reserved numbers of all reservable items which the customer reserved. 

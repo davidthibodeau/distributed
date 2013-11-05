@@ -26,7 +26,7 @@ public interface RMCustomer extends Remote {
 
 	/* deleteCustomer removes the customer and associated reservations */
 	public RMHashtable deleteCustomer(int id,int customer) 
-			throws RemoteException, InvalidTransactionException; 
+			throws RemoteException; 
 
 	/* return a bill */
 	public String queryCustomerInfo(int id,int customer) 
