@@ -43,11 +43,11 @@ public interface ResourceManager extends Remote
     
     /* return the number of cars available at a location */
     public int queryCars(int id, String location) 
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the price of a car at a location */
     public int queryCarsPrice(int id, String location) 
-	throws RemoteException;   
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;   
     
     /* reserve a car at this location */
     public boolean reserveCar(int id, int customer, String location) 
@@ -78,11 +78,11 @@ public interface ResourceManager extends Remote
     
     /* queryFlight returns the number of empty seats. */
     public int queryFlight(int id, int flightNumber) 
-	throws RemoteException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
     
     /* queryFlightPrice returns the price of a seat on this flight. */
     public int queryFlightPrice(int id, int flightNumber) 
-	throws RemoteException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
     
     /* Reserve a seat on this flight*/
     public boolean reserveFlight(int id, int customer, int flightNumber) 
@@ -105,11 +105,11 @@ public interface ResourceManager extends Remote
     
     /* return the number of rooms available at a location */
     public int queryRooms(int id, String location) 
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the price of a room at a location */
     public int queryRoomsPrice(int id, String location) 
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
  
     /* reserve a room certain at this location */
     public boolean reserveRoom(int id, int customer, String locationd) 
@@ -129,7 +129,7 @@ public interface ResourceManager extends Remote
 
     /* return a bill */
     public String queryCustomerInfo(int id,int customer) 
-	throws RemoteException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 			    			    
     /* reserve an itinerary */
     public boolean itinerary(int id, int customer, Vector flightNumbers, String location, boolean Car, boolean Room)

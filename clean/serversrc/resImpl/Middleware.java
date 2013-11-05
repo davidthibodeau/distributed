@@ -214,46 +214,88 @@ public class Middleware implements ResourceManager {
 	}
 
 	@Override
-	public int queryFlight(int id, int flightNumber) throws RemoteException {
-
-		return rmFlight.queryFlight(id, flightNumber);
+	public int queryFlight(int id, int flightNumber) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
+			return rmFlight.queryFlight(id, flightNumber);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}		
 	}
 
 	@Override
-	public int queryCars(int id, String location) throws RemoteException {
-
-		return rmCar.queryCars(id, location);
+	public int queryCars(int id, String location) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
+			return rmCar.queryCars(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public int queryRooms(int id, String location) throws RemoteException {
-
-		return rmHotel.queryRooms(id, location);
+	public int queryRooms(int id, String location)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
+			return rmHotel.queryRooms(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
+		
 	}
 
 	@Override
 	public String queryCustomerInfo(int id, int customer)
-			throws RemoteException {
-		return rmCustomer.queryCustomerInfo(id, customer);
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.READ);
+			return rmCustomer.queryCustomerInfo(id, customer);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
 	public int queryFlightPrice(int id, int flightNumber)
-			throws RemoteException {
-		
-		return rmFlight.queryFlightPrice(id, flightNumber);
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
+			return rmFlight.queryFlightPrice(id, flightNumber);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}	
 	}
 
 	@Override
-	public int queryCarsPrice(int id, String location) throws RemoteException {
-
-		return rmCar.queryCarsPrice(id, location);
+	public int queryCarsPrice(int id, String location)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
+			return rmCar.queryCarsPrice(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public int queryRoomsPrice(int id, String location) throws RemoteException {
-
-		return rmHotel.queryRoomsPrice(id, location);
+	public int queryRoomsPrice(int id, String location) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
+			return rmHotel.queryRoomsPrice(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
@@ -323,13 +365,12 @@ public class Middleware implements ResourceManager {
 	 * 
 	 */ 
 	public int getInt(Object temp) throws Exception {
-	    try {
-	        return (new Integer((String)temp)).intValue();
-	        }
-	    catch(Exception e) {
-	        throw e;
-	        }
-	    }
+		try {
+			return (new Integer((String)temp)).intValue();
+		} catch(Exception e) {
+			throw e;
+		}
+	}
 	
 	/*
 	 * Call RMCust to obtain customer, if it exists.
