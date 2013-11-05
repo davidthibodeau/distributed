@@ -30,7 +30,7 @@ public interface RMFlight extends Remote, RMBase {
      * @throws InvalidTransactionException 
      */   
     public boolean deleteFlight(int id, int flightNum) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
+	throws RemoteException, TransactionAbortedException; 
     
     /* queryFlight returns the number of empty seats. */
     public int queryFlight(int id, int flightNumber) 

@@ -90,7 +90,7 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
     
     // Delete rooms from a location
     public boolean deleteRooms(int id, String location)
-        throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+        throws RemoteException, TransactionAbortedException {
         return deleteItem(id, Hotel.getKey(location));
         
     }

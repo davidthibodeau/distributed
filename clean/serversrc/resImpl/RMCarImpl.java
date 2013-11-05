@@ -91,7 +91,7 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 	}
 
 	@Override
-	public boolean deleteCars(int id, String location) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+	public boolean deleteCars(int id, String location) throws RemoteException, TransactionAbortedException {
 		
 		return deleteItem(id, Car.getKey(location));
 	}

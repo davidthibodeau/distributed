@@ -22,7 +22,7 @@ public interface RMHotel extends Remote, RMBase {
      * @return success
      */
     public boolean deleteRooms(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
+	throws RemoteException, TransactionAbortedException; 
     
     /* return the number of rooms available at a location */
     public int queryRooms(int id, String location) 

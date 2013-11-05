@@ -91,7 +91,7 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
     }
 
     public boolean deleteFlight(int id, int flightNum)
-    		throws RemoteException, InvalidTransactionException, TransactionAbortedException
+    		throws RemoteException, TransactionAbortedException
 	{
     	return deleteItem(id, Flight.getKey(flightNum));
 	}

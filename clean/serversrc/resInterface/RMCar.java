@@ -22,7 +22,7 @@ public interface RMCar extends RMBase, Remote {
      * @return success
      */		    
     public boolean deleteCars(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
+	throws RemoteException, TransactionAbortedException; 
     
     /* return the number of cars available at a location */
     public int queryCars(int id, String location) 
