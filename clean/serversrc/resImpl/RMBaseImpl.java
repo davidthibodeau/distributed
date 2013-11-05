@@ -58,17 +58,15 @@ public abstract class RMBaseImpl implements RMBase {
 			Trace.warn("RM::deleteItem( " + id + ", "  + key+") failed--item doesn't exist" );
 			return false;
     	}
-    	synchronized (curObj) {
-    		if (curObj.getReserved()==0) {
-    			removeData(id, curObj.getKey());
-    			Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
-    			return true;
-    		}
-    		else {
-    			Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
-    			return false;
-    		}
-        }
+    	if (curObj.getReserved()==0) {
+    		removeData(id, curObj.getKey());
+    		Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
+    		return true;
+    	}
+    	else {
+    		Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
+    		return false;
+    	}
     }
     
     public boolean unreserveItem(int id, ReservedItem reserveditem)
@@ -78,28 +76,24 @@ public abstract class RMBaseImpl implements RMBase {
 			Trace.warn("RM::reserveItem( " + id + ", "  + reserveditem+") failed--item doesn't exist" );
 			return false;
     	}
-    	synchronized (item) {
-    		Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-    		item.setReserved(item.getReserved()-reserveditem.getCount());
-    		item.setCount(item.getCount()+reserveditem.getCount());
-    		return true;
-    	}
+    	Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+    	item.setReserved(item.getReserved()-reserveditem.getCount());
+    	item.setCount(item.getCount()+reserveditem.getCount());
+    	return true;
     }
-    
+
     //This function is called to cancel a reservation done at the same time the customer is deleted
     public boolean unreserveItem(int id, String key)
     		throws RemoteException{
     	ReservableItem item = (ReservableItem) readData(id, key);
     	if ( item == null ) {
-			Trace.warn("RM::reserveItem( " + id + ", "  + key+") failed--item doesn't exist" );
-			return false;
+    		Trace.warn("RM::reserveItem( " + id + ", "  + key+") failed--item doesn't exist" );
+    		return false;
     	}
-    	synchronized (item) {
-    		Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-    		item.setReserved(item.getReserved()-1);
-    		item.setCount(item.getCount()+1);
-    		return true;
-    	}
+    	Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+    	item.setReserved(item.getReserved()-1);
+    	item.setCount(item.getCount()+1);
+    	return true;
     }
 
     // query the number of available seats/rooms/cars
@@ -132,25 +126,23 @@ public abstract class RMBaseImpl implements RMBase {
     // we acquired the lock (but after we retrieved the object).
     // Returns the price of the item in a nullable integer using RMInteger.
     public RMInteger reserveItem(int id, int customerID, String key, String location)
-    	throws RemoteException {
+    		throws RemoteException {
     	ReservableItem item = (ReservableItem)readData(id, key);
     	if ( item == null ) {
-			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
-			return null;
+    		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
+    		return null;
     	}
-    	synchronized (item) {
-    		if (item.getCount()==0) {
-    			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
-    			return null;
-    		} else if (item.isDeleted()) {
-    			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--item has been deleted" );
-    			return null;
-    		} else {            
-    			// decrease the number of available items in the storage
-    			item.setCount(item.getCount() - 1);
-    			item.setReserved(item.getReserved()+1);
-    			return new RMInteger(item.getPrice());
-    		}
+    	if (item.getCount()==0) {
+    		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
+    		return null;
+    	} else if (item.isDeleted()) {
+    		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--item has been deleted" );
+    		return null;
+    	} else {            
+    		// decrease the number of available items in the storage
+    		item.setCount(item.getCount() - 1);
+    		item.setReserved(item.getReserved()+1);
+    		return new RMInteger(item.getPrice());
     	}
     }
     
