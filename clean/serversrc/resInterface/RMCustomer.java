@@ -4,8 +4,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import serversrc.resImpl.Customer;
+import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.RMHashtable;
 import serversrc.resImpl.ReservedItem;
+import serversrc.resImpl.TransactionAbortedException;
 
 /**
  *	This Interface is made to guarantee to the middleware the 
@@ -38,4 +40,23 @@ public interface RMCustomer extends Remote {
 
 	public boolean unreserve(int id, int cid, ReservedItem item)
 			throws RemoteException;
+	
+	/**
+	 * Commits the transaction with transactionID
+	 * @param transactionID is the transaction to be committed
+	 * @return true if commit is a success. 
+	 * @throws RemoteException -rmi
+	 * @throws TransactionAbortedException 
+	 * @throws InvalidTransactionException 
+	 */
+	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+	
+	
+	/**
+	 * Aborts the transaction with transactionID
+	 * @param transactionID
+	 * @throws RemoteException -rmi
+	 * @throws InvalidTransactionException 
+	 */
+	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
 }

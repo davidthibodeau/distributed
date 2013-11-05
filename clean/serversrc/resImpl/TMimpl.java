@@ -19,25 +19,25 @@ public class TMimpl implements TransactionManager {
 	private RMHashtable transactionHT;
 	
     // Reads a data item
-    private Transaction readData( int id, String key )
+    private Transaction readData(int id)
     {
         synchronized(transactionHT) {
-            return (Transaction) transactionHT.get(key);
+            return (Transaction) transactionHT.get(id);
         }
     }
 
     // Writes a data item
-    private void writeData( int id, String key, Transaction value )
+    private void writeData( int id, Transaction value )
     {
         synchronized(transactionHT) {
-            transactionHT.put(key, value);
+            transactionHT.put(id, value);
         }
     }
     
     // Remove the item out of storage
-    protected Transaction removeData(int id, String key) {
+    protected Transaction removeData(int id) {
         synchronized(transactionHT) {
-            return (Transaction)transactionHT.remove(key);
+            return (Transaction)transactionHT.remove(id);
         }
     }
 	
@@ -54,25 +54,55 @@ public class TMimpl implements TransactionManager {
 		// Generate a globally unique ID for the new transaction
         int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                                    String.valueOf( Math.round( Math.random() * 100 + 1 )));
-        
-		return 0;
+        writeData(tid, new Transaction(tid));
+		return tid;
 	}
 
 	@Override
 	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
-		// TODO Auto-generated method stub
-		return false;
+		Transaction t = removeData(transactionID);
+		if(t.isCarEnlisted())
+			rmCar.commit(transactionID);
+		if(t.isFlightEnlisted())
+			rmFlight.commit(transactionID);
+		if(t.isHotelEnlisted())
+			rmHotel.commit(transactionID);
+		if(t.isCustomerEnlisted())
+			rmCustomer.commit(transactionID);
+		return true;
 	}
 
 	@Override
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException {
-		// TODO Auto-generated method stub
-
+		Transaction t = removeData(transactionID);
+		if(t.isCarEnlisted())
+			rmCar.abort(transactionID);
+		if(t.isFlightEnlisted())
+			rmFlight.abort(transactionID);
+		if(t.isHotelEnlisted())
+			rmHotel.abort(transactionID);
+		if(t.isCustomerEnlisted())
+			rmCustomer.abort(transactionID);
+		
 	}
 
 	@Override
 	public void enlist(int transactionID, RMType rm) {
-		// TODO Auto-generated method stub
+		Transaction t = readData(transactionID);
+		switch(rm){
+		case CAR:
+			t.enlistCar();
+			break;
+		case FLIGHT:
+			t.enlistFlight();
+			break;
+		case HOTEL:
+			t.enlistHotel();
+			break;
+		case CUSTOMER:
+			t.enlistCustomer();
+			break;
+		}
 
 	}
 
