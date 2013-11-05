@@ -80,74 +80,136 @@ public class Middleware implements ResourceManager {
     }
 
 	@Override
-	public boolean addFlight(int id, int flightNum, int flightSeats,
-			int flightPrice) throws RemoteException {
-
+	public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+		acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
 		return rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
 	public boolean addCars(int id, String location, int numCars, int price)
-			throws RemoteException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
+			return rmCar.addCars(id, location, numCars, price);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 
-		return rmCar.addCars(id, location, numCars, price);
 	}
 
 	@Override
 	public boolean addRooms(int id, String location, int numRooms, int price)
-			throws RemoteException {
-
-		return rmHotel.addRooms(id, location, numRooms, price);
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
+			return rmHotel.addRooms(id, location, numRooms, price);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public int newCustomer(int id) throws RemoteException {
-		
-		return rmCustomer.newCustomer(id);
+	/*
+	 * This function will make the request then acquire a Write lock for it. 
+	 * Since newCustomer generates a new unique cid, there is not any lock for it yet.
+	 */
+	public int newCustomer(int id) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException{
+		try{
+			int cid = rmCustomer.newCustomer(id);
+			acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			return cid;
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public boolean newCustomer(int id, int cid) throws RemoteException {
-		
-		return rmCustomer.newCustomer(id, cid);
+	public boolean newCustomer(int id, int cid)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException{
+		try{
+			acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			return rmCustomer.newCustomer(id, cid);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
-		
-		return rmFlight.deleteFlight(id, flightNum);
+	public boolean deleteFlight(int id, int flightNum) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
+			return rmFlight.deleteFlight(id, flightNum);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public boolean deleteCars(int id, String location) throws RemoteException {
-		
-		return rmCar.deleteCars(id, location);
+	public boolean deleteCars(int id, String location)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
+			return rmCar.deleteCars(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
-	public boolean deleteRooms(int id, String location) throws RemoteException {
-		
-		return rmHotel.deleteRooms(id, location);
+	public boolean deleteRooms(int id, String location)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
+			return rmHotel.deleteRooms(id, location);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}		
 	}
 
 	@Override
-	public boolean deleteCustomer(int id, int customer) throws RemoteException {
-		
-		RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
-		 for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
-             String reservedkey = (String) (e.nextElement());
-             ReservedItem reserveditem = (ReservedItem) reservationHT.get( reservedkey );
-             Trace.info("RM::deleteCustomer(" + id + ", " + customer + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
-             
-             if (reserveditem.getrType() == ReservedItem.rType.FLIGHT)
-            	 rmFlight.unreserveItem(id, reserveditem);
-             else if (reserveditem.getrType() == ReservedItem.rType.CAR)
-            	 rmCar.unreserveItem(id, reserveditem);
-             else if (reserveditem.getrType() == ReservedItem.rType.ROOM)
-            	 rmHotel.unreserveItem(id, reserveditem);
-             
-         }
-		
+	public boolean deleteCustomer(int id, int customer)
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		try{
+			acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
+			RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
+			for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
+				String reservedkey = (String) (e.nextElement());
+				ReservedItem reserveditem = (ReservedItem) reservationHT.get( reservedkey );
+				Trace.info("RM::deleteCustomer(" + id + ", " + customer + ") has reserved " 
+						+ reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
+
+				String key = reserveditem.getKey();
+				if (reserveditem.getrType() == ReservedItem.rType.FLIGHT){
+					acquireLock(id, RMType.FLIGHT, key, LockManager.WRITE);
+					rmFlight.unreserveItem(id, reserveditem);
+				} else if (reserveditem.getrType() == ReservedItem.rType.CAR){
+					acquireLock(id, RMType.CAR, key, LockManager.WRITE);
+					rmCar.unreserveItem(id, reserveditem);
+				}else if (reserveditem.getrType() == ReservedItem.rType.ROOM){
+					acquireLock(id, RMType.HOTEL, key, LockManager.WRITE);
+					rmHotel.unreserveItem(id, reserveditem);
+				}
+			}
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}		
+
 		return true;
 	}
 
@@ -382,27 +444,53 @@ public class Middleware implements ResourceManager {
 	}
 
 	@Override
-	public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+	public boolean commit(int id) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public void abort(int id) throws RemoteException, InvalidTransactionException {
+	public void abort(int id) 
+			throws RemoteException, InvalidTransactionException {
 		// TODO Auto-generated method stub
 	}
 	
-	// This function should probably abort if lock cannot be obtained.
-	private boolean acquireLock(int id, RMType type, String object, int lockType) {
+	/*
+	 * lock.Lock will return false only if informations are incorrect.
+	 * The only information that can fail is the id that is provided by the user.
+	 * Hence InvalidTransactionException is raised.
+	 */
+	private boolean acquireLock(int id, RMType type, String key, int lockType) 
+			throws TransactionAbortedException, InvalidTransactionException {
 		try {
-			if (lock.Lock(id, type.toString() + object, lockType)) {
-			return true;
+
+			if (lock.Lock(id, key, lockType)) {
+				if(lockType == LockManager.WRITE)
+					tm.enlist(id, type);
+				return true;
 			} else{
-				return false;
+				throw new InvalidTransactionException();
 			}
 		} catch (DeadlockException e) {
-			return false;
+			throw new TransactionAbortedException(id);
 		}
 	}
-	
+
+	private String createKey(RMType type, String object){
+		String key = null;
+		switch(type){
+		case CAR:
+			key = Car.getKey(object);
+			break;
+		case FLIGHT:
+			key = Flight.getKey(Integer.parseInt(object));
+			break;
+		case HOTEL:
+			key = Hotel.getKey(object);
+		case CUSTOMER:
+			key = Customer.getKey(Integer.parseInt(object));
+		}
+		return key;
+	}
 }
