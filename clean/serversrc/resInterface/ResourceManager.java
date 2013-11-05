@@ -51,7 +51,7 @@ public interface ResourceManager extends Remote
     
     /* reserve a car at this location */
     public boolean reserveCar(int id, int customer, String location) 
-	throws RemoteException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
     
 	/* Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.
@@ -86,7 +86,7 @@ public interface ResourceManager extends Remote
     
     /* Reserve a seat on this flight*/
     public boolean reserveFlight(int id, int customer, int flightNumber) 
-	throws RemoteException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
     
     /* Add rooms to a location.  
      * This should look a lot like addFlight, only keyed on a string location
@@ -113,7 +113,7 @@ public interface ResourceManager extends Remote
  
     /* reserve a room certain at this location */
     public boolean reserveRoom(int id, int customer, String locationd) 
-	throws RemoteException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
 	
 	/* new customer just returns a unique customer identifier */
     public int newCustomer(int id) 
@@ -133,7 +133,7 @@ public interface ResourceManager extends Remote
 			    			    
     /* reserve an itinerary */
     public boolean itinerary(int id, int customer, Vector flightNumbers, String location, boolean Car, boolean Room)
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     
 	/**

@@ -48,7 +48,6 @@ public abstract class RMBaseImpl implements RMBase {
         }
     }
     
-    
     // deletes the entire item
     protected boolean deleteItem(int id, String key) throws InvalidTransactionException, TransactionAbortedException
     {
@@ -132,7 +131,7 @@ public abstract class RMBaseImpl implements RMBase {
     		return new RMInteger(item.getPrice());
     	}
     }
-    
+
     public boolean commit(int id) throws RemoteException, InvalidTransactionException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){

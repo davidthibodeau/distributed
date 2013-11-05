@@ -300,62 +300,76 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean reserveFlight(int id, int customer, int flightNum)
-			throws RemoteException {
-		ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum), String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
-		return (item != null);
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+		try{
+			ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum), String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
+			return (item != null);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
 	public boolean reserveCar(int id, int customer, String location)
-			throws RemoteException {
-		ReservedItem item = reserveItem(id, customer, Car.getKey(location), location, ReservedItem.rType.CAR);
-		return (item != null);
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+		try{
+			ReservedItem item = reserveItem(id, customer, Car.getKey(location), location, ReservedItem.rType.CAR);
+			return (item != null);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
 
 	@Override
 	public boolean reserveRoom(int id, int customer, String location)
-			throws RemoteException {
-		ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location, ReservedItem.rType.ROOM);
-		return (item != null);
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
+		try{
+			ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location, ReservedItem.rType.ROOM);
+			return (item != null);
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
 	}
-				
+
 	@Override
-	public boolean itinerary(int id, int customer, Vector flightNumbers,
-			String location, boolean car, boolean room) throws RemoteException {
+	public boolean itinerary(int id, int customer, Vector flightNumbers,String location, boolean car, boolean room) 
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
-					", " + car + ", " + room + " ) called" );        
-        // Read customer object if it exists (and read lock it)
-        Customer cust = rmCustomer.getCustomer(id, customer);
-        if ( cust == null ) {
-        	Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
-					", " + car + ", " + room + " ) -- Customer non existent, adding it." );
-        	return false;
-        }
-        if (car){
-        	reserveItem(id, customer, Car.getKey(location) ,location, ReservedItem.rType.CAR);
-        }
-        if (room){
-        	reserveItem(id, customer, Hotel.getKey(location) ,location, ReservedItem.rType.ROOM);
-        }
-        Vector flightsDone = new Vector();
-        for (Enumeration e = flightNumbers.elements(); e.hasMoreElements();) {
-        	int flightnum = 0;
-        	try {
-        		flightnum = getInt(e.nextElement());
-        	} catch(Exception ex) {
-        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
-    					", " + car + ", " + room + " ) -- Expected FlightNumber was not a valid integer. Exception "
-    					+ ex + " cached");
-        		return false;
-        	}
-        	ReservedItem reservedFlight = reserveItem(id, customer, Flight.getKey(flightnum), String.valueOf(flightnum), ReservedItem.rType.FLIGHT);
-        	if (reservedFlight == null){
-        		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
-    					", " + car + ", " + room + " ) -- flight could not have been reserved." );
-        		return false;
-        	}
-        	flightsDone.add(reservedFlight);	
-        }
+				", " + car + ", " + room + " ) called" );        
+		// Read customer object if it exists (and read lock it)
+		try{
+			if (car){
+				reserveItem(id, customer, Car.getKey(location) ,location, ReservedItem.rType.CAR);
+			}
+			if (room){
+				reserveItem(id, customer, Hotel.getKey(location) ,location, ReservedItem.rType.ROOM);
+			}
+			Vector flightsDone = new Vector();
+			for (Enumeration e = flightNumbers.elements(); e.hasMoreElements();) {
+				int flightnum = 0;
+				try {
+					flightnum = getInt(e.nextElement());
+				} catch(Exception ex) {
+					Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
+							", " + car + ", " + room + " ) -- Expected FlightNumber was not a valid integer. Exception "
+							+ ex + " cached");
+					return false;
+				}
+				ReservedItem reservedFlight = reserveItem(id, customer, Flight.getKey(flightnum), String.valueOf(flightnum), ReservedItem.rType.FLIGHT);
+				if (reservedFlight == null){
+					Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
+							", " + car + ", " + room + " ) -- flight could not have been reserved." );
+					return false;
+				}
+				flightsDone.add(reservedFlight);	
+			}
+		} catch (TransactionAbortedException i) {
+			abort(id);
+			throw new TransactionAbortedException(id);
+		}
         	
 		return true;
 	}
@@ -380,9 +394,10 @@ public class Middleware implements ResourceManager {
 
 	 */
 	protected ReservedItem reserveItem(int id, int customerID, String key, String location, ReservedItem.rType rtype)
-			throws RemoteException {
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException  {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ ", "+location+" ) called" );        
 		// Verifies if customer exists
+		acquireLock(id, RMType.CUSTOMER, Customer.getKey(customerID), LockManager.WRITE);
 		Customer cust = rmCustomer.getCustomer(id, customerID);
 		if ( cust == null ) {
 			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key + ", "+location+")  failed--customer doesn't exist" );
@@ -391,13 +406,16 @@ public class Middleware implements ResourceManager {
 
 		RMInteger price = null;
 		// check if the item is available
-		if (rtype == ReservedItem.rType.CAR)
+		if (rtype == ReservedItem.rType.CAR){ 
+			acquireLock(id, RMType.CAR, key, LockManager.WRITE);
 			price = rmCar.reserveItem(id, customerID, key, location);
-		else if (rtype == ReservedItem.rType.FLIGHT)
+		} else if (rtype == ReservedItem.rType.FLIGHT) { 
+			acquireLock(id, RMType.FLIGHT, key, LockManager.WRITE);
 			price = rmFlight.reserveItem(id, customerID, key, location);
-		else if (rtype == ReservedItem.rType.ROOM)
+		} else if (rtype == ReservedItem.rType.ROOM) {
+			acquireLock(id, RMType.HOTEL, key, LockManager.WRITE);
 			price = rmHotel.reserveItem(id, customerID, key, location);
-
+		}
 		if ( price == null ) {
 			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed-- Object RM returned false." );
 			return null;
@@ -409,13 +427,7 @@ public class Middleware implements ResourceManager {
 				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") succeeded" );
 				return item;
 			} else {
-				Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") failed -- Customer has been deleted!" );
-				if (rtype == ReservedItem.rType.CAR)
-					rmCar.unreserveItem(id, key);
-				else if (rtype == ReservedItem.rType.FLIGHT)
-					rmFlight.unreserveItem(id, key);
-				else if (rtype == ReservedItem.rType.ROOM)
-					rmHotel.unreserveItem(id, key);
+
 			}
 			return null;
 
