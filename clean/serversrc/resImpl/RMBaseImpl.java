@@ -50,13 +50,13 @@ public abstract class RMBaseImpl implements RMBase {
     
     
     // deletes the entire item
-    protected boolean deleteItem(int id, String key)
+    protected boolean deleteItem(int id, String key) throws InvalidTransactionException, TransactionAbortedException
     {
         Trace.info("RM::deleteItem(" + id + ", " + key + ") called" );
         ReservableItem curObj = (ReservableItem) readData( id, key );
     	if ( curObj == null ) {
 			Trace.warn("RM::deleteItem( " + id + ", "  + key+") failed--item doesn't exist" );
-			return false;
+			throw new InvalidTransactionException();
     	}
     	if (curObj.getReserved()==0) {
     		removeData(id, curObj.getKey());
@@ -65,7 +65,7 @@ public abstract class RMBaseImpl implements RMBase {
     	}
     	else {
     		Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
-    		return false;
+    		throw new TransactionAbortedException(id);
     	}
     }
     

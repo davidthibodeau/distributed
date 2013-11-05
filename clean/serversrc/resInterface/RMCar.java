@@ -4,6 +4,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import serversrc.resImpl.InvalidTransactionException;
+import serversrc.resImpl.TransactionAbortedException;
+
 public interface RMCar extends RMBase, Remote {
 
     /* Add cars to a location.  
@@ -19,7 +22,7 @@ public interface RMCar extends RMBase, Remote {
      * @return success
      */		    
     public boolean deleteCars(int id, String location) 
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the number of cars available at a location */
     public int queryCars(int id, String location) 

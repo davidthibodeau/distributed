@@ -4,6 +4,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import serversrc.resImpl.InvalidTransactionException;
+import serversrc.resImpl.TransactionAbortedException;
+
 public interface RMHotel extends Remote, RMBase {
 
 	/* Add rooms to a location.  
@@ -19,7 +22,7 @@ public interface RMHotel extends Remote, RMBase {
      * @return success
      */
     public boolean deleteRooms(int id, String location) 
-	throws RemoteException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the number of rooms available at a location */
     public int queryRooms(int id, String location) 
