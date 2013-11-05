@@ -383,21 +383,19 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int start() throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+		return tm.start();
 	}
 
 	@Override
 	public boolean commit(int id) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
-		// TODO Auto-generated method stub
-		return false;
+		return tm.commit(id);
 	}
 
 	@Override
 	public void abort(int id) 
 			throws RemoteException, InvalidTransactionException {
-		// TODO Auto-generated method stub
+		tm.abort(id);
 	}
 	
 	/*
