@@ -5,21 +5,16 @@ import java.util.Enumeration;
 
 import serversrc.resInterface.*;
 
-public class RMBaseImpl implements RMBase {
+public abstract class RMBaseImpl implements RMBase {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	protected RMHashtable m_transactionHT = new RMHashtable();
 
     // Reads a data item
-    private RMItem readData( int id, String key )
-    {
-        synchronized(m_itemHT) {
-            return (RMItem) m_itemHT.get(key);
-        }
-    }
-
+    protected abstract RMItem readData( int id, String key );
+    
     // Writes a data item
-    private void writeData( int id, String key, RMItem value )
+    protected void registerData( int id, String key, RMItem value )
     {
         synchronized(m_itemHT) {
             m_itemHT.put(key, value);
@@ -27,9 +22,29 @@ public class RMBaseImpl implements RMBase {
     }
     
     // Remove the item out of storage
-    protected RMItem removeData(int id, String key) {
+    protected RMItem deleteData(int id, String key) {
         synchronized(m_itemHT) {
             return (RMItem)m_itemHT.remove(key);
+        }
+    }
+
+    // Writes a data item
+    protected void writeData( int id, String key, RMItem value )
+    {
+        synchronized(m_transactionHT) {
+        	RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+            trHT.put(key, value);
+        }
+    }
+    
+    // Remove the item out of storage
+    protected RMItem removeData(int id, String key) {
+        synchronized(m_transactionHT) {
+        	RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+        	RMItem item = (RMItem)readData(id, key);
+        	item.setDeleted(true);
+        	writeData(id, key, item);
+            return item;
         }
     }
     
@@ -46,7 +61,6 @@ public class RMBaseImpl implements RMBase {
     	synchronized (curObj) {
     		if (curObj.getReserved()==0) {
     			removeData(id, curObj.getKey());
-    			curObj.setDeleted(true);
     			Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
     			return true;
     		}
@@ -152,9 +166,9 @@ public class RMBaseImpl implements RMBase {
     	for(Enumeration<Object> i = transaction.elements(); i.hasMoreElements(); ){
     		ReservableItem item = (ReservableItem) i.nextElement();
     		if(item.isDeleted())
-    			removeData(id, item.getKey());
+    			deleteData(id, item.getKey());
     		else
-    			writeData(id,item.getKey(), item);
+    			registerData(id,item.getKey(), item);
     	}
     	return true;
     }

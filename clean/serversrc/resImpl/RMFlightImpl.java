@@ -48,24 +48,22 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
         }
     }
 	
+    protected RMItem readData( int id, String key )
+    {
+    	synchronized(m_transactionHT){
+    		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+    		RMItem item = (RMItem) trHT.get(key);
+    		if(item != null)
+    			return item;
+    	}
+        synchronized(m_itemHT) {
+            return new Flight((Flight) m_itemHT.get(key));
+        }
+    }
+	
 	public RMFlightImpl() throws RemoteException {
 		
 	}
-	
-	private RMItem readData( int id, String key )
-    {
-        synchronized(m_itemHT) {
-            return (RMItem) m_itemHT.get(key);
-        }
-    }
-
-    // Writes a data item
-    private void writeData( int id, String key, RMItem value )
-    {
-        synchronized(m_itemHT) {
-            m_itemHT.put(key, value);
-        }
-    }
 	
     // Create a new flight, or add seats to existing flight
     //  NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price

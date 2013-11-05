@@ -47,25 +47,22 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
         }
     }
 	
+    protected RMItem readData( int id, String key )
+    {
+    	synchronized(m_transactionHT){
+    		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+    		RMItem item = (RMItem) trHT.get(key);
+    		if(item != null)
+    			return item;
+    	}
+        synchronized(m_itemHT) {
+            return new Hotel((Hotel) m_itemHT.get(key));
+        }
+    }
+	
 	public RMHotelImpl() throws RemoteException {
 	
 	}
-	
-	// Reads a data item
-    private RMItem readData( int id, String key )
-    {
-        synchronized(m_itemHT) {
-            return (RMItem) m_itemHT.get(key);
-        }
-    }
-
-    // Writes a data item
-    private void writeData( int id, String key, RMItem value )
-    {
-        synchronized(m_itemHT) {
-            m_itemHT.put(key, value);
-        }
-    }
 	
     // Create a new room location or add rooms to an existing location
     //  NOTE: if price <= 0 and the room location already exists, it maintains its current price
