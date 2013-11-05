@@ -19,61 +19,63 @@ public class Middleware implements ResourceManager {
 	RMCustomer rmCustomer;
 	LockManager lock;
 	TransactionManager tm;
-	
+
 	public static void main(String args[]) {
-        // Figure out where server is running
-        String server = "localhost";
-        int port = 1099;
-        Registry registry;
-        if (args.length == 5) {
-            server = server + ":" + args[4];
-            port = Integer.parseInt(args[4]); 
-        } else {
-            System.err.println ("Wrong usage");
-            System.out.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel rmCustomer [port]");
-            System.exit(1);
-        }
+		// Figure out where server is running
+		String server = "localhost";
+		int port = 1099;
+		Registry registry;
+		if (args.length == 5) {
+			server = server + ":" + args[4];
+			port = Integer.parseInt(args[4]); 
+		} else {
+			System.err.println ("Wrong usage");
+			System.out.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel rmCustomer [port]");
+			System.exit(1);
+		}
 
-        try {
-            // create a new Server object
-            // dynamically generate the stub (client proxy)
-        	Middleware obj = new Middleware();
-        	obj.lock = new LockManager();
-            ResourceManager rm = (ResourceManager) UnicastRemoteObject.exportObject(obj, 0);
-            // get a reference to the rmiregistry
-            registry = LocateRegistry.getRegistry(args[0], port);
-            // get the proxy and the remote reference by rmiregistry lookup
-            obj.rmCar = (RMCar) registry.lookup("Group2RMCar");
-            registry = LocateRegistry.getRegistry(args[1], port);
-            obj.rmFlight = (RMFlight) registry.lookup("Group2RMFlight");
-            registry = LocateRegistry.getRegistry(args[2], port);
-            obj.rmHotel = (RMHotel) registry.lookup("Group2RMHotel");
-            registry = LocateRegistry.getRegistry(args[3], port);
-            obj.rmCustomer = (RMCustomer) registry.lookup("Group2RMCustomer");
-            if(obj.rmCar!=null && obj.rmFlight != null && obj.rmHotel!=null)
-            {
-            	System.out.println("Successful");
-            	System.out.println("Connected to RMs");
-            }
-            else
-            {
-            	System.out.println("Unsuccessful");
-            }
+		try {
+			// create a new Server object
+			// dynamically generate the stub (client proxy)
+			Middleware obj = new Middleware();
+			ResourceManager rm = (ResourceManager) UnicastRemoteObject.exportObject(obj, 0);
+			// get a reference to the rmiregistry
+			registry = LocateRegistry.getRegistry(args[0], port);
+			// get the proxy and the remote reference by rmiregistry lookup
+			obj.rmCar = (RMCar) registry.lookup("Group2RMCar");
+			registry = LocateRegistry.getRegistry(args[1], port);
+			obj.rmFlight = (RMFlight) registry.lookup("Group2RMFlight");
+			registry = LocateRegistry.getRegistry(args[2], port);
+			obj.rmHotel = (RMHotel) registry.lookup("Group2RMHotel");
+			registry = LocateRegistry.getRegistry(args[3], port);
+			obj.rmCustomer = (RMCustomer) registry.lookup("Group2RMCustomer");
+			if(obj.rmCar!=null && obj.rmFlight != null && obj.rmHotel!=null)
+			{
+				System.out.println("Successful");
+				System.out.println("Connected to RMs");
+				obj.lock = new LockManager();
+				obj.tm = new TMimpl(obj.rmCar, obj.rmFlight, obj.rmHotel, obj.rmCustomer);
+			}
+			else
+			{
+				System.out.println("Unsuccessful");
+				System.exit(1);
+			}
 
-            // Bind the remote object's stub in the registry
-	    registry = LocateRegistry.getRegistry(port);
-            registry = LocateRegistry.getRegistry(port);
-            registry.rebind("Group2Middleware", rm);
+			// Bind the remote object's stub in the registry
+			registry = LocateRegistry.getRegistry(port);
+			registry = LocateRegistry.getRegistry(port);
+			registry.rebind("Group2Middleware", rm);
 
-            System.err.println("Server ready");
-        } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
-            e.printStackTrace();
-        }
+			System.err.println("Server ready");
+		} catch (Exception e) {
+			System.err.println("Server exception: " + e.toString());
+			e.printStackTrace();
+		}
 
-        // Create and install a security manager
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
+		// Create and install a security manager
+		if (System.getSecurityManager() == null) {
+			System.setSecurityManager(new RMISecurityManager());
         }
     }
 
@@ -391,7 +393,7 @@ public class Middleware implements ResourceManager {
 	}
 	
 	// This function should probably abort if lock cannot be obtained.
-	private boolean acquireLock(int id, RMType type, String object, int lockType){
+	private boolean acquireLock(int id, RMType type, String object, int lockType) {
 		try {
 			if (lock.Lock(id, type.toString() + object, lockType)) {
 			return true;
