@@ -68,19 +68,6 @@ public abstract class RMBaseImpl implements RMBase {
     		throw new TransactionAbortedException(id);
     	}
     }
-    
-    public boolean unreserveItem(int id, ReservedItem reserveditem)
-    		throws RemoteException{
-    	ReservableItem item = (ReservableItem) readData(id, reserveditem.getKey());
-    	if ( item == null ) {
-			Trace.warn("RM::reserveItem( " + id + ", "  + reserveditem+") failed--item doesn't exist" );
-			return false;
-    	}
-    	Trace.info("RM::unreserveItem(" + id + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-    	item.setReserved(item.getReserved()-reserveditem.getCount());
-    	item.setCount(item.getCount()+reserveditem.getCount());
-    	return true;
-    }
 
     //This function is called to cancel a reservation done at the same time the customer is deleted
     public boolean unreserveItem(int id, String key)

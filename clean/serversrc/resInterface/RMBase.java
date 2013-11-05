@@ -9,9 +9,6 @@ import serversrc.resImpl.ReservedItem;
 import serversrc.resImpl.TransactionAbortedException;
 
 public interface RMBase extends Remote {
-
-	public boolean unreserveItem(int id, ReservedItem reserveditem)
-		throws RemoteException;
 	
 	public boolean unreserveItem(int id, String key)
 			throws RemoteException;

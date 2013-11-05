@@ -196,13 +196,13 @@ public class Middleware implements ResourceManager {
 				String key = reserveditem.getKey();
 				if (reserveditem.getrType() == ReservedItem.rType.FLIGHT){
 					acquireLock(id, RMType.FLIGHT, key, LockManager.WRITE);
-					rmFlight.unreserveItem(id, reserveditem);
+					rmFlight.unreserveItem(id, reserveditem.getKey());
 				} else if (reserveditem.getrType() == ReservedItem.rType.CAR){
 					acquireLock(id, RMType.CAR, key, LockManager.WRITE);
-					rmCar.unreserveItem(id, reserveditem);
+					rmCar.unreserveItem(id, reserveditem.getKey());
 				}else if (reserveditem.getrType() == ReservedItem.rType.ROOM){
 					acquireLock(id, RMType.HOTEL, key, LockManager.WRITE);
-					rmHotel.unreserveItem(id, reserveditem);
+					rmHotel.unreserveItem(id, reserveditem.getKey());
 				}
 			}
 		} catch (TransactionAbortedException i) {
