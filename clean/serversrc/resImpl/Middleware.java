@@ -461,6 +461,7 @@ public class Middleware implements ResourceManager {
 		try {
 
 			if (lock.Lock(id, key, lockType)) {
+				tm.lives(id);
 				if(lockType == LockManager.WRITE)
 					tm.enlist(id, type);
 				return true;
