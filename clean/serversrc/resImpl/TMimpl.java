@@ -1,14 +1,12 @@
 package serversrc.resImpl;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import serversrc.resInterface.RMCar;
-import serversrc.resInterface.RMCustomer;
-import serversrc.resInterface.RMFlight;
-import serversrc.resInterface.RMHotel;
-import serversrc.resInterface.RMType;
-import serversrc.resInterface.TransactionManager;
+import serversrc.resInterface.*;
 
 public class TMimpl implements TransactionManager {
 	
@@ -107,8 +105,137 @@ public class TMimpl implements TransactionManager {
 			t.enlistCustomer();
 			break;
 		}
+	}
+	
+	public void lives(int id){
+		Transaction tr = readData(id);
+		tr.resetTTL();
+	}
+	
+	
+	/**
+	 * Defines the type of transactions as kept in
+	 * the hashtable. This class lives as a subclass to
+	 * be able to have the TTL as a field and have the
+	 * TTL call abort when delay is passed to abort the
+	 * transaction
+	 *
+	 */
+	@SuppressWarnings("serial")
+	public class Transaction implements Serializable {
+
+		private boolean carEnlisted = false;
+		private boolean hotelEnlisted = false;
+		private boolean flightEnlisted = false;
+		private boolean customerEnlisted = false;
+		private TimeToLive ttl;
+		private int id;
+		
+		public Transaction (int id){
+			this.id = id;
+			ttl = new TimeToLive();
+		}
+		
+		public int getID (){
+			return id;
+		}
+		
+		class TimeToLive {
+
+			private Timer timer;
+			private final long life = 600; //in seconds; 10 min.
+
+			TimeToLive() {
+				timer = new Timer();
+				timer.schedule(new RemindTask(), life*1000);
+			}
+
+			class RemindTask extends TimerTask {
+				public void run() {
+					try {
+						abort(id);
+					} catch (RemoteException e) {
+						// Should not happen
+						e.printStackTrace();
+					} catch (InvalidTransactionException e) {
+						// Should not happen
+						e.printStackTrace();
+					}
+					timer.cancel(); //Terminate the timer thread
+				}
+			}	
+			
+			void reset(){
+				timer.cancel();
+				timer = new Timer();
+				timer.schedule(new RemindTask(), life*1000);
+			}
+		}
+
+		void resetTTL(){
+			ttl.reset();
+		}
+		
+		
+		/**
+		 * Tells whether RMCar is enlisted
+		 */
+		public boolean isCarEnlisted() {
+			return carEnlisted;
+		}
+		
+		/**
+		 * Adds RMCar to the list of enlisted RMs
+		 */
+		public void enlistCar() {
+			this.carEnlisted = true;
+		}
+
+		/**
+		 * Tells whether RMHotel is enlisted
+		 */
+		public boolean isHotelEnlisted() {
+			return hotelEnlisted;
+		}
+
+		/**
+		 * Adds RMHotel to the list of enlisted RMs
+		 */
+		public void enlistHotel() {
+			this.hotelEnlisted = true;
+		}
+
+		/**
+		 * Tells whether RMFlight is enlisted
+		 */
+		public boolean isFlightEnlisted() {
+			return flightEnlisted;
+		}
+
+		/**
+		 * Adds RMFlight to the list of enlisted RMs
+		 */
+		public void enlistFlight() {
+			this.flightEnlisted = true;
+		}
+
+		/**
+		 * Tells whether RMCustomer is enlisted
+		 */
+		public boolean isCustomerEnlisted() {
+			return customerEnlisted;
+		}
+
+		/**
+		 * Adds RMCustomer to the list of enlisted RMs
+		 */
+		public void enlistCustomer() {
+			this.customerEnlisted = true;
+		}
 
 	}
 
-
+	
+	
+	
 }
