@@ -4,7 +4,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
-import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.TransactionAbortedException;
 
 public interface RMFlight extends Remote, RMBase {
@@ -26,6 +25,7 @@ public interface RMFlight extends Remote, RMBase {
      *   then the flight cannot be deleted
      *
      * @return success.
+     * @throws RemoteException 
      * @throws TransactionAbortedException 
      */   
     public boolean deleteFlight(int id, int flightNum) 

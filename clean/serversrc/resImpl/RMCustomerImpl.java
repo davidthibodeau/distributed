@@ -82,7 +82,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	}
 	
 	@Override
-	public boolean newCustomer(int id, int cid) throws RemoteException {
+	public boolean newCustomer(int id, int cid) throws RemoteException, TransactionAbortedException {
 	    {
 	    	Trace.info("INFO: RM::newCustomer(" + id + ", " + cid + ") called" );
 	        Customer cust = (Customer) readData( id, Customer.getKey(cid) );
@@ -93,7 +93,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	            return true;
 	        } else {
 	            Trace.info("INFO: RM::newCustomer(" + id + ", " + cid + ") failed--customer already exists");
-	            return false;
+	            throw new TransactionAbortedException(id);
 	        } // else
 		}
 	}
@@ -102,13 +102,13 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	/**
 	 * Must remove all reserved items of that customer as well. 
 	 */
-	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException {
+	public RMHashtable deleteCustomer(int id, int customerID) throws RemoteException, TransactionAbortedException {
 		
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
 		Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
 		if ( cust == null ) {
 			Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-			return null;
+			throw new TransactionAbortedException(id);
 		}
 		RMHashtable reservationHT = null;          
 		// Increase the reserved numbers of all reservable items which the customer reserved. 
@@ -126,13 +126,13 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     //  customer doesn't exist. Returns empty RMHashtable if customer exists but has no
     //  reservations.
     public RMHashtable getCustomerReservations(int id, int customerID)
-        throws RemoteException
+        throws RemoteException, TransactionAbortedException
     {
         Trace.info("RM::getCustomerReservations(" + id + ", " + customerID + ") called" );
         Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
         if ( cust == null ) {
             Trace.warn("RM::getCustomerReservations failed(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return null;
+            throw new TransactionAbortedException(id);
         } else {
             return cust.getReservations();
         } // if
@@ -145,13 +145,13 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 
     // return a bill
     public String queryCustomerInfo(int id, int customerID)
-        throws RemoteException
+        throws RemoteException, TransactionAbortedException
     {
         Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + ") called" );
         Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
         if ( cust == null ) {
             Trace.warn("RM::queryCustomerInfo(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return "";   // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
+            throw new TransactionAbortedException(id);
         } else {
                 String s = cust.printBill();
                 Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + "), bill follows..." );
@@ -161,22 +161,22 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     }
 
     public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
-    		throws RemoteException {
+    		throws RemoteException, TransactionAbortedException {
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
     	if (cust == null)
-    		return null;
+    		throw new TransactionAbortedException(id);
     	if (cust.isDeleted())
-    		return null;
+    		throw new TransactionAbortedException(id);
     	return cust.reserve(key, location, price, rtype);
     }
 
     public boolean unreserve(int id, int cid, ReservedItem item)
-    		throws RemoteException {
+    		throws RemoteException, TransactionAbortedException {
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
     	if (cust == null)
-    		return false;
+    		throw new TransactionAbortedException(id);
     	if (cust.isDeleted()) 
-    		return false;
+    		throw new TransactionAbortedException(id);
     	cust.unreserve(item.getKey());
     	return true;
     }

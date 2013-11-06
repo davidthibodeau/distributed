@@ -56,7 +56,7 @@ public abstract class RMBaseImpl implements RMBase {
         ReservableItem curObj = (ReservableItem) readData( id, key );
     	if ( curObj == null ) {
 			Trace.warn("RM::deleteItem( " + id + ", "  + key+") failed--item doesn't exist" );
-			return false;
+			throw new TransactionAbortedException(id);
     	}
     	if (curObj.getReserved()==0) {
     		removeData(id, curObj.getKey());
@@ -71,11 +71,11 @@ public abstract class RMBaseImpl implements RMBase {
 
     //This function is called to cancel a reservation done at the same time the customer is deleted
     public boolean unreserveItem(int id, String key)
-    		throws RemoteException{
+    		throws RemoteException, TransactionAbortedException{
     	ReservableItem item = (ReservableItem) readData(id, key);
     	if ( item == null ) {
     		Trace.warn("RM::reserveItem( " + id + ", "  + key+") failed--item doesn't exist" );
-    		return false;
+    		throw new TransactionAbortedException(id);
     	}
     	Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
     	item.setReserved(item.getReserved()-1);
@@ -113,18 +113,18 @@ public abstract class RMBaseImpl implements RMBase {
     // we acquired the lock (but after we retrieved the object).
     // Returns the price of the item in a nullable integer using RMInteger.
     public RMInteger reserveItem(int id, int customerID, String key, String location)
-    		throws RemoteException {
+    		throws RemoteException, TransactionAbortedException {
     	ReservableItem item = (ReservableItem)readData(id, key);
     	if ( item == null ) {
     		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
-    		return null;
+    		throw new TransactionAbortedException(id);
     	}
     	if (item.getCount()==0) {
     		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
-    		return null;
+    		throw new TransactionAbortedException(id);
     	} else if (item.isDeleted()) {
     		Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--item has been deleted" );
-    		return null;
+    		throw new TransactionAbortedException(id);
     	} else {            
     		// decrease the number of available items in the storage
     		item.setCount(item.getCount() - 1);

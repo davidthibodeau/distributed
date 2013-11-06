@@ -4,7 +4,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
-import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.TransactionAbortedException;
 
 public interface RMCar extends RMBase, Remote {
