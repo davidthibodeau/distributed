@@ -164,8 +164,11 @@ public abstract class RMBaseImpl implements RMBase {
     }
     
     public boolean shutdown() throws RemoteException {
-    	System.exit(0);
-    	return true;
+    	try {
+    		return true;
+    	} finally {
+    		System.exit(0);
+    	}
     }
 
 }

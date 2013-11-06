@@ -506,9 +506,11 @@ public class Middleware implements ResourceManager {
 			return true;
 		
 		shutdown = true;
-		boolean b = tm.shutdown();
-		System.exit(0);
-		return b;
+		try {
+			return tm.shutdown();
+		} finally {
+			System.exit(0);
+		}
 	}
 	
 	/*
