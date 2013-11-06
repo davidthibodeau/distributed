@@ -461,9 +461,8 @@ public class Middleware implements ResourceManager {
 	private boolean acquireLock(int id, RMType type, String key, int lockType) 
 			throws TransactionAbortedException, InvalidTransactionException {
 		try {
-
+			tm.lives(id);
 			if (lock.Lock(id, key, lockType)) {
-				tm.lives(id);
 				if(lockType == LockManager.WRITE)
 					tm.enlist(id, type);
 				return true;
