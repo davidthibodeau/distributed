@@ -442,12 +442,14 @@ public class Middleware implements ResourceManager {
 	@Override
 	public boolean commit(int id) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+		lock.UnlockAll(id);
 		return tm.commit(id);
 	}
 
 	@Override
 	public void abort(int id) 
 			throws RemoteException, InvalidTransactionException {
+		lock.UnlockAll(id);
 		tm.abort(id);
 	}
 	
