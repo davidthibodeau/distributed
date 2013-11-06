@@ -162,5 +162,10 @@ public abstract class RMBaseImpl implements RMBase {
     		throw new InvalidTransactionException();
     	}
     }
+    
+    public boolean shutdown() throws RemoteException {
+    	System.exit(0);
+    	return true;
+    }
 
 }

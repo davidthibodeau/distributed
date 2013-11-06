@@ -59,4 +59,6 @@ public interface RMCustomer extends Remote {
 	 * @throws InvalidTransactionException 
 	 */
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
+	
+	public boolean shutdown() throws RemoteException;
 }

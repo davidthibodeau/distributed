@@ -40,4 +40,8 @@ public interface TransactionManager extends Remote {
 	 * @param rm the resource manager being used. 
 	 */
 	public void enlist(int transactionID, RMType rm);
+	
+	public boolean shutdown() throws RemoteException;
+
+	public void lives(int id);
 }

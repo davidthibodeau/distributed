@@ -34,5 +34,7 @@ public interface RMBase extends Remote {
 	 * @throws InvalidTransactionException 
 	 */
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
+	
+	public boolean shutdown() throws RemoteException;
 
 }

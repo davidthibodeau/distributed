@@ -3,9 +3,12 @@ package serversrc.resImpl;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.Enumeration;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import LockManager.LockManager;
 import serversrc.resInterface.*;
 
 public class TMimpl implements TransactionManager {
@@ -15,6 +18,9 @@ public class TMimpl implements TransactionManager {
 	private RMHotel rmHotel;
 	private RMCustomer rmCustomer;
 	private RMHashtable transactionHT;
+	//lock is passed to the TM so that the TimeToLive can 
+	//unlock when aborting an idle transaction
+	private LockManager lock;
 	
     // Reads a data item
     private Transaction readData(int id)
@@ -39,11 +45,12 @@ public class TMimpl implements TransactionManager {
         }
     }
 	
-	public TMimpl(RMCar Car, RMFlight Flight, RMHotel Hotel, RMCustomer Customer){
+	public TMimpl(RMCar Car, RMFlight Flight, RMHotel Hotel, RMCustomer Customer, LockManager lock){
 		rmCar = Car;
 		rmFlight = Flight;
 		rmHotel = Hotel;
 		rmCustomer = Customer;
+		this.lock = lock;
 		transactionHT = new RMHashtable();
 	}
 
@@ -107,6 +114,34 @@ public class TMimpl implements TransactionManager {
 		}
 	}
 	
+	public boolean shutdown() throws RemoteException {
+		Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+		for (Thread s : threadSet) {
+			try {
+				s.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
+    		Transaction tr = i.nextElement();
+    		try {
+				abort(tr.getID());
+			} catch (RemoteException e) {
+				// Should not happen
+				e.printStackTrace();
+			} catch (InvalidTransactionException e) {
+				// Should not happen
+				e.printStackTrace();
+			}
+		}
+		rmCar.shutdown();
+		rmFlight.shutdown();
+		rmHotel.shutdown();
+		rmCustomer.shutdown();
+		return true;
+	}
+	
 	public void lives(int id){
 		Transaction tr = readData(id);
 		tr.resetTTL();
@@ -118,8 +153,7 @@ public class TMimpl implements TransactionManager {
 	 * the hashtable. This class lives as a subclass to
 	 * be able to have the TTL as a field and have the
 	 * TTL call abort when delay is passed to abort the
-	 * transaction
-	 *
+	 * transaction.
 	 */
 	@SuppressWarnings("serial")
 	public class Transaction implements Serializable {
@@ -153,6 +187,7 @@ public class TMimpl implements TransactionManager {
 			class RemindTask extends TimerTask {
 				public void run() {
 					try {
+						lock.UnlockAll(id);
 						abort(id);
 					} catch (RemoteException e) {
 						// Should not happen
