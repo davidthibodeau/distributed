@@ -487,7 +487,9 @@ public class Middleware implements ResourceManager {
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		if(shutdown)
 			throw new ServerShutdownException();
-		lock.UnlockAll(id);
+		synchronized(lock){
+			lock.UnlockAll(id);
+		}
 		return tm.commit(id);
 	}
 
@@ -496,7 +498,9 @@ public class Middleware implements ResourceManager {
 			throws RemoteException, InvalidTransactionException, ServerShutdownException {
 		if(shutdown)
 			throw new ServerShutdownException();
-		lock.UnlockAll(id);
+		synchronized(lock){
+			lock.UnlockAll(id);
+		}
 		tm.abort(id);
 	}
 	
@@ -522,7 +526,11 @@ public class Middleware implements ResourceManager {
 			throws TransactionAbortedException, InvalidTransactionException {
 		try {
 			tm.lives(id);
-			if (lock.Lock(id, key, lockType)) {
+			boolean locked = false;
+			synchronized(lock){
+				locked = lock.Lock(id, key, lockType);
+			}
+			if (locked) {
 				if(lockType == LockManager.WRITE)
 					tm.enlist(id, type);
 				return true;

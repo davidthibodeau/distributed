@@ -191,7 +191,9 @@ public class TMimpl implements TransactionManager {
 			class RemindTask extends TimerTask {
 				public void run() {
 					try {
-						lock.UnlockAll(id);
+						synchronized(lock){
+							lock.UnlockAll(id);
+						}
 						abort(id);
 					} catch (RemoteException e) {
 						// Should not happen
