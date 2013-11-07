@@ -468,7 +468,7 @@ public class client
 						rm.abort(Id);
 					break;
 				case 26: //shutdown server and client
-					if(argument.size()!=1){
+					if(arguments.size()!=1){
 						obj.wrongNumber();
 						break;
 					}

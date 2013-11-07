@@ -54,7 +54,7 @@ public interface ResourceManager extends Remote
     public boolean reserveCar(int id, int customer, String location) 
 	throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException; 
     
-	/* Add seats to a flight.  In general this will be used to create a new
+	/** Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.
      * Adding to an existing flight should overwrite the current price of the
      * available seats.
