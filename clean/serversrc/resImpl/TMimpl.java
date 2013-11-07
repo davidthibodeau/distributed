@@ -145,6 +145,7 @@ public class TMimpl implements TransactionManager {
     		Transaction tr = i.nextElement();
     		try {
 				abort(tr.getID());
+				lock.UnlockAll(tr.getID());
 			} catch (RemoteException e) {
 				// Should not happen
 				e.printStackTrace();
@@ -220,10 +221,10 @@ public class TMimpl implements TransactionManager {
 			class RemindTask extends TimerTask {
 				public void run() {
 					try {
+						abort(id);
 						synchronized(lock){
 							lock.UnlockAll(id);
 						}
-						abort(id);
 					} catch (RemoteException e) {
 						// Should not happen
 						e.printStackTrace();

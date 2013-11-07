@@ -550,10 +550,11 @@ public class Middleware implements ResourceManager {
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		if(shutdown)
 			throw new ServerShutdownException();
+		boolean b = tm.commit(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
 		}
-		return tm.commit(id);
+		return b;
 	}
 
 	@Override
@@ -561,10 +562,10 @@ public class Middleware implements ResourceManager {
 			throws RemoteException, InvalidTransactionException, ServerShutdownException {
 		if(shutdown)
 			throw new ServerShutdownException();
+		tm.abort(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
 		}
-		tm.abort(id);
 	}
 	
 	@Override
