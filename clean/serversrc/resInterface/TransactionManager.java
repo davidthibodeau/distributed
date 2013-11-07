@@ -38,10 +38,11 @@ public interface TransactionManager extends Remote {
 	 * Adds RM into transactionID list of RMs. 
 	 * @param transactionID the id of the transaction
 	 * @param rm the resource manager being used. 
+	 * @throws InvalidTransactionException 
 	 */
-	public void enlist(int transactionID, RMType rm);
+	public void enlist(int transactionID, RMType rm) throws InvalidTransactionException;
 	
 	public boolean shutdown() throws RemoteException;
 
-	public void lives(int id);
+	public void lives(int id) throws InvalidTransactionException;
 }

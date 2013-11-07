@@ -96,8 +96,10 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
-	public void enlist(int transactionID, RMType rm) {
+	public void enlist(int transactionID, RMType rm) throws InvalidTransactionException {
 		Transaction t = readData(transactionID);
+		if(t == null)
+			throw new InvalidTransactionException();
 		switch(rm){
 		case CAR:
 			t.enlistCar();
@@ -142,8 +144,10 @@ public class TMimpl implements TransactionManager {
 		return true;
 	}
 	
-	public void lives(int id){
+	public void lives(int id) throws InvalidTransactionException{
 		Transaction tr = readData(id);
+		if(tr == null)
+			throw new InvalidTransactionException();
 		tr.resetTTL();
 	}
 	
