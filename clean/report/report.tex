@@ -282,7 +282,12 @@ public boolean deleteCars(int id, String location)
 
 \subsection*{Transactions from the RMs' Point of View}
 
+Write operations are done lazily in the RMs. The base class for the RMs, \java{RMBaseImpl} contains a new hashtable \java{m_transactionHT} which uses transaction IDs as keys, and contains hashtables as values. Those hashtables contain the changes made to the items by the existing transactions. When the transaction manager tells them to commit a transaction, the RM will simply write to the main hashtale the content of the hashtable of the particular transaction.
 
+The method \java{readData} will try to find the item in the hashtable of the transaction first. If it isn't there, it will do a deep copy of the item and gives this copy back. Then, if the RM modifies the item, the original one will stay the same. The method \java{writeData} will simply write the item to the hashtable of the transaction. The method \java{removeData} will simply flag the item to be deleted and add it to the transaction hashtable.
 
+If the transaction is aborted, its hashtable is simply discarded. If it is committed, the commit will write all elements of the hashtable of the transaction to the main hashtable. The items with the deleted tags will simply be removed from the main hashtable.
+
+We note that if someone does modify an item, then noone else will try to access it is committed since noone else has a reading lock. It is thus safe to have a hashtable by id since there will be only one modified copy in only one of the hashtables and it is the only one that will be accessed. If multiple have a copy in their hashtable, then those copies will only be read.
 
 \end{document}
