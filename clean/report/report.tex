@@ -11,7 +11,7 @@
 \usepackage[square]{natbib}
 %\usepackage[parfill]{parskip}
 \author{David Thibodeau \and Jason Wiener}
-\title{COMP 512: Deliverable 1}
+\title{COMP 512: Deliverable 2}
 \date{\today}
 
 %Declare formatting for theorems, definitions, etc.
@@ -126,240 +126,163 @@
 \begin{document}
 \maketitle
 
-%TODO: Put code examples
-Our implementation is split into three layers: the client which takes
-user inputs and formats them into queries that it sends to the server;
-the middleware which receives queries from the client and then redirects and/or
-coordinates the execution of the queries with the ressource managers;
-the ressource managers which each keeps track of a particular
-ressource. There are four ressources: cars, flights, rooms, and
-customers. Some operations such as adding a ressource, deleting a
-ressource (except for customers) or queries informations about them
-only requires the middleware to pass the query to the corresponding
-ressource manager. 
+Our work for this deliverable extends our RMI implementation from the previous deliverable. We added to it a lock manager and a transaction manager, both of which handle the correct execution of transaction based writes and read in 2PL with a one-phase commit. Our work for this deliverable extends our RMI implementation from the previous deliverable. Both the transaction manager and the lock manager appear as objects of the middleware which uses them to handle transactions.
+
+\subsection*{Lock Manager}
+
+The lock manager follows mostly the provided code. It indexes locks it gives to objects in two ways: the object that is being locked and the transaction holding the lock. It has a waiting list for the transactions that want a lock and it will raise a deadlock exception if a given delay is passed. We extended the lock manager to handle the upgrade of locks from read lock to write lock.
+
+\subsection*{Transaction Manager}
+
+The transaction manager handles the transactions. The class contains an inner class \java{Transaction} which contains all the information about a particular one. It is defined as an inner class to give access to abort method from the transaction manager. The reason for this requirement is explained in the Time To Live mechanism (TTL) subsection. 
+
+A transaction object contains the transaction ID, together with a boolean for each of the RMs telling us whether or not the transaction involve this RM. It also contains the TTL presented below.
+
+The transaction manager stores all transactions in an hashtable using the transaction ID as key. It also keeps the RMI objects for each RM obtained from the Middleware when the transaction manager is created. The RMIs are used to coordinate with them to commit/abort/shutdown.
+
+It creates a new transaction object when its \java{start} method is called, giving it a new unique ID that is sent back to the Middleware, then to the client. It can commit and abort transactions with the corresponding methods. Those methods will simply remove the transaction object from the hashtable and call the commit or abort method, respectively, from the enlisted RMs to have them discard or register the writes they kept in store.
+
+\subsubsection*{Time To Live Mechanism}
+
+The transaction manager handles a (TTL) which is used to abort inactive transactions from crashed or idle clients. It is defined as an inner class within the Transaction class and contains a timer and an extension of the class \java{TimerTask}. On tick, the timer task will run and abort the transaction, giving up all the locks the transactions held. 
+
+Each time an operation involves this transaction, the \java{lives} method from the transaction manager will retreive the transaction and call its \java{resetTTL} method. This method will cancel the current timer, preventing it from start the scheduled task, and create another one, rescheduling the task.
+
+The inactivity delay is defined by the constant life. The current implementation sets it to 10 minutes (600 seconds) but it can easily be modified.
+
+\begin{figureone}{\java{TimeToLive} class in TMimpl.java \label{fig:ttl}}
 \begin{lstlisting}
-public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
-    throws RemoteException {
-  return rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
-}
-\end{lstlisting}
-Other operations such as reservations and deletions
-of customers require communicating with both the
-customer RM and the object RMs.
+class TimeToLive {
 
-\subsubsection*{Implementation using Java's RMI}
-We have two implementations of the project, one using Java's Remote
-Method Invocation while the other handles TCP sockets directly. The
-RMI implementation uses Java interfaces to indicate to the remote
-program what are the local methods it can use. The middleware
-implements the \java{ResourceManager} interface. The resource managers
-implement one of \java{RMCar}, \java{RMFlight}, \java{RMHotel}, or
-\java{RMCustomer} which all extend the base interface \java{RMBase}.
-\java{RMBase} is the interface used by the base class
-\java{RMBaseImpl} which as parent class for the implementations of
-each of the ressource managers. This class implements the hashtable
-and operations that are common to all the RMs like \java{readData},
-\java{writeData}, and \java{reserveItem}.
-
-To start the implementation, we first need to start the RMs. They take
-as optional input a port number. If none is provided, they assume the
-port 1099 is used for the rmiregistry (which needs to be started on
-the local machine). The middleware then takes as arguments the name of
-the machines running RMCar, RMFlight, RMHotel, and RMCustomer,
-respectively. It also takes a port number as an optional argument. For
-simplicity, it will take a single port number and will try to reach
-all the RMs on this port, in addition to setting himself to listen to
-that port. This limitation requires us to start all the rmiregistries
-on the same port. This, however, simplifies the parsing of the input
-for the middleware. We have had some trouble connecting to a
-rmiregistry that was not already started. In particular, it could not
-see the RMBase interface even if it was there. It seems to be linked to
-having the CLASSPATH variable set when the rmiregistry is started.
-Then, the client is started and takes the name of the server running
-the middleware together with an optional port number.
-
-\subsubsection*{Implementation using Sockets}
-The TCP implementation communicates using the Java's Sockets. The
-queries to the middleware or the RMs are done by sending a
-\java{Vector} whose first element is a string containing a particular
-keyword representing the operation to perform. The other elements in
-the vector are the arguments to be provided. The client makes sure the
-input provided by the user is correct before making the call. The
-middleware can then always assume the rest of the vector is properly
-formatted. Similarly, the middleware always sends properly formatted
-vectors to the RMs so that they don't have to do such verifications. 
-
-Both the middleware and the RMs create a Socket Server and enter
-socket accept loops. Each time something connects to it (either the
-client to the middleware, or the middleware to one of the RMs), the
-server will create an object of its own class with the newly created
-socket as a field. Then, it will create a thread for this object so
-that the request is handled while the main thread continue to listen
-for new connections. 
-\begin{lstlisting}
-Socket clientSocket;
-ServerSocket connection = new ServerSocket(port);
-
-while (true) {
-  clientSocket = connection.accept();
+  private Timer timer;
+  private final long life = 600; //in seconds; 10 min.
   
-  TCPMiddleware obj = new TCPMiddleware(clientSocket, server, port);
-  Thread t = new Thread(obj);
-  t.start();
-}
-\end{lstlisting}
-This thread will then obtain the input and output
-streams from this connection and wait for a vector to be passed to
-it. When it happens, it will read it and forward the query to the
-appropriate method and wait for an answer from it. Then, it will send
-back an answer to the client. In the case of some queries that need
-the attention of only one RM, the middleware will just forward the
-vector to the appropriate RM. 
-\begin{lstlisting}
-if (!method.contains("reserve")) {
-  if (method.contains("Cars")) {
-    try {
-      carsOut.writeObject(methodInvocation);
-      clientOut.writeObject(carsIn.readObject());
-    } catch (IOException e) {
-      Trace.error("IOException in method invocation: "
-      + getString(method));
-    }
+  TimeToLive() {
+    timer = new Timer();
+    timer.schedule(new RemindTask(), life*1000);
   }
-\end{lstlisting}
-This implementation is then non-blocking but will
-not scale well to a large number of clients as the host will
-most likely limit the possible number of threads a process can run.
-%Discuss that last sentence with Jason. Need also specify how it is
-%run.
-
-\subsubsection*{Reservations}
-The functions interacting with reservations, such as
-\java{reserveCar}, \java{reserveFlight}, \java{reserveRoom},
-\java{itinerary}, but also \java{deleteCustomer} which deletes all
-reservations from the customer to be deleted need to be handled by the
-middleware that needs to update the customer informations and then the
-RM dealing with the object to be reserved. In order to avoid
-duplicating code, we use an \java{enum} called \java{rType} which
-indicates if the object to be reserved is a car, a flight seat or a
-room. The reserve functions will 
-first verify the existence of the customer. Then, it will call the
-corresponding RM to verify if the item can be reserved and do it
-altogether. In order to prevent concurrent execution to cause
-problems, we lock the object that is being updated as it is retrieved
-from the hashtable. Then, it will get the information back and add the
-reservation to the customer in its RM. Since another client could have
-deleted the customer during that time, it does the check and, if it
-passes, adds the reservation to the customer's reservations table. If
-the customer has been deleted, the middleware will query the RM of the
-reserved object to unreserve it. 
-The code appears in figure~\ref{fig:reserve}. 
-\begin{figureone}{\java{reserveItem} method from the middleware. \label{fig:reserve}}
-\begin{lstlisting}
-protected ReservedItem reserveItem(int id, int customerID, String key, 
-                                      String location, ReservedItem.rType rtype)
-    throws RemoteException {
-  // Verifies if customer exists
-  Customer cust = rmCustomer.getCustomer(id, customerID);
-  if ( cust == null ) {
-    return null;
-  } 
-
-  RMInteger price = null;
-  // check if the item is available
-  if (rtype == ReservedItem.rType.CAR)
-    price = rmCar.reserveItem(id, customerID, key, location);
-  else if (rtype == ReservedItem.rType.FLIGHT)
-    price = rmFlight.reserveItem(id, customerID, key, location);
-  else if (rtype == ReservedItem.rType.ROOM)
-    price = rmHotel.reserveItem(id, customerID, key, location);
-
-  if ( price == null ) {
-    return null;
-  } else {  
-    // We do the following check in case the customer has been
-    // deleted between the first verification and now.
-    ReservedItem item = rmCustomer.reserve(id, customerID, key,
-                                           location, price.getValue(), rtype);
-    if(item != null){
-      return item;
-    } else {
-      if (rtype == ReservedItem.rType.CAR)
-        rmCar.unreserveItem(id, item);
-      else if (rtype == ReservedItem.rType.FLIGHT)
-        rmFlight.unreserveItem(id, item);
-      else if (rtype == ReservedItem.rType.ROOM)
-        rmHotel.unreserveItem(id, item);
+  
+  class RemindTask extends TimerTask {
+    public void run() {
+      try {
+	synchronized(lock){
+	  lock.UnlockAll(id);
+	}
+	abort(id);
+      } catch (Exception e) {
+	// Should not happen
+	e.printStackTrace();
+      }
+      timer.cancel(); //Terminate the timer thread
     }
-    return null;
+  }	
+  
+  void reset(){
+    timer.cancel();
+    timer = new Timer();
+    timer.schedule(new RemindTask(), life*1000);
   }
 }
-
 \end{lstlisting}
 \end{figureone}
 
-We needed to do it this way since we
-could not synchronize the whole reservation as it involved three
-differents servers. Similarly, the \java{itinerary} functions does all the
-reservations one after the others but as soon as one fails, it undoes
-all the previous ones it did. The idea is that the whole itinerary
-must be valid or nothing is done. It would make little sense for the
-customer to have only partial itineraries. In order to do that, we
-made so that \java{reserveItem} returns a \java{ReservedItem} instead
-of a boolean so that one could easily unreserve it. We test
-success of the reservation by verifying if the \java{ReservedItem} is \java{null}.
 
- \java{deleteCustomer} will delete the
- customer and then receive from the customer RM the hashtable of
- reservations. Then, it will go through all the reservations and
- unreserve them. We note that an object RM will never unreserve twice
- the same object. First, the only two ways an object reservation is
- cancelled is when the customer is deleted or when a reservation cannot
- go through. If the reservation does not go through because the
- customer is deleted (e.g. if it happens in \java{reserveCar}), then it
- will never be placed in the customer's hashtable of reservations and
- so will not be unreserved by the \java{deleteCustomer}. If the
- reservation is cancelled because the whole itinerary cannot be
- reserved, then each of them will have to lock the customer. If the
- delete function has the lock first, it will set the customer field
- \java{m\_deleted} to \java{true} and so unreserve will return \java{false},
- cancelling the reservation on the RM of the object. If the unreserve
- has the lock first, then it will remove the reservation from the
- customer's hashtable of reservation before \java{deleteCustomer}
- retrieves the hashtable. Hence, \java{deleteCustomer} will never see
- the reservation and will not be able to cancel it. Thus, any
- reservation will be cancelled at most once.
+\subsection*{Coordination from the Middleware}
 
-We also put locks on items we reserve in \java{RMBaseImpl}. Without
-them, two customers could reserve the same last car, room, or flight
-seat. Concurrent reservations and unreservations could also lead to
-wrong assignments to the item's \java{nCount} or \java{nReserved}
-fields. Moreover, \java{deleteItem} acquires the lock to make sure a
-reservation will not be done on a deleted object.
+The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
 
+The obtenion of the lock is done through the method \java{acquireLock} which is presented in figure~\ref{fig:acquireLock}. This method will tell the transaction manager that the transaction is still alive (resetting its TTL timer), then will verify if a lock can be given. If the lock can be given, and it is a write lock, it will tell the transaction manager to enlist the corresponding RM. If it cannot obtain the lock, a \java{DeadlockException} will be raised and it will then abort the whole transaction by raising \java{TransactionAbortedException}. The method returns a boolean obtained from \java{tm.lives} indicating whether or not the operation is done for a transaction in autocommitted mode. This mode is described in a subsection below.
+
+\begin{figureone}{\java{acquireLock} method in Middleware.java \label{fig:acquireLock}}
 \begin{lstlisting}
-public boolean unreserveItem(int id, String key)
-    throws RemoteException{
-  ReservableItem item = (ReservableItem) readData(id, key);
-  synchronized (item) {
-    item.setReserved(item.getReserved()-1);
-    item.setCount(item.getCount()+1);
-    return true;
+private boolean acquireLock(int id, RMType type, String key, int lockType) 
+    throws TransactionAbortedException, InvalidTransactionException {
+  try {
+    boolean b = tm.lives(id);
+    boolean locked = false;
+    synchronized(lock){
+      locked = lock.Lock(id, key, lockType);
+    }
+    if (locked) {
+      if(lockType == LockManager.WRITE)
+      tm.enlist(id, type);
+      return b;
+    } else{
+      throw new InvalidTransactionException();
+    }
+  } catch (DeadlockException e) {
+    throw new TransactionAbortedException(id);
   }
 }
 \end{lstlisting}
-\subsubsection*{Tests}
-We first did simple connection tests to make sure the implementations
-actually run. Then, we tested if the functions executed properly and
-if the expected answer was given. The simple tests included creating,
-reserving and deleting items. Deleting customers, creating
-itineraries. The analysis performed above eliminated the need to test
-for concurrent reservations and deletions. 
+\end{figureone}
 
-We would have liked  to test the number of
-concurrent clients each of the two implementations can handle by
-making a large number of client connect and make queries on the server
-at the same time. Unfortunately, we ran out of time and could not
-finish that.
-%Finish tests section
+The middleware also receives the start/commit/abort requests from the client. For the start operation, it simply forwards the query to the transaction manager, gettin from it a transaction ID that is sent back to the client. During commit/abort operations, it simply unlocks all the locks held by the transaction, then passes control to the transaction manager to handle the rest of the commit/abort.
+
+\subsubsection*{Shutting Down the Server}
+
+The server can go in shutdown mode if a client uses the shutdown command. The middleware will set the \java{shutdown} flag to true, preventing any new operation to be executed. Then, it will pass the control to the transaction manager which will wait for all the existing threads from the Middleware server to finish to abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply send an exit signal since there is no opened transactions and the system does not yet implement recovery mechanisms. The operations done by the transaction manager appears in figure~\ref{fig:shutdown}.
+
+\begin{figureone}{\java{shutdown} method in TMimpl.java \label{fig:shutdown}}
+\begin{lstlisting}
+public boolean shutdown() throws RemoteException {
+  Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+  for (Thread s : threadSet) {
+    try {
+      s.join();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+  for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
+    Transaction tr = i.nextElement();
+    try {
+      abort(tr.getID());
+    } catch (Exception e) {
+      // Should not happen
+      e.printStackTrace();
+    }
+  }
+  rmCar.shutdown();
+  rmFlight.shutdown();
+  rmHotel.shutdown();
+  rmCustomer.shutdown();
+  return true;
+}
+\end{lstlisting}
+\end{figureone}
+
+\subsubsection*{Autocommitting Transactions}
+
+The server implements an autocommitting mechanism. A client can use the autocommit command to obtain a transaction ID that will perform autocommitting transactions, that is, each query will form its own transaction. It will obtain the necessary locks, perform the operations, then the middleware will ask the transaction manager to commit those changes and will release the locks. 
+
+This autocommit feature appears as a flag in the transaction object. Such object does not have a TTL timer since they are noone possibly waiting for this transaction to finish. Moreover, committing or aborting any of its transactions will not remove the transaction object and so the ID can be used to do any number of autocommitting operations.  
+
+
+\begin{figureone}{\java{deleteCars} method in Middleware.java \label{fig:operation}}
+\begin{lstlisting}
+public boolean deleteCars(int id, String location)
+    throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+  try{
+    if(shutdown)
+      throw new ServerShutdownException();
+    boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
+    boolean b1 = rmCar.deleteCars(id, location);
+    if(!b)
+      commit(id);
+    return b1;
+  } catch (TransactionAbortedException i) {
+    abort(id);
+    throw new TransactionAbortedException(id);
+  }
+}
+\end{lstlisting}
+\end{figureone}
+
+
+\subsection*{Transactions from the RMs' Point of View}
+
+
+
+
 \end{document}
