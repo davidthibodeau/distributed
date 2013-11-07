@@ -133,7 +133,7 @@ public abstract class RMBaseImpl implements RMBase {
     	}
     }
 
-    public boolean commit(int id) throws RemoteException, InvalidTransactionException {
+    public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
