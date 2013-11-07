@@ -64,8 +64,17 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
+	public int start(boolean autocommit) throws RemoteException {
+		// Generate a globally unique ID for the new transaction
+        int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+                                   String.valueOf( Math.round( Math.random() * 100 + 1 )));
+        writeData(tid, new Transaction(tid, autocommit));
+		return tid;
+	}
+	
+	@Override
 	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
-		Transaction t = removeData(transactionID);
+		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
 		if(t.isCarEnlisted())
@@ -76,12 +85,16 @@ public class TMimpl implements TransactionManager {
 			rmHotel.commit(transactionID);
 		if(t.isCustomerEnlisted())
 			rmCustomer.commit(transactionID);
+		if(t.isAutoCommitting())
+			t.commit();
+		else
+			removeData(transactionID);
 		return true;
 	}
 
 	@Override
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException {
-		Transaction t = removeData(transactionID);
+		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
 		if(t.isCarEnlisted())
@@ -92,7 +105,10 @@ public class TMimpl implements TransactionManager {
 			rmHotel.abort(transactionID);
 		if(t.isCustomerEnlisted())
 			rmCustomer.abort(transactionID);
-		
+		if(t.isAutoCommitting())
+			t.commit();//Does not actually performs commit but clears the enlisted properties.
+		else
+			removeData(transactionID);
 	}
 
 	@Override
@@ -144,11 +160,11 @@ public class TMimpl implements TransactionManager {
 		return true;
 	}
 	
-	public void lives(int id) throws InvalidTransactionException{
+	public boolean lives(int id) throws InvalidTransactionException{
 		Transaction tr = readData(id);
 		if(tr == null)
 			throw new InvalidTransactionException();
-		tr.resetTTL();
+		return tr.resetTTL();
 	}
 	
 	
@@ -166,6 +182,7 @@ public class TMimpl implements TransactionManager {
 		private boolean hotelEnlisted = false;
 		private boolean flightEnlisted = false;
 		private boolean customerEnlisted = false;
+		private boolean autocommit = false;
 		private TimeToLive ttl;
 		private int id;
 		
@@ -174,8 +191,20 @@ public class TMimpl implements TransactionManager {
 			ttl = new TimeToLive();
 		}
 		
+		public Transaction (int id, boolean autocommit){
+			this.autocommit = autocommit;
+			this.id = id;
+			//If autocommit is on, then transaction will not expire
+			if(!autocommit)
+				ttl = new TimeToLive();
+		}
+			
 		public int getID (){
 			return id;
+		}
+		
+		public boolean isAutoCommitting(){
+			return autocommit;
 		}
 		
 		class TimeToLive {
@@ -213,8 +242,11 @@ public class TMimpl implements TransactionManager {
 			}
 		}
 
-		void resetTTL(){
-			ttl.reset();
+		//reset does not occur if autocommit since there is nothing to have expire.
+		boolean resetTTL(){
+			if(!autocommit)
+				ttl.reset();
+			return !autocommit;
 		}
 		
 		
@@ -272,6 +304,17 @@ public class TMimpl implements TransactionManager {
 		 */
 		public void enlistCustomer() {
 			this.customerEnlisted = true;
+		}
+		
+		/**
+		 * Will simply reset the enlisted RMs.
+		 * Is only used for autocommit transactions.
+		 */
+		public void commit() {
+			flightEnlisted = false;
+			carEnlisted = false;
+			hotelEnlisted = false;
+			customerEnlisted = false;
 		}
 
 	}

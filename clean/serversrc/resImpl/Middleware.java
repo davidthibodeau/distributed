@@ -86,8 +86,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-		acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
-		return rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
+			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
+			boolean b1 = rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -100,8 +103,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
-			return rmCar.addCars(id, location, numCars, price);
+			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
+			boolean b1 = rmCar.addCars(id, location, numCars, price);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -115,8 +121,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
-			return rmHotel.addRooms(id, location, numRooms, price);
+			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
+			boolean b1 = rmHotel.addRooms(id, location, numRooms, price);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -134,7 +143,9 @@ public class Middleware implements ResourceManager {
 			if(shutdown)
 				throw new ServerShutdownException();
 			int cid = rmCustomer.newCustomer(id);
-			acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			if(!b)
+				commit(id);
 			return cid;
 		} catch (TransactionAbortedException i) {
 			abort(id);
@@ -148,7 +159,9 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
+			if(!b)
+				commit(id);
 			return rmCustomer.newCustomer(id, cid);
 		} catch (TransactionAbortedException i) {
 			abort(id);
@@ -162,8 +175,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
-			return rmFlight.deleteFlight(id, flightNum);
+			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
+			boolean b1 = rmFlight.deleteFlight(id, flightNum);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -176,8 +192,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
-			return rmCar.deleteCars(id, location);
+			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
+			boolean b1 = rmCar.deleteCars(id, location);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -190,8 +209,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
-			return rmHotel.deleteRooms(id, location);
+			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
+			boolean b1 = rmHotel.deleteRooms(id, location);
+			if(!b)
+				commit(id);
+			return b1;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -204,7 +226,7 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
 			for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
 				String reservedkey = (String) (e.nextElement());
@@ -224,6 +246,8 @@ public class Middleware implements ResourceManager {
 					rmHotel.unreserveItem(id, reserveditem.getKey());
 				}
 			}
+			if(!b)
+				return commit(id);
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -238,8 +262,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
-			return rmFlight.queryFlight(id, flightNumber);
+			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
+			int i = rmFlight.queryFlight(id, flightNumber);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -252,8 +279,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
-			return rmCar.queryCars(id, location);
+			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
+			int i = rmCar.queryCars(id, location);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -266,8 +296,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
-			return rmHotel.queryRooms(id, location);
+			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
+			int i = rmHotel.queryRooms(id, location);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -281,8 +314,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.READ);
-			return rmCustomer.queryCustomerInfo(id, customer);
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.READ);
+			String i = rmCustomer.queryCustomerInfo(id, customer);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -295,8 +331,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
-			return rmFlight.queryFlightPrice(id, flightNumber);
+			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
+			int i = rmFlight.queryFlightPrice(id, flightNumber);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -309,8 +348,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
-			return rmCar.queryCarsPrice(id, location);
+			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
+			int i = rmCar.queryCarsPrice(id, location);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -323,8 +365,11 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
-			acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
-			return rmHotel.queryRoomsPrice(id, location);
+			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
+			int i = rmHotel.queryRoomsPrice(id, location);
+			if(!b)
+				commit(id);
+			return i;
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -337,7 +382,10 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum), String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
+			if(!b)
+				commit(id);
 			return (item != null);
 		} catch (TransactionAbortedException i) {
 			abort(id);
@@ -351,7 +399,10 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Car.getKey(location), location, ReservedItem.rType.CAR);
+			if(!b)
+				commit(id);
 			return (item != null);
 		} catch (TransactionAbortedException i) {
 			abort(id);
@@ -365,7 +416,10 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location, ReservedItem.rType.ROOM);
+			if(!b)
+				commit(id);
 			return (item != null);
 		} catch (TransactionAbortedException i) {
 			abort(id);
@@ -382,6 +436,7 @@ public class Middleware implements ResourceManager {
 		try{
 			if(shutdown)
 				throw new ServerShutdownException();
+			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			if (car){
 				reserveItem(id, customer, Car.getKey(location) ,location, ReservedItem.rType.CAR);
 			}
@@ -397,16 +452,18 @@ public class Middleware implements ResourceManager {
 					Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
 							", " + car + ", " + room + " ) -- Expected FlightNumber was not a valid integer. Exception "
 							+ ex + " cached");
-					return false;
+					throw new TransactionAbortedException(id);
 				}
 				ReservedItem reservedFlight = reserveItem(id, customer, Flight.getKey(flightnum), String.valueOf(flightnum), ReservedItem.rType.FLIGHT);
 				if (reservedFlight == null){
 					Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightnum+ ", "+location+
 							", " + car + ", " + room + " ) -- flight could not have been reserved." );
-					return false;
+					throw new TransactionAbortedException(id);
 				}
 				flightsDone.add(reservedFlight);	
 			}
+			if(!b)
+				return commit(id);
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);
@@ -438,7 +495,6 @@ public class Middleware implements ResourceManager {
 			throws RemoteException, TransactionAbortedException, InvalidTransactionException  {
 		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ ", "+location+" ) called" );        
 		// Verifies if customer exists
-		acquireLock(id, RMType.CUSTOMER, Customer.getKey(customerID), LockManager.WRITE);
 		Customer cust = rmCustomer.getCustomer(id, customerID);
 		if ( cust == null ) {
 			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key + ", "+location+")  failed--customer doesn't exist" );
@@ -480,6 +536,13 @@ public class Middleware implements ResourceManager {
 		if(shutdown)
 			throw new ServerShutdownException();
 		return tm.start();
+	}
+	
+	@Override
+	public int autocommit() throws RemoteException, ServerShutdownException {
+		if(shutdown)
+			throw new ServerShutdownException();
+		return tm.start(true);
 	}
 
 	@Override
@@ -525,7 +588,7 @@ public class Middleware implements ResourceManager {
 	private boolean acquireLock(int id, RMType type, String key, int lockType) 
 			throws TransactionAbortedException, InvalidTransactionException {
 		try {
-			tm.lives(id);
+			boolean b = tm.lives(id);
 			boolean locked = false;
 			synchronized(lock){
 				locked = lock.Lock(id, key, lockType);
@@ -533,7 +596,7 @@ public class Middleware implements ResourceManager {
 			if (locked) {
 				if(lockType == LockManager.WRITE)
 					tm.enlist(id, type);
-				return true;
+				return b;
 			} else{
 				throw new InvalidTransactionException();
 			}

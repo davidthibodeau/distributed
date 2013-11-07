@@ -478,6 +478,18 @@ public class client
 						System.exit(0);
 					} else
 						System.out.println("Server shutdown has failed. Client shutdown has been cancelled.");
+					
+				case 27: //Start an autocommitted sequence of transactions
+					if(arguments.size()!=1){
+						obj.wrongNumber();
+						break;
+					}
+					System.out.println("Obtaining id for autocommitted operations.");
+						Id = obj.getInt(arguments.elementAt(1));
+						tid = rm.autocommit();
+						System.out.println("new transaction id:"+tid);
+					break;
+					
 				default:
 					System.out.println("The interface does not support this command.");
 					break;
@@ -563,6 +575,8 @@ public class client
 			return 25;
 		else if (argument.compareToIgnoreCase("shutdown")==0)
 			return 26;
+		else if (argument.compareToIgnoreCase("autocommit")==0)
+			return 27;
 		else
 			return 666;
 
@@ -577,7 +591,8 @@ public class client
 		System.out.println("deletecustomer\nqueryflight\nquerycar\nqueryroom\nquerycustomer");
 		System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
 		System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");
-		System.out.println("nquit");
+		System.out.println("start\nautocommit\ncommit\nabort\nshutdown");
+		System.out.println("\nquit");
 		System.out.println("\ntype help, <commandname> for detailed info(NOTE the use of comma).");
 	}
 
@@ -771,7 +786,7 @@ public class client
 			System.out.println("\tstart");
 			break;
 
-		case 24: //start a transaction
+		case 24: //commit a transaction
 			System.out.println("Commit a transaction");
 			System.out.println("Purpose:");
 			System.out.println("\tRegister the transaction to be committed.");
@@ -779,19 +794,28 @@ public class client
 			System.out.println("\tcommit, <id>");
 			break;
 
-		case 25: //start a transaction
+		case 25: //abort a transaction
 			System.out.println("Abort a new transaction");
 			System.out.println("Purpose:");
 			System.out.println("\tRequest the aborting of the transaction.");
 			System.out.println("\nUsage:");
 			System.out.println("\tstart, <id>");
 			break;
-		case 26:
+		case 26: //shutdown a transaction
 			System.out.println("Shutdown the server and the client");
 			System.out.println("Purpose:");
 			System.out.println("\tWill shutdown both the client and the server.");
 			System.out.println("\nUsage:");
 			System.out.println("\tshutdown");
+			break;
+			
+		case 27: //start an autocommitted sequence of operations
+			System.out.println("Start a sequence of autocommitted transactions");
+			System.out.println("Purpose:");
+			System.out.println("\tProvides an id for operations that will be autocommitted.");
+			System.out.println("\nUsage:");
+			System.out.println("\tstart");
+			break;
 
 		default:
 			System.out.println(command);

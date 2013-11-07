@@ -167,5 +167,12 @@ public interface ResourceManager extends Remote
 	public void abort(int transactionID) throws RemoteException, InvalidTransactionException, ServerShutdownException;
 	
 	public boolean shutdown() throws RemoteException;
+
+	/**
+	 * Informs server that a transaction in autocommit mode has been initiated
+	 * @return The id associated with this transaction. 
+	 * @throws ServerShutdownException 
+	 */
+	public int autocommit() throws RemoteException, ServerShutdownException;
     			
 }
