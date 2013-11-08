@@ -10,8 +10,9 @@ import serversrc.resImpl.TransactionAbortedException;
 
 public class TestClient extends client implements Runnable{
 
-	int transactionTime; //in milliseconds.
+	int transactionTime; //time in between transactions (milliseconds)
 	int averageResponseTime; //in milliseconds.
+	int transactionsCompleted;
 	
 	TestClient(double requestRate, double numberOfClients){
 		transactionTime = (int) (1000*numberOfClients/requestRate);		
@@ -40,11 +41,18 @@ public class TestClient extends client implements Runnable{
 	}
 	
 	
-	void flightTransaction(int id, int flightNum, int flightSeats, int flightPrice) throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException{
+	void flightTransaction(int id, int flightNum, int flightSeats, int flightPrice) throws RemoteException, InvalidTransactionException, TransactionAbortedException{
+		
 		rm.addFlight(id, flightNum, flightSeats, flightPrice);
 		rm.queryFlight(id, flightNum);
 		rm.deleteFlight(id, flightNum);
 		rm.addFlight(id, flightNum, flightSeats, flightPrice);
+		rm.addFlight(id, flightNum+(int)(5*Math.random()), flightSeats-(int)(10*Math.random()), flightPrice);
+		
+	}
+	
+	void transactionSet(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException{
+		rm.addCars(id, String.valueOf(Math.random()), (int)(Math.random()*500), (int)(Math.random()*40));
 		
 	}
 }
