@@ -221,34 +221,38 @@ The middleware also receives the start/commit/abort requests from the client. Fo
 
 \subsubsection*{Shutting Down the Server}
 
-The server can go in shutdown mode if a client uses the shutdown command. The middleware will set the \java{shutdown} flag to true, preventing any new operation to be executed. Then, it will pass the control to the transaction manager which will wait for all the existing threads from the Middleware server to finish to abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply send an exit signal since there is no opened transactions and the system does not yet implement recovery mechanisms. The operations done by the transaction manager appears in figure~\ref{fig:shutdown}.
+The server can go in shutdown mode if a client uses the shutdown command. The middleware will unbind itself from the RMI registry to prevent new transactions. Then, it will pass the control to the transaction manager which will abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply unbind their registry and create a thread to wait for exit since there is no opened transactions and the system does not yet implement recovery mechanisms. When control will be passed back to the Middleware, it will create a new thread that will wait before exiting.
 
-\begin{figureone}{\java{shutdown} method in TMimpl.java \label{fig:shutdown}}
+We create this new thread to make sure the client has time to get back an answer from the middleware before any of them exists. The solution to this specific problem, which appears in figure~\ref{fig:shutdown} was found on Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
+
+\begin{figureone}{\java{shutdown} method in RMCar.java (solution from Stack Overflow) \label{fig:shutdown}}
 \begin{lstlisting}
-public boolean shutdown() throws RemoteException {
-  Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-  for (Thread s : threadSet) {
+  public boolean shutdown() throws RemoteException {
+    Trace.info("quit");
+    Registry registry = LocateRegistry.getRegistry(port);
     try {
-      s.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+      registry.unbind("Group2RMCar");
+      UnicastRemoteObject.unexportObject(this, false);
+    } catch (NotBoundException e) {
+      throw new RemoteException("Could not unregister service, quiting anyway", e);
     }
+
+    new Thread() {
+      @Override
+      public void run() {
+	Trace.info("Shutting down...");
+	try {
+	  sleep(2000);
+	} catch (InterruptedException e) {
+	  // I don't care
+	}
+	Trace.info("done");
+	System.exit(0);
+      }
+
+    }.start();
+    return true;
   }
-  for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
-    Transaction tr = i.nextElement();
-    try {
-      abort(tr.getID());
-    } catch (Exception e) {
-      // Should not happen
-      e.printStackTrace();
-    }
-  }
-  rmCar.shutdown();
-  rmFlight.shutdown();
-  rmHotel.shutdown();
-  rmCustomer.shutdown();
-  return true;
-}
 \end{lstlisting}
 \end{figureone}
 
@@ -262,10 +266,8 @@ This autocommit feature appears as a flag in the transaction object. Such object
 \begin{figureone}{\java{deleteCars} method in Middleware.java \label{fig:operation}}
 \begin{lstlisting}
 public boolean deleteCars(int id, String location)
-    throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+    throws RemoteException, InvalidTransactionException, TransactionAbortedException {
   try{
-    if(shutdown)
-      throw new ServerShutdownException();
     boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
     boolean b1 = rmCar.deleteCars(id, location);
     if(!b)
@@ -290,4 +292,12 @@ If the transaction is aborted, its hashtable is simply discarded. If it is commi
 
 We note that if someone does modify an item, then noone else will try to access it is committed since noone else has a reading lock. It is thus safe to have a hashtable by id since there will be only one modified copy in only one of the hashtables and it is the only one that will be accessed. If multiple have a copy in their hashtable, then those copies will only be read.
 
+\section*{Performance Evaluation}
+Performance of this system is evaluated based on average latency for a request. The throughput of the system should be relatively constant under many conditions. Throughput would remain relatively stable unless many transactions require the same object and at least one write is present. For a single client the lock manager will not get in the way. However it's presence has a slight performance penalty. This lock manager works in O(c), however with many transactions this can be noticeable. 
+
+For several clients the system's throughput would remain constant on average, however it may drop from time to time if a deeadlock is detected. Transactions are meant to be short, and they have a short time out. However the average delay that a client receives will grow due to minor fluctuations. Since the operations are carried out in a FIFO manner this only creates significant delay in the event of a sudden burst of activity. 
+
+Since the testing is done locally, the network latency is extremely low and is unlikely to cause a problem. The middleware itself takes all the requests so it is a good candidate for where a bottleneck could be. The requests the middleware do are small and often involve only passing messages from one system to another. The distribution of the three different resources allows for a more evenly distribution of the processing and data loading. 
+
+While this does slightly take the load away from the main system, the benefits of this is to allow concurrent requests. One transaction can happen on one machine while another happens on another machine. The benefits of this are removed when considering offset loads. That is to say, if one RM receives more requests than the others. In our system we have a Customer RM. This is used in more of the possible operations than the rest and thus could cause a penalty in resource usage, and latency.  
 \end{document}
