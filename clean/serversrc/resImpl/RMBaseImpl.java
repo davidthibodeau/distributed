@@ -12,6 +12,7 @@ public abstract class RMBaseImpl implements RMBase {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	protected RMHashtable m_transactionHT = new RMHashtable();
+	static int port;
 
     // Reads a data item
     protected abstract RMItem readData( int id, String key );

@@ -18,7 +18,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 	public static void main(String args[]) {
         // Figure out where server is running
         String server = "localhost";
-        int port = 1099;
+        port = 1099;
 
         if (args.length == 1) {
             server = server + ":" + args[0];
@@ -189,7 +189,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 
     public boolean shutdown() throws RemoteException {
     	System.out.println("quit");
-    	Registry registry = LocateRegistry.getRegistry();
+    	Registry registry = LocateRegistry.getRegistry(port);
     	try {
     		registry.unbind("Group2RMCustomer");
     		UnicastRemoteObject.unexportObject(this, false);
