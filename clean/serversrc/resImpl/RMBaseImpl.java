@@ -1,6 +1,7 @@
 package serversrc.resImpl;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 
 import serversrc.resInterface.*;
@@ -165,6 +166,7 @@ public abstract class RMBaseImpl implements RMBase {
     
     public boolean shutdown() throws RemoteException {
     	try {
+    		while(UnicastRemoteObject.unexportObject(this, false)) {}
     		return true;
     	} finally {
     		System.exit(0);

@@ -19,7 +19,6 @@ public class Middleware implements ResourceManager {
 	private RMCustomer rmCustomer;
 	private LockManager lock;
 	private TransactionManager tm;
-	private boolean shutdown = false;
 
 	public static void main(String args[]) {
 		// Figure out where server is running
@@ -84,8 +83,7 @@ public class Middleware implements ResourceManager {
 	public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+		
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
 			boolean b1 = rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
 			if(!b)
@@ -101,8 +99,6 @@ public class Middleware implements ResourceManager {
 	public boolean addCars(int id, String location, int numCars, int price)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
 			boolean b1 = rmCar.addCars(id, location, numCars, price);
 			if(!b)
@@ -119,8 +115,6 @@ public class Middleware implements ResourceManager {
 	public boolean addRooms(int id, String location, int numRooms, int price)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
 			boolean b1 = rmHotel.addRooms(id, location, numRooms, price);
 			if(!b)
@@ -140,8 +134,6 @@ public class Middleware implements ResourceManager {
 	public int newCustomer(int id) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException{
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			int cid = rmCustomer.newCustomer(id);
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
 			if(!b)
@@ -157,8 +149,6 @@ public class Middleware implements ResourceManager {
 	public boolean newCustomer(int id, int cid)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException{
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
 			if(!b)
 				commit(id);
@@ -173,8 +163,7 @@ public class Middleware implements ResourceManager {
 	public boolean deleteFlight(int id, int flightNum) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
 			boolean b1 = rmFlight.deleteFlight(id, flightNum);
 			if(!b)
@@ -190,8 +179,7 @@ public class Middleware implements ResourceManager {
 	public boolean deleteCars(int id, String location)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
 			boolean b1 = rmCar.deleteCars(id, location);
 			if(!b)
@@ -207,8 +195,7 @@ public class Middleware implements ResourceManager {
 	public boolean deleteRooms(int id, String location)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
 			boolean b1 = rmHotel.deleteRooms(id, location);
 			if(!b)
@@ -224,8 +211,7 @@ public class Middleware implements ResourceManager {
 	public boolean deleteCustomer(int id, int customer)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			RMHashtable reservationHT = rmCustomer.deleteCustomer(id, customer);
 			for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
@@ -260,8 +246,7 @@ public class Middleware implements ResourceManager {
 	public int queryFlight(int id, int flightNumber) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
 			int i = rmFlight.queryFlight(id, flightNumber);
 			if(!b)
@@ -277,8 +262,7 @@ public class Middleware implements ResourceManager {
 	public int queryCars(int id, String location) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
 			int i = rmCar.queryCars(id, location);
 			if(!b)
@@ -294,8 +278,7 @@ public class Middleware implements ResourceManager {
 	public int queryRooms(int id, String location)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
 			int i = rmHotel.queryRooms(id, location);
 			if(!b)
@@ -312,8 +295,7 @@ public class Middleware implements ResourceManager {
 	public String queryCustomerInfo(int id, int customer)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.READ);
 			String i = rmCustomer.queryCustomerInfo(id, customer);
 			if(!b)
@@ -329,8 +311,7 @@ public class Middleware implements ResourceManager {
 	public int queryFlightPrice(int id, int flightNumber)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
 			int i = rmFlight.queryFlightPrice(id, flightNumber);
 			if(!b)
@@ -346,8 +327,7 @@ public class Middleware implements ResourceManager {
 	public int queryCarsPrice(int id, String location)
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
 			int i = rmCar.queryCarsPrice(id, location);
 			if(!b)
@@ -363,8 +343,7 @@ public class Middleware implements ResourceManager {
 	public int queryRoomsPrice(int id, String location) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
 			int i = rmHotel.queryRoomsPrice(id, location);
 			if(!b)
@@ -380,8 +359,7 @@ public class Middleware implements ResourceManager {
 	public boolean reserveFlight(int id, int customer, int flightNum)
 			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Flight.getKey(flightNum), String.valueOf(flightNum), ReservedItem.rType.FLIGHT);
 			if(!b)
@@ -397,8 +375,7 @@ public class Middleware implements ResourceManager {
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
+
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Car.getKey(location), location, ReservedItem.rType.CAR);
 			if(!b)
@@ -414,8 +391,6 @@ public class Middleware implements ResourceManager {
 	public boolean reserveRoom(int id, int customer, String location)
 			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location, ReservedItem.rType.ROOM);
 			if(!b)
@@ -434,8 +409,6 @@ public class Middleware implements ResourceManager {
 				", " + car + ", " + room + " ) called" );        
 		// Read customer object if it exists (and read lock it)
 		try{
-			if(shutdown)
-				throw new ServerShutdownException();
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			if (car){
 				reserveItem(id, customer, Car.getKey(location) ,location, ReservedItem.rType.CAR);
@@ -533,23 +506,18 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int start() throws RemoteException, ServerShutdownException {
-		if(shutdown)
-			throw new ServerShutdownException();
+
 		return tm.start();
 	}
 	
 	@Override
 	public int autocommit() throws RemoteException, ServerShutdownException {
-		if(shutdown)
-			throw new ServerShutdownException();
 		return tm.start(true);
 	}
 
 	@Override
 	public boolean commit(int id) 
 			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
-		if(shutdown)
-			throw new ServerShutdownException();
 		boolean b = tm.commit(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
@@ -560,8 +528,6 @@ public class Middleware implements ResourceManager {
 	@Override
 	public void abort(int id) 
 			throws RemoteException, InvalidTransactionException, ServerShutdownException {
-		if(shutdown)
-			throw new ServerShutdownException();
 		tm.abort(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
@@ -570,13 +536,10 @@ public class Middleware implements ResourceManager {
 	
 	@Override
 	public boolean shutdown() throws RemoteException {
-		if(shutdown)
-			return true;
+
 		Trace.info("shutdown() initiated. Waiting to unexport the object.");
 		while(UnicastRemoteObject.unexportObject(this, false)) {}
 		Trace.info("shutdown() unexported middleware.");
-		shutdown = true;
-		Trace.info("Waiting for threads to finish");
 		try {
 			return tm.shutdown();
 		} finally {
