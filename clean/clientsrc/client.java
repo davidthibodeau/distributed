@@ -439,7 +439,6 @@ public class client
 						break;
 					}
 					System.out.println("Starting new transaction");
-						Id = obj.getInt(arguments.elementAt(1));
 						int tid = rm.start();
 						System.out.println("new transaction id:"+tid);
 					break;
@@ -485,7 +484,6 @@ public class client
 						break;
 					}
 					System.out.println("Obtaining id for autocommitted operations.");
-						Id = obj.getInt(arguments.elementAt(1));
 						tid = rm.autocommit();
 						System.out.println("new transaction id:"+tid);
 					break;
