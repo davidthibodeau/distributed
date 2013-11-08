@@ -159,7 +159,12 @@ public class TMimpl implements TransactionManager {
 				e.printStackTrace();
 			}
 		}
+		try{
 		rmCar.shutdown();
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
 		rmFlight.shutdown();
 		rmHotel.shutdown();
 		rmCustomer.shutdown();

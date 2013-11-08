@@ -6,6 +6,7 @@ import java.rmi.registry.Registry;
 import serversrc.resInterface.*;
 
 import java.rmi.registry.LocateRegistry;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
@@ -113,5 +114,31 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 		return queryPrice(id, Car.getKey(location));
 	}
 
+	public boolean shutdown() throws RemoteException {
+		System.out.println("quit");
+		Registry registry = LocateRegistry.getRegistry();
+		try {
+			registry.unbind("Group2RMCar");
+			UnicastRemoteObject.unexportObject(this, false);
+		} catch (NotBoundException e) {
+			throw new RemoteException("Could not unregister service, quiting anyway", e);
+		}
+
+		new Thread() {
+			@Override
+			public void run() {
+				Trace.info("Shutting down...");
+				try {
+					sleep(2000);
+				} catch (InterruptedException e) {
+					// I don't care
+				}
+				Trace.info("done");
+				System.exit(0);
+			}
+
+		}.start();
+		return true;
+	}
 
 }

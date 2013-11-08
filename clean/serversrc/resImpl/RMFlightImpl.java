@@ -1,5 +1,6 @@
 package serversrc.resImpl;
 
+import java.rmi.NotBoundException;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -114,6 +115,33 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
     {
         return queryPrice(id, Flight.getKey(flightNum));
     }
+    
+	public boolean shutdown() throws RemoteException {
+		System.out.println("quit");
+		Registry registry = LocateRegistry.getRegistry();
+		try {
+			registry.unbind("Group2RMFlight");
+			UnicastRemoteObject.unexportObject(this, false);
+		} catch (NotBoundException e) {
+			throw new RemoteException("Could not unregister service, quiting anyway", e);
+		}
+
+		new Thread() {
+			@Override
+			public void run() {
+				Trace.info("Shutting down...");
+				try {
+					sleep(2000);
+				} catch (InterruptedException e) {
+					// I don't care
+				}
+				Trace.info("done");
+				System.exit(0);
+			}
+
+		}.start();
+		return true;
+	}
 
 
 
