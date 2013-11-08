@@ -120,19 +120,27 @@ public class TMimpl implements TransactionManager {
 		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
-		switch(rm){
-		case CAR:
-			t.enlistCar();
-			break;
-		case FLIGHT:
-			t.enlistFlight();
-			break;
-		case HOTEL:
-			t.enlistHotel();
-			break;
-		case CUSTOMER:
-			t.enlistCustomer();
-			break;
+		try {
+			switch(rm){
+			case CAR:
+				t.enlistCar();
+				rmCar.enlist(transactionID);
+				break;
+			case FLIGHT:
+				t.enlistFlight();
+				rmFlight.enlist(transactionID);
+				break;
+			case HOTEL:
+				t.enlistHotel();
+				rmHotel.enlist(transactionID);
+				break;
+			case CUSTOMER:
+				t.enlistCustomer();
+				rmCustomer.enlist(transactionID);
+				break;
+			}
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 		Trace.info("TM::enlist(" + transactionID + ", " + rm.toString() + ") succeeded.");
 	}
