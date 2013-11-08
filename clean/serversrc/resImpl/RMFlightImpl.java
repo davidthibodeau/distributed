@@ -59,7 +59,10 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
 			}
     	}
         synchronized(m_itemHT) {
-            return new Flight((Flight) m_itemHT.get(key));
+        	Flight c = (Flight) m_itemHT.get(key);
+			if (c != null)
+				return new Flight(c);
+			return null;
         }
     }
 	

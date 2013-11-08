@@ -61,7 +61,10 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 			}
 		}
 		synchronized(m_itemHT) {
-			return new Car((Car) m_itemHT.get(key));
+			Car c = (Car) m_itemHT.get(key);
+			if (c != null)
+				return new Car(c);
+			return null;
 		}
     }
     

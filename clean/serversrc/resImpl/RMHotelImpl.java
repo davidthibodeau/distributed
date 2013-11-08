@@ -58,7 +58,10 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
 			}
     	}
         synchronized(m_itemHT) {
-            return new Hotel((Hotel) m_itemHT.get(key));
+        	Hotel c = (Hotel) m_itemHT.get(key);
+			if (c != null)
+				return new Hotel(c);
+			return null;
         }
     }
 	

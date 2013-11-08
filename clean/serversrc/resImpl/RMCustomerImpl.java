@@ -61,7 +61,10 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 			}
     	}
         synchronized(m_itemHT) {
-            return new Customer((Customer) m_itemHT.get(key));
+        	Customer c = (Customer) m_itemHT.get(key);
+			if (c != null)
+				return new Customer(c);
+			return null;
         }
     }
 	
