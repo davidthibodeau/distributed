@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 import serversrc.resImpl.InvalidTransactionException;
-import serversrc.resImpl.ServerShutdownException;
 import serversrc.resImpl.TransactionAbortedException;
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -32,7 +31,7 @@ public interface ResourceManager extends Remote
      * instead of a flight number.
      */
     public boolean addCars(int id, String location, int numCars, int price) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* Delete all Cars from a location.
      * It may not succeed if there are reservations for this location
@@ -40,19 +39,19 @@ public interface ResourceManager extends Remote
      * @return success
      */		    
     public boolean deleteCars(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the number of cars available at a location */
     public int queryCars(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the price of a car at a location */
     public int queryCarsPrice(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;   
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;   
     
     /* reserve a car at this location */
     public boolean reserveCar(int id, int customer, String location) 
-	throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
     
 	/** Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.
@@ -62,7 +61,7 @@ public interface ResourceManager extends Remote
      * @return success.
      */
     public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /**
      *   Delete the entire flight.
@@ -73,29 +72,29 @@ public interface ResourceManager extends Remote
      * @return success.
      * @throws TransactionAbortedException 
      * @throws InvalidTransactionException 
-     * @throws ServerShutdownException 
+     * @throws  
      */   
     public boolean deleteFlight(int id, int flightNum) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* queryFlight returns the number of empty seats. */
     public int queryFlight(int id, int flightNumber) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
     
     /* queryFlightPrice returns the price of a seat on this flight. */
     public int queryFlightPrice(int id, int flightNumber) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
     
     /* Reserve a seat on this flight*/
     public boolean reserveFlight(int id, int customer, int flightNumber) 
-	throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
     
     /* Add rooms to a location.  
      * This should look a lot like addFlight, only keyed on a string location
      * instead of a flight number.
      */
     public boolean addRooms(int id, String location, int numRooms, int price) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 	
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 	
     
     /* Delete all Rooms from a location.
      * It may not succeed if there are reservations for this location.
@@ -103,47 +102,47 @@ public interface ResourceManager extends Remote
      * @return success
      */
     public boolean deleteRooms(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the number of rooms available at a location */
     public int queryRooms(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* return the price of a room at a location */
     public int queryRoomsPrice(int id, String location) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
  
     /* reserve a room certain at this location */
     public boolean reserveRoom(int id, int customer, String locationd) 
-	throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException; 
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException; 
 	
 	/* new customer just returns a unique customer identifier */
     public int newCustomer(int id) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     /* new customer with providing id */
     public boolean newCustomer(int id, int cid)
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
     
     /* deleteCustomer removes the customer and associated reservations */
     public boolean deleteCustomer(int id,int customer) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
 
     /* return a bill */
     public String queryCustomerInfo(int id,int customer) 
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 			    			    
     /* reserve an itinerary */
     public boolean itinerary(int id, int customer, Vector flightNumbers, String location, boolean Car, boolean Room)
-	throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException; 
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException; 
     
     
 	/**
 	 * Informs server that a transaction is starting
 	 * @return The id associated with this transaction. 
-	 * @throws ServerShutdownException 
+	 * @throws  
 	 */
-	public int start() throws RemoteException, ServerShutdownException;
+	public int start() throws RemoteException;
 	
 	/**
 	 * Commits the transaction with transactionID
@@ -152,9 +151,9 @@ public interface ResourceManager extends Remote
 	 * @throws RemoteException -rmi
 	 * @throws TransactionAbortedException 
 	 * @throws InvalidTransactionException 
-	 * @throws ServerShutdownException 
+	 * @throws  
 	 */
-	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException;
+	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
 	
 	/**
@@ -162,17 +161,17 @@ public interface ResourceManager extends Remote
 	 * @param transactionID
 	 * @throws RemoteException -rmi
 	 * @throws InvalidTransactionException 
-	 * @throws ServerShutdownException 
+	 * @throws  
 	 */
-	public void abort(int transactionID) throws RemoteException, InvalidTransactionException, ServerShutdownException;
+	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
 	
 	public boolean shutdown() throws RemoteException;
 
 	/**
 	 * Informs server that a transaction in autocommit mode has been initiated
 	 * @return The id associated with this transaction. 
-	 * @throws ServerShutdownException 
+	 * @throws  
 	 */
-	public int autocommit() throws RemoteException, ServerShutdownException;
+	public int autocommit() throws RemoteException;
     			
 }
