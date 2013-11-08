@@ -81,7 +81,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 		
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
@@ -97,7 +97,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean addCars(int id, String location, int numCars, int price)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
 			boolean b1 = rmCar.addCars(id, location, numCars, price);
@@ -113,7 +113,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean addRooms(int id, String location, int numRooms, int price)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
 			boolean b1 = rmHotel.addRooms(id, location, numRooms, price);
@@ -132,7 +132,7 @@ public class Middleware implements ResourceManager {
 	 * Since newCustomer generates a new unique cid, there is not any lock for it yet.
 	 */
 	public int newCustomer(int id) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException{
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException{
 		try{
 			int cid = rmCustomer.newCustomer(id);
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
@@ -147,7 +147,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean newCustomer(int id, int cid)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException{
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException{
 		try{
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid), LockManager.WRITE);
 			if(!b)
@@ -161,7 +161,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteFlight(int id, int flightNum) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNum), LockManager.WRITE);
@@ -177,7 +177,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteCars(int id, String location)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
@@ -193,7 +193,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteRooms(int id, String location)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.WRITE);
@@ -209,7 +209,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean deleteCustomer(int id, int customer)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
@@ -244,7 +244,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryFlight(int id, int flightNumber) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
@@ -260,7 +260,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryCars(int id, String location) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
@@ -276,7 +276,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryRooms(int id, String location)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
@@ -293,7 +293,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public String queryCustomerInfo(int id, int customer)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.READ);
@@ -309,7 +309,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryFlightPrice(int id, int flightNumber)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.FLIGHT, Flight.getKey(flightNumber), LockManager.READ);
@@ -325,7 +325,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryCarsPrice(int id, String location)
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.READ);
@@ -341,7 +341,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public int queryRoomsPrice(int id, String location) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		try{
 
 			boolean b = acquireLock(id, RMType.HOTEL, Hotel.getKey(location), LockManager.READ);
@@ -357,7 +357,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean reserveFlight(int id, int customer, int flightNum)
-			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
@@ -373,7 +373,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean reserveCar(int id, int customer, String location)
-			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
 		try{
 
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
@@ -389,7 +389,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean reserveRoom(int id, int customer, String location)
-			throws RemoteException, TransactionAbortedException, InvalidTransactionException, ServerShutdownException {
+			throws RemoteException, TransactionAbortedException, InvalidTransactionException {
 		try{
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(customer), LockManager.WRITE);
 			ReservedItem item = reserveItem(id, customer, Hotel.getKey(location), location, ReservedItem.rType.ROOM);
@@ -404,7 +404,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public boolean itinerary(int id, int customer, Vector flightNumbers,String location, boolean car, boolean room) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", " +flightNumbers+ ", "+location+
 				", " + car + ", " + room + " ) called" );        
 		// Read customer object if it exists (and read lock it)
@@ -505,19 +505,19 @@ public class Middleware implements ResourceManager {
 	}
 
 	@Override
-	public int start() throws RemoteException, ServerShutdownException {
+	public int start() throws RemoteException {
 
 		return tm.start();
 	}
 	
 	@Override
-	public int autocommit() throws RemoteException, ServerShutdownException {
+	public int autocommit() throws RemoteException {
 		return tm.start(true);
 	}
 
 	@Override
 	public boolean commit(int id) 
-			throws RemoteException, InvalidTransactionException, TransactionAbortedException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException, TransactionAbortedException {
 		boolean b = tm.commit(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
@@ -527,7 +527,7 @@ public class Middleware implements ResourceManager {
 
 	@Override
 	public void abort(int id) 
-			throws RemoteException, InvalidTransactionException, ServerShutdownException {
+			throws RemoteException, InvalidTransactionException {
 		tm.abort(id);
 		synchronized(lock){
 			lock.UnlockAll(id);
