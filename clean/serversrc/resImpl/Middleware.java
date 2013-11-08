@@ -572,7 +572,9 @@ public class Middleware implements ResourceManager {
 	public boolean shutdown() throws RemoteException {
 		if(shutdown)
 			return true;
-		
+		Trace.info("shutdown() initiated. Waiting to unexport the object.");
+		while(UnicastRemoteObject.unexportObject(this, false)) {}
+		Trace.info("shutdown() unexported middleware.");
 		shutdown = true;
 		Trace.info("Waiting for threads to finish");
 		try {
