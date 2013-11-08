@@ -51,9 +51,11 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
     {
     	synchronized(m_transactionHT){
     		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
-    		RMItem item = (RMItem) trHT.get(key);
-    		if(item != null)
-    			return item;
+    		if(trHT != null){
+				RMItem item = (RMItem) trHT.get(key);
+				if(item != null)
+					return item;
+			}
     	}
         synchronized(m_itemHT) {
             return new Hotel((Hotel) m_itemHT.get(key));

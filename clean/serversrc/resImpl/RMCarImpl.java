@@ -46,21 +46,23 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 
         // Create and install a security manager
         if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
+        	System.setSecurityManager(new RMISecurityManager());
         }
-    }
-	
-    protected RMItem readData( int id, String key )
-    {
-    	synchronized(m_transactionHT){
-    		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
-    		RMItem item = (RMItem) trHT.get(key);
-    		if(item != null)
-    			return item;
-    	}
-        synchronized(m_itemHT) {
-            return new Car((Car) m_itemHT.get(key));
-        }
+	}
+
+	protected RMItem readData( int id, String key )
+	{
+		synchronized(m_transactionHT){
+			RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+			if(trHT != null){
+				RMItem item = (RMItem) trHT.get(key);
+				if(item != null)
+					return item;
+			}
+		}
+		synchronized(m_itemHT) {
+			return new Car((Car) m_itemHT.get(key));
+		}
     }
     
     public RMCarImpl() throws RemoteException {
