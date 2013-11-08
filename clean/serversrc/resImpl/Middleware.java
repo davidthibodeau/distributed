@@ -574,6 +574,7 @@ public class Middleware implements ResourceManager {
 			return true;
 		
 		shutdown = true;
+		Trace.info("Waiting for threads to finish");
 		try {
 			return tm.shutdown();
 		} finally {
