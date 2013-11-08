@@ -146,18 +146,6 @@ public class TMimpl implements TransactionManager {
 	}
 	
 	public boolean shutdown() throws RemoteException {
-		Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-		
-		
-		for (Thread s : threadSet) {
-			try {
-				if (!s.equals(Thread.currentThread()))
-					
-					s.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 		for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
     		Transaction tr = i.nextElement();
     		try {
