@@ -60,6 +60,7 @@ public class TMimpl implements TransactionManager {
         int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                                    String.valueOf( Math.round( Math.random() * 100 + 1 )));
         writeData(tid, new Transaction(tid));
+        Trace.info("TM::start() succeeded. Providing transaction id " + tid );
 		return tid;
 	}
 
@@ -69,6 +70,7 @@ public class TMimpl implements TransactionManager {
         int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                                    String.valueOf( Math.round( Math.random() * 100 + 1 )));
         writeData(tid, new Transaction(tid, autocommit));
+        Trace.info("TM::autocommit() succeeded. Providing transaction id " + tid );
 		return tid;
 	}
 	
@@ -89,6 +91,7 @@ public class TMimpl implements TransactionManager {
 			t.commit();
 		else
 			removeData(transactionID);
+		Trace.info("TM::commit(" + transactionID + ") succeeded.");
 		return true;
 	}
 
@@ -109,6 +112,7 @@ public class TMimpl implements TransactionManager {
 			t.commit();//Does not actually performs commit but clears the enlisted properties.
 		else
 			removeData(transactionID);
+		Trace.info("TM::abort(" + transactionID + ") succeeded.");
 	}
 
 	@Override
@@ -130,6 +134,7 @@ public class TMimpl implements TransactionManager {
 			t.enlistCustomer();
 			break;
 		}
+		Trace.info("TM::enlist(" + transactionID + ", " + rm.toString() + ") succeeded.");
 	}
 	
 	public boolean shutdown() throws RemoteException {
@@ -158,6 +163,7 @@ public class TMimpl implements TransactionManager {
 		rmFlight.shutdown();
 		rmHotel.shutdown();
 		rmCustomer.shutdown();
+		Trace.info("TM::shutdown() succeeded.");
 		return true;
 	}
 	
@@ -165,6 +171,7 @@ public class TMimpl implements TransactionManager {
 		Transaction tr = readData(id);
 		if(tr == null)
 			throw new InvalidTransactionException();
+		Trace.info("TM::lives(" + id + ") succeeded.");
 		return tr.resetTTL();
 	}
 	

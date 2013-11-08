@@ -7,8 +7,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Vector;
-import LockManager.*;
 
+import LockManager.*;
 import serversrc.resInterface.*;
 
 public class Middleware implements ResourceManager {
@@ -589,6 +589,7 @@ public class Middleware implements ResourceManager {
 	private boolean acquireLock(int id, RMType type, String key, int lockType) 
 			throws TransactionAbortedException, InvalidTransactionException {
 		try {
+			Trace.info("TM::acquireLock("+ id + ", " + type.toString() + ", " + key + ", " + lockType + ") started.");
 			boolean b = tm.lives(id);
 			boolean locked = false;
 			synchronized(lock){
@@ -597,6 +598,7 @@ public class Middleware implements ResourceManager {
 			if (locked) {
 				if(lockType == LockManager.WRITE)
 					tm.enlist(id, type);
+				Trace.info("TM::acquireLock("+ id + ", " + type.toString() + ", " + key + ", " + lockType + ") succeeded.");
 				return b;
 			} else{
 				throw new InvalidTransactionException();
