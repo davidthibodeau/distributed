@@ -223,7 +223,7 @@ public class TMimpl implements TransactionManager {
 		class TimeToLive {
 
 			private Timer timer;
-			private final long life = 600; //in seconds; 10 min.
+			private final long life = 120; //in seconds; 2 min.
 
 			TimeToLive() {
 				timer = new Timer();

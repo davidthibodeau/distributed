@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -144,17 +145,11 @@ public class Middleware implements ResourceManager {
 	 */
 	public int newCustomer(int id) throws RemoteException,
 			InvalidTransactionException, TransactionAbortedException {
-		try {
-			int cid = rmCustomer.newCustomer(id);
-			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid),
-					LockManager.WRITE);
-			if (!b)
-				commit(id);
-			return cid;
-		} catch (TransactionAbortedException i) {
-			abort(id);
-			throw new TransactionAbortedException(id);
-		}
+		int cid = Integer.parseInt( String.valueOf(id) +
+				String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+				String.valueOf( Math.round( Math.random() * 100 + 1 )));
+		newCustomer(id, cid);
+		return cid;
 	}
 
 	@Override
@@ -163,9 +158,10 @@ public class Middleware implements ResourceManager {
 		try {
 			boolean b = acquireLock(id, RMType.CUSTOMER, Customer.getKey(cid),
 					LockManager.WRITE);
+			boolean b1 = rmCustomer.newCustomer(id, cid);
 			if (!b)
 				commit(id);
-			return rmCustomer.newCustomer(id, cid);
+			return b1; 
 		} catch (TransactionAbortedException i) {
 			abort(id);
 			throw new TransactionAbortedException(id);

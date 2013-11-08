@@ -1,14 +1,11 @@
 package clientsrc;
 
 import serversrc.resImpl.InvalidTransactionException;
-import serversrc.resImpl.ServerShutdownException;
 import serversrc.resImpl.TransactionAbortedException;
 import serversrc.resInterface.*;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.RMISecurityManager;
-import java.rmi.RemoteException;
 import java.util.*;
 import java.io.*;
 
@@ -496,8 +493,6 @@ public class client
 				System.out.println("The transaction you asked for does not exists. Maybe it was aborted because of inactivity.");
 			} catch (TransactionAbortedException e) {
 				System.out.println("The request you made for this transaction could not be completed and the transaction has been aborted.");
-			} catch (ServerShutdownException e) {
-				System.out.println("The server has shutdowned. Uncommited transactions are aborted and no other operations can be done.");
 			} catch (Exception e) {
 				System.out.println("EXCEPTION:");
 				System.out.println(e.getMessage());
