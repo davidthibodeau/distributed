@@ -181,7 +181,9 @@ public abstract class RMBaseImpl implements RMBase {
     
     public boolean enlist(int id) throws RemoteException {
     	synchronized(m_transactionHT) {
-            m_transactionHT.put(id, new RMHashtable());
+    		RMHashtable tr = (RMHashtable) m_transactionHT.get(id);
+    		if(tr == null)
+    			m_transactionHT.put(id, new RMHashtable());
         }
     	return true;
     }
