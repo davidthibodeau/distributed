@@ -144,10 +144,15 @@ public class LockManager
                                     }
                                 //There is only one lock, maybe it is a lock conversion?
                                 } else if (vect1.size () == 1) {
+                                	Trace.info("UnlockAll(" + xid + ") - Reached the correct branch.");
                                 	TrxnObj d = (TrxnObj) vect.elementAt(0);
                                 	//The transaction requesting the lock already has one, ie lock conversion
                                     //Then, we can give it the new lock.
+                                	Trace.info("UnlockAll(" + xid + ") - Lock is held by " + d.getXId() + 
+                                			" and " +  waitObj.getXId() + " asks for a write lock.");
                                 	if(d.getXId() == waitObj.getXId()){
+                                		Trace.info("UnlockAll(" + xid + ") has reach equality branch. Waking up the thread of "
+                                				+ waitObj.getXId());
                                 		this.waitTable.remove(waitObj);     
                                         
                                         try {
