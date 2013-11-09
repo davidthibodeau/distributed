@@ -57,14 +57,20 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
     		if(trHT != null){
 				RMItem item = (RMItem) trHT.get(key);
-				if(item != null)
+				if(item != null){
+					Trace.info("INFO: RM::readData(" + id + ", " + key + 
+							") found item in m_transactionHT, returning it.");
 					return item;
+				}
 			}
     	}
         synchronized(m_itemHT) {
         	Customer c = (Customer) m_itemHT.get(key);
-			if (c != null)
+			if (c != null){
+				Trace.info("INFO: RM::readData(" + id + ", " + key + 
+						") found item in m_itemHT, copying it and returning the copy.");
 				return new Customer(c);
+			}
 			return null;
         }
     }
