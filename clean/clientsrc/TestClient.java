@@ -110,7 +110,7 @@ public class TestClient extends client implements Runnable {
 			totalTransactions++;
 			totalResponseTime += delay;
 			try {
-				Thread.sleep(transactionTime - delay);
+				Thread.sleep(Math.max(transactionTime - delay, 0));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				return;
@@ -118,6 +118,7 @@ public class TestClient extends client implements Runnable {
 
 		}
 		averageTransactions = totalResponseTime / totalTransactions;
+		
 	}
 
 	void flightTransaction(int id, int flightNum, int flightSeats,
