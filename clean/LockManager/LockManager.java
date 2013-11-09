@@ -3,6 +3,8 @@ package LockManager;
 import java.util.BitSet;
 import java.util.Vector;
 
+import serversrc.resImpl.Trace;
+
 public class LockManager
 {
     public static final int READ = 0;
@@ -126,7 +128,7 @@ public class LockManager
                                 // get all other transactions which have locks on the
                                 // data item just unlocked. 
                                 Vector vect1 = this.lockTable.elements(dataObj);
-                                
+                                Trace.info("UnlockAll(" + xid + ") - waitTable has " + vect1.size() + " transactions wanting it.");
                                 // remove interrupted thread from waitTable only if no
                                 // other transaction has locked this data item
                                 if (vect1.size () == 0) {
