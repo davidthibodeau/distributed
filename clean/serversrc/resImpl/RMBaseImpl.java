@@ -38,6 +38,7 @@ public abstract class RMBaseImpl implements RMBase {
         synchronized(m_transactionHT) {
         	RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
             trHT.put(key, value);
+            m_transactionHT.put(id, trHT);
         }
     }
     

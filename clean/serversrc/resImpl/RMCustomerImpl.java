@@ -56,15 +56,23 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     	synchronized(m_transactionHT){
     		RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
     		if(trHT != null){
+    			Trace.info("INFO: RM::readData(" + id + ", " + key + 
+						") trHT not null.");
 				RMItem item = (RMItem) trHT.get(key);
-				if(item != null)
+				if(item != null){
+					Trace.info("INFO: RM::readData(" + id + ", " + key + 
+							") found item in m_transactionHT, returning it.");
 					return item;
+				}
 			}
     	}
         synchronized(m_itemHT) {
         	Customer c = (Customer) m_itemHT.get(key);
-			if (c != null)
+			if (c != null){
+				Trace.info("INFO: RM::readData(" + id + ", " + key + 
+						") found item in m_itemHT, copying it and returning the copy.");
 				return new Customer(c);
+			}
 			return null;
         }
     }
@@ -168,12 +176,14 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 
     public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     		throws RemoteException, TransactionAbortedException {
+    	Trace.info("RM::reserve(" + id + ", " + cid + ") called" );
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
     	if (cust == null)
     		throw new TransactionAbortedException(id);
     	if (cust.isDeleted())
     		throw new TransactionAbortedException(id);
     	ReservedItem i = cust.reserve(key, location, price, rtype);
+    	Trace.info("RM::reserve(" + id + ", " + cid + ") writing modified cust to transactionHT." );
     	writeData(id, key, cust);
     	return i;
     }
