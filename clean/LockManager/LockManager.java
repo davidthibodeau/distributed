@@ -113,6 +113,7 @@ public class LockManager
                 trxnObj = (TrxnObj) vect.elementAt(i);
                 this.lockTable.remove(trxnObj);
 
+                Trace.info("UnlockAll(" + xid + ") will remove from locktable object with id " + trxnObj.getXId());
                 DataObj dataObj = new DataObj(trxnObj.getXId(), trxnObj.getDataName(), trxnObj.getLockType());
                 this.lockTable.remove(dataObj);
                                         
