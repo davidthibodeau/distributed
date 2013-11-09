@@ -577,9 +577,7 @@ public class Middleware implements ResourceManager {
 	public boolean commit(int id) throws RemoteException,
 			InvalidTransactionException, TransactionAbortedException {
 		boolean b = tm.commit(id);
-		synchronized (lock) {
-			lock.UnlockAll(id);
-		}
+		lock.UnlockAll(id);
 		return b;
 	}
 
@@ -587,9 +585,7 @@ public class Middleware implements ResourceManager {
 	public void abort(int id) throws RemoteException,
 			InvalidTransactionException {
 		tm.abort(id);
-		synchronized (lock) {
-			lock.UnlockAll(id);
-		}
+		lock.UnlockAll(id);
 	}
 
 	@Override
@@ -640,9 +636,7 @@ public class Middleware implements ResourceManager {
 					+ key + ", " + lockType + ") started.");
 			boolean b = tm.lives(id);
 			boolean locked = false;
-			synchronized (lock) {
-				locked = lock.Lock(id, key, lockType);
-			}
+			locked = lock.Lock(id, key, lockType);
 			if (locked) {
 				if (lockType == LockManager.WRITE)
 					tm.enlist(id, type);

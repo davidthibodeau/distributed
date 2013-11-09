@@ -238,9 +238,7 @@ public class TMimpl implements TransactionManager {
 				public void run() {
 					try {
 						abort(id);
-						synchronized(lock){
-							lock.UnlockAll(id);
-						}
+						lock.UnlockAll(id);
 					} catch (RemoteException e) {
 						// Should not happen
 						e.printStackTrace();
