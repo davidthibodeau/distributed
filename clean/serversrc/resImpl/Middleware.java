@@ -145,9 +145,8 @@ public class Middleware implements ResourceManager {
 	 */
 	public int newCustomer(int id) throws RemoteException,
 			InvalidTransactionException, TransactionAbortedException {
-		int cid = Integer.parseInt( String.valueOf(id) +
-				String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
-				String.valueOf( Math.round( Math.random() * 100 + 1 )));
+		int cid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+				String.valueOf( Math.round( Math.random() * 10 + 1 )));
 		newCustomer(id, cid);
 		return cid;
 	}
