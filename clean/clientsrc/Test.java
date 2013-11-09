@@ -41,7 +41,7 @@ public class Test {
 		}
 		
 		for(int i = 0; i <numOfClients; ++i){
-			averageDelay = (int) (1f/i * clients[i].averageResponseTime + (double)(i-1f)/i * averageDelay); 
+			averageDelay = (int) (1f/i * clients[i].averageTransactions + (double)(i-1f)/i * averageDelay); 
 		}
 		
 		for(int i = 0; i < numOfClients; ++i){

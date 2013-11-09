@@ -15,7 +15,9 @@ import serversrc.resInterface.ResourceManager;
 public class TestClient extends client implements Runnable {
 	static Random rand = new Random();
 	int transactionTime; // in milliseconds.
-	int averageResponseTime; // in milliseconds.
+	int totalResponseTime; // in milliseconds.
+	int totalTransactions;
+	int averageTransactions;
 	int lengthOfExperiment;
 	long startTime;
 	long stopTime;
@@ -78,6 +80,7 @@ public class TestClient extends client implements Runnable {
 		stopTime = startTime + lengthOfExperiment;
 		while (System.currentTimeMillis() < stopTime) {
 			int identifier, amount, price;
+			long delay = System.currentTimeMillis();
 
 			try {
 				identifier = rand.nextInt();
@@ -103,13 +106,23 @@ public class TestClient extends client implements Runnable {
 				rm.commit(tid);
 			} catch (RemoteException e) {
 				e.printStackTrace();
-				return;
+				break;
 			}
 			catch(Exception e){
 				
 			}
+			delay = (int) (System.currentTimeMillis() - delay);
+			totalTransactions++;
+			totalResponseTime += delay;
+			try {
+				Thread.sleep(transactionTime - delay);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return;
+			}
+			
 		}
-
+		averageTransactions = totalResponseTime/totalTransactions;
 	}
 
 	void flightTransaction(int id, int flightNum, int flightSeats,
