@@ -40,10 +40,6 @@ public class Test {
 			e.printStackTrace();
 		}
 		
-		for(int i = 0; i <numOfClients; ++i){
-			averageDelay = (int) (1f/i * clients[i].averageTransactions + (double)(i-1f)/i * averageDelay); 
-		}
-		
 		for(int i = 0; i < numOfClients; ++i){
 			try {
 				threads[i].join();
@@ -51,6 +47,10 @@ public class Test {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+		
+		for(int i = 0; i <numOfClients; ++i){
+			averageDelay = (int) (1f/i * clients[i].averageTransactions + (double)(i-1f)/i * averageDelay); 
 		}
 		
 		System.out.println("Experiment summary: \n Number of Clients: " + numOfClients  );
