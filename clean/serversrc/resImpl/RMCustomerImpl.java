@@ -174,12 +174,14 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
 
     public ReservedItem reserve(int id, int cid, String key, String location, int price, ReservedItem.rType rtype)
     		throws RemoteException, TransactionAbortedException {
+    	Trace.info("RM::reserve(" + id + ", " + cid + ") called" );
     	Customer cust = (Customer) readData(id, Customer.getKey(cid));
     	if (cust == null)
     		throw new TransactionAbortedException(id);
     	if (cust.isDeleted())
     		throw new TransactionAbortedException(id);
     	ReservedItem i = cust.reserve(key, location, price, rtype);
+    	Trace.info("RM::reserve(" + id + ", " + cid + ") writing modified cust to transactionHT." );
     	writeData(id, key, cust);
     	return i;
     }
