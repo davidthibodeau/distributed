@@ -524,7 +524,7 @@ public class Middleware implements ResourceManager {
 		// Verifies if customer exists
 		Customer cust = rmCustomer.getCustomer(id, customerID);
 		if (cust == null) {
-			Trace.warn("RM::reserveCar( " + id + ", " + customerID + ", " + key
+			Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key
 					+ ", " + location + ")  failed--customer doesn't exist");
 			return null;
 		}

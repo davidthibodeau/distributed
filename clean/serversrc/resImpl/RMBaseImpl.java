@@ -147,11 +147,21 @@ public abstract class RMBaseImpl implements RMBase {
     		throw new InvalidTransactionException();
     	}
     	for(Enumeration<Object> i = transaction.elements(); i.hasMoreElements(); ){
-    		ReservableItem item = (ReservableItem) i.nextElement();
-    		if(item.isDeleted())
-    			deleteData(id, item.getKey());
-    		else
-    			registerData(id,item.getKey(), item);
+    		RMItem item = (RMItem) i.nextElement();
+    		if(item.getClass() == Customer.class){
+    			Customer cust = (Customer)item;
+    			if(cust.isDeleted())
+    				deleteData(id, cust.getKey());
+    			else
+    				registerData(id, cust.getKey(), cust);
+    		} else{
+    			ReservableItem item1 = (ReservableItem) item;
+    			if(item.isDeleted())
+    				deleteData(id, item1.getKey());
+    			else
+    				registerData(id, item1.getKey(), item1);
+    		
+    		}
     	}
     	return true;
     }
