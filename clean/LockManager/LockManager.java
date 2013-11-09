@@ -171,7 +171,7 @@ public class LockManager
                                 //There is only one lock, maybe it is a lock conversion?
                                 } else if (vect1.size () == 1) {
                                 	Trace.info("UnlockAll(" + xid + ") - Reached the correct branch.");
-                                	TrxnObj d = (TrxnObj) vect.elementAt(0);
+                                	TrxnObj d = (TrxnObj) vect1.elementAt(0);
                                 	//The transaction requesting the lock already has one, ie lock conversion
                                     //Then, we can give it the new lock.
                                 	Trace.info("UnlockAll(" + xid + ") - Lock is held by " + d.getXId() + 
