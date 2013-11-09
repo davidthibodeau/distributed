@@ -3,6 +3,8 @@ package LockManager;
 import java.util.BitSet;
 import java.util.Vector;
 
+import serversrc.resImpl.Trace;
+
 public class LockManager
 {
     public static final int READ = 0;
@@ -126,7 +128,7 @@ public class LockManager
                                 // get all other transactions which have locks on the
                                 // data item just unlocked. 
                                 Vector vect1 = this.lockTable.elements(dataObj);
-                                
+                                Trace.info("UnlockAll(" + xid + ") - waitTable has " + vect1.size() + " transactions wanting it.");
                                 // remove interrupted thread from waitTable only if no
                                 // other transaction has locked this data item
                                 if (vect1.size () == 0) {
@@ -139,7 +141,24 @@ public class LockManager
                                     }
                                     catch (Exception e)    {
                                         System.out.println("Exception on unlock\n" + e.getMessage());
-                                    }        
+                                    }
+                                //There is only one lock, maybe it is a lock conversion?
+                                } else if (vect1.size () == 1) {
+                                	DataObj d = (DataObj) vect.elementAt(0);
+                                	//The transaction requesting the lock already has one, ie lock conversion
+                                    //Then, we can give it the new lock.
+                                	if(d.getXId() == waitObj.getXId()){
+                                		this.waitTable.remove(waitObj);     
+                                        
+                                        try {
+                                            synchronized (waitObj.getThread())    {
+                                                waitObj.getThread().notify();
+                                            }    
+                                        }
+                                        catch (Exception e)    {
+                                            System.out.println("Exception on unlock\n" + e.getMessage());
+                                        }
+                                	}
                                 }
                                 else {
                                     // some other transaction still has a lock on
