@@ -89,8 +89,10 @@ public class TMimpl implements TransactionManager {
 			rmCustomer.commit(transactionID);
 		if(t.isAutoCommitting())
 			t.commit();
-		else
+		else{
+			t.cancelTTL();
 			removeData(transactionID);
+		}
 		Trace.info("TM::commit(" + transactionID + ") succeeded.");
 		return true;
 	}
@@ -110,8 +112,10 @@ public class TMimpl implements TransactionManager {
 			rmCustomer.abort(transactionID);
 		if(t.isAutoCommitting())
 			t.commit();//Does not actually performs commit but clears the enlisted properties.
-		else
+		else{
+			t.cancelTTL();
 			removeData(transactionID);
+		}
 		Trace.info("TM::abort(" + transactionID + ") succeeded.");
 	}
 
@@ -253,6 +257,10 @@ public class TMimpl implements TransactionManager {
 				timer = new Timer();
 				timer.schedule(new RemindTask(), life*1000);
 			}
+			
+			void cancel(){
+				timer.cancel();
+			}
 		}
 
 		//reset does not occur if autocommit since there is nothing to have expire.
@@ -260,6 +268,12 @@ public class TMimpl implements TransactionManager {
 			if(!autocommit)
 				ttl.reset();
 			return !autocommit;
+		}
+		
+		boolean cancelTTL(){
+			if(!autocommit)
+				ttl.cancel();
+			return true;
 		}
 		
 		
