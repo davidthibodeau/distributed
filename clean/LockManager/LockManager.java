@@ -139,7 +139,24 @@ public class LockManager
                                     }
                                     catch (Exception e)    {
                                         System.out.println("Exception on unlock\n" + e.getMessage());
-                                    }        
+                                    }
+                                //There is only one lock, maybe it is a lock conversion?
+                                } else if (vect1.size () == 1) {
+                                	DataObj d = (DataObj) vect.elementAt(0);
+                                	//The transaction requesting the lock already has one, ie lock conversion
+                                    //Then, we can give it the new lock.
+                                	if(d.getXId() == waitObj.getXId()){
+                                		this.waitTable.remove(waitObj);     
+                                        
+                                        try {
+                                            synchronized (waitObj.getThread())    {
+                                                waitObj.getThread().notify();
+                                            }    
+                                        }
+                                        catch (Exception e)    {
+                                            System.out.println("Exception on unlock\n" + e.getMessage());
+                                        }
+                                	}
                                 }
                                 else {
                                     // some other transaction still has a lock on
