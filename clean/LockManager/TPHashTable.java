@@ -94,7 +94,26 @@ public class TPHashTable
         }
         
         vectSlot = (Vector) vect.elementAt( hashSlot );
-        return vectSlot.removeElement(xobj);
+        
+        //The following make sure the right item is removed in case there are multiple entries with same key
+        XObj xobj2;
+        int size = vectSlot.size();
+        for ( int i = (size - 1); i >= 0; i-- ) {
+            xobj2 = (XObj) vectSlot.elementAt(i);
+            if(xobj.getClass() == TrxnObj.class && xobj2.getClass() == TrxnObj.class){
+        		TrxnObj tobj = (TrxnObj) xobj;
+        		TrxnObj tobj2 = (TrxnObj) xobj;
+        		if(tobj.getDataName() == tobj2.getDataName() && tobj.getXId() == tobj2.getXId()){
+        			vectSlot.remove(i);
+        			return true;
+        		}
+        	}
+            if ( xobj.key() == xobj2.key()) {
+            	vectSlot.remove(i); 
+            	return true;
+            }
+        }
+        return false;
     }
 
     public synchronized XObj get(XObj xobj)
