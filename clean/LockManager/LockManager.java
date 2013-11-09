@@ -116,31 +116,7 @@ public class LockManager
 
                 
                 DataObj dataObj = new DataObj(trxnObj.getXId(), trxnObj.getDataName(), trxnObj.getLockType());
-                Vector vect2 = this.lockTable.elements(dataObj);
-                Trace.info("UnlockAll(" + xid + ") will remove from locktable object with id " + trxnObj.getXId() 
-                		+ ". Before that, locktable contained " + vect2.size() + " elements.");
-                Trace.info("UnlockAll(" + xid + ") now removes object with id " + trxnObj.getXId() + " data " 
-                			+ trxnObj.getDataName() + " and  locktype " + trxnObj.getLockType());
-                int locksize = vect2.size();
-                for (int k = 0; k < locksize; k++) {
-                	DataObj d = (DataObj) vect2.get(k);
-                	Trace.info("UnlockAll(" + xid + ") vect2 contains at index " + k + " object with id " 
-                			+ d.getXId() + " data " + d.getDataName() + " and  locktype " + d.getLockType());
-                }
-                Trace.info("UnlockAll(" + xid + ") vect2");
                 this.lockTable.remove(dataObj);
-                
-                vect2 = this.lockTable.elements(dataObj);
-                Trace.info("UnlockAll(" + xid + ") will remove from locktable object with id " + trxnObj.getXId() 
-                		+ ". Before that, locktable contained " + vect2.size() + " elements.");
-                Trace.info("UnlockAll(" + xid + ") now removes object with id " + trxnObj.getXId() + " data " 
-                			+ trxnObj.getDataName() + " and  locktype " + trxnObj.getLockType());
-                locksize = vect2.size();
-                for (int k = 0; k < locksize; k++) {
-                	DataObj d = (DataObj) vect2.get(k);
-                	Trace.info("UnlockAll(" + xid + ") vect2 contains at index " + k + " object with id " 
-                			+ d.getXId() + " data " + d.getDataName() + " and  locktype " + d.getLockType());
-                }
                                         
                 // check if there are any waiting transactions. 
                 synchronized (this.waitTable) {
@@ -174,11 +150,8 @@ public class LockManager
                                 	TrxnObj d = (TrxnObj) vect1.elementAt(0);
                                 	//The transaction requesting the lock already has one, ie lock conversion
                                     //Then, we can give it the new lock.
-                                	Trace.info("UnlockAll(" + xid + ") - Lock is held by " + d.getXId() + 
-                                			" and " +  waitObj.getXId() + " asks for a write lock.");
                                 	if(d.getXId() == waitObj.getXId()){
-                                		Trace.info("UnlockAll(" + xid + ") has reach equality branch. Waking up the thread of "
-                                				+ waitObj.getXId());
+                                		Trace.info("UnlockAll(" + xid + ") Waking up the thread of "+ waitObj.getXId());
                                 		this.waitTable.remove(waitObj);     
                                         
                                         try {
