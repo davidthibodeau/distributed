@@ -101,9 +101,12 @@ public class TestClient extends client implements Runnable {
 				}
 
 				rm.commit(tid);
-			} catch (Exception e) {
+			} catch (RemoteException e) {
 				e.printStackTrace();
 				return;
+			}
+			catch(Exception e){
+				
 			}
 		}
 
