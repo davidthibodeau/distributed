@@ -68,7 +68,8 @@ public class LockManager
     						this.lockTable.remove(dataObj);	
 
     					}
-
+    					Trace.info("Lock(" + xid + ", " + strData + ", " + lockType + ") adds dataObj with id " 
+                    			+ dataObj.getXId() + " data " + dataObj.getDataName() + " and  locktype " + dataObj.getLockType());
     					this.lockTable.add(trxnObj);
     					this.lockTable.add(dataObj);
 		    }
