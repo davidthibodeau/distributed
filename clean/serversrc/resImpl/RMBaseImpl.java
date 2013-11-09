@@ -43,13 +43,10 @@ public abstract class RMBaseImpl implements RMBase {
     
     // Remove the item out of storage
     protected RMItem removeData(int id, String key) {
-        synchronized(m_transactionHT) {
-        	RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
         	RMItem item = (RMItem)readData(id, key);
         	item.setDeleted(true);
         	writeData(id, key, item);
             return item;
-        }
     }
     
     // deletes the entire item
@@ -84,6 +81,7 @@ public abstract class RMBaseImpl implements RMBase {
     	Trace.info("RM::unreserveItem(" + id + ") has reserved " + key + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
     	item.setReserved(item.getReserved()-1);
     	item.setCount(item.getCount()+1);
+    	writeData(id,key,item);
     	return true;
     }
 
@@ -133,6 +131,7 @@ public abstract class RMBaseImpl implements RMBase {
     		// decrease the number of available items in the storage
     		item.setCount(item.getCount() - 1);
     		item.setReserved(item.getReserved()+1);
+    		writeData(id,key,item);
     		return new RMInteger(item.getPrice());
     	}
     }
