@@ -22,55 +22,49 @@ public class TestClient extends client implements Runnable {
 	long startTime;
 	long stopTime;
 
-	TestClient(int requestRate, int numberOfClients, int lengthOfExperiment, String args[]) {
-		transactionTime = (int) (1000f * numberOfClients / requestRate);
-		this.lengthOfExperiment = lengthOfExperiment;
-		String server = "localhost";
-		int port = 1099;
-		if (args.length > 0)
-		{
-			server = args[0];
-		}
-		if (args.length > 1)
-		{
-			port = Integer.parseInt(args[1]);
-		}
-		if (args.length > 2)
-		{
-			System.out.println ("Usage: java client [rmihost [rmiport]]");
-			System.exit(1);
-		}
+	TestClient(int requestRate, int numberOfClients, int lengthOfExperiment,
+			String args[]) {
+		if (numberOfClients == 1 || requestRate == 0) {
+			transactionTime = 0;
 
-		try 
-		{
+		} else {
+			transactionTime = (int) (1000f * numberOfClients / requestRate);
+		}
+			String server = "localhost";
+			int port = 1099;
+			if (args.length > 0) {
+				server = args[0];
+			}
+			if (args.length > 1) {
+				port = Integer.parseInt(args[1]);
+			}
+			if (args.length > 2) {
+				System.out.println("Usage: java client [rmihost [rmiport]]");
+				System.exit(1);
+			}
+		this.lengthOfExperiment = lengthOfExperiment;
+
+		try {
 			// get a reference to the rmiregistry
 			Registry registry = LocateRegistry.getRegistry(server, port);
 			// get the proxy and the remote reference by rmiregistry lookup
 			rm = (ResourceManager) registry.lookup("Group2Middleware");
-			if(rm!=null)
-			{
+			if (rm != null) {
 				System.out.println("Successful");
 				System.out.println("Connected to RM");
-			}
-			else
-			{
+			} else {
 				System.out.println("Unsuccessful");
 			}
 			// make call on remote method
-		} 
-		catch (Exception e) 
-		{    
+		} catch (Exception e) {
 			System.err.println("Client exception: " + e.toString());
 			e.printStackTrace();
-			
+
 		}
-
-
 
 		if (System.getSecurityManager() == null) {
-			//System.setSecurityManager(new RMISecurityManager());
+			// System.setSecurityManager(new RMISecurityManager());
 		}
-
 
 	}
 
@@ -92,24 +86,25 @@ public class TestClient extends client implements Runnable {
 				int selector = rand.nextInt(3);
 
 				switch (selector) {
-				
-				case(0):
+
+				case (0):
 					flightTransaction(tid, identifier, amount, price);
 					break;
-				case(1):
-					carTransaction(tid, String.valueOf(identifier), amount, price);
+				case (1):
+					carTransaction(tid, String.valueOf(identifier), amount,
+							price);
 					break;
-				case(2):
-					hotelTransaction(tid, String.valueOf(identifier), amount, price);
+				case (2):
+					hotelTransaction(tid, String.valueOf(identifier), amount,
+							price);
 				}
 
 				rm.commit(tid);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				break;
-			}
-			catch(Exception e){
-				
+			} catch (Exception e) {
+
 			}
 			delay = (int) (System.currentTimeMillis() - delay);
 			totalTransactions++;
@@ -120,9 +115,9 @@ public class TestClient extends client implements Runnable {
 				e.printStackTrace();
 				return;
 			}
-			
+
 		}
-		averageTransactions = totalResponseTime/totalTransactions;
+		averageTransactions = totalResponseTime / totalTransactions;
 	}
 
 	void flightTransaction(int id, int flightNum, int flightSeats,
