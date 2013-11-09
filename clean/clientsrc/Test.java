@@ -9,19 +9,22 @@ public class Test {
 	 */
 	public static void main(String[] args) {
 		
-		
+		String rms[] = new String[args.length-3];
 		int numOfClients = Integer.parseInt(args[0]);
 		int ratePerSecond = Integer.parseInt(args[1]);
 		int experimentLength = Integer.parseInt(args[2]);
 		int averageDelay = 0;
 		
+		for(int i = 0; i < rms.length; ++i){
+			rms[i] = args[i+3];
+		}
 		
 		
 		TestClient clients[] = new TestClient[numOfClients];
 		Thread threads[] = new Thread[numOfClients];
 		
 		for (int i = 0; i < numOfClients; ++i){
-			clients[i] = new TestClient(ratePerSecond, numOfClients, experimentLength);
+			clients[i] = new TestClient(ratePerSecond, numOfClients, experimentLength, rms);
 			threads[i] = new Thread(clients[i]);
 			
 		}
