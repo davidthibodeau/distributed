@@ -113,8 +113,11 @@ public class LockManager
                 trxnObj = (TrxnObj) vect.elementAt(i);
                 this.lockTable.remove(trxnObj);
 
-                Trace.info("UnlockAll(" + xid + ") will remove from locktable object with id " + trxnObj.getXId());
+                
                 DataObj dataObj = new DataObj(trxnObj.getXId(), trxnObj.getDataName(), trxnObj.getLockType());
+                Vector vect2 = this.lockTable.elements(dataObj);
+                Trace.info("UnlockAll(" + xid + ") will remove from locktable object with id " + trxnObj.getXId() 
+                		+ ". Before that, locktable contained " + vect2.size() + " elements.");
                 this.lockTable.remove(dataObj);
                                         
                 // check if there are any waiting transactions. 
