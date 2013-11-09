@@ -69,7 +69,7 @@ public class LockManager
 
     					}
     					Trace.info("Lock(" + xid + ", " + strData + ", " + lockType + ") adds dataObj with id " 
-                    			+ dataObj.getXId() + " data " + dataObj.getDataName() + " and  locktype " + dataObj.getLockType());
+                    			+ dataObj.getXId() + ", data " + dataObj.getDataName() + ", and locktype " + dataObj.getLockType());
     					this.lockTable.add(trxnObj);
     					this.lockTable.add(dataObj);
 		    }
@@ -123,8 +123,9 @@ public class LockManager
                 			+ trxnObj.getDataName() + " and  locktype " + trxnObj.getLockType());
                 int locksize = vect2.size();
                 for (int k = 0; k < locksize; k++) {
+                	DataObj d = (DataObj) vect2.get(k);
                 	Trace.info("UnlockAll(" + xid + ") vect2 contains at index " + k + " object with id " 
-                			+ trxnObj.getXId() + " data " + trxnObj.getDataName() + " and  locktype " + trxnObj.getLockType());
+                			+ d.getXId() + " data " + d.getDataName() + " and  locktype " + d.getLockType());
                 }
                 Trace.info("UnlockAll(" + xid + ") vect2");
                 this.lockTable.remove(dataObj);
