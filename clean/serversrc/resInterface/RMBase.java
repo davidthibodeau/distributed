@@ -38,5 +38,7 @@ public interface RMBase extends Remote {
 	public boolean shutdown() throws RemoteException;
 	
 	public boolean enlist(int id) throws RemoteException;
+	
+	public void selfdestruct() throws RemoteException;
 
 }

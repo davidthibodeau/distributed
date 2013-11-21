@@ -226,6 +226,5 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     	}.start();
     	return true;
     }
-
     
 }

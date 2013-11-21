@@ -187,5 +187,9 @@ public abstract class RMBaseImpl implements RMBase {
         }
     	return true;
     }
+    
+	public void selfdestruct() throws RemoteException {
+		System.exit(1);
+	}
 
 }

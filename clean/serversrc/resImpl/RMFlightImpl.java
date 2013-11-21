@@ -144,5 +144,4 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
 	}
 
 
-
 }

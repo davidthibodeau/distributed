@@ -623,6 +623,29 @@ public class Middleware implements ResourceManager {
 		}.start();
 		return true;
 	}
+	
+	public boolean crash(String which) throws RemoteException {
+		
+		if(which == "car"){
+			rmCar.selfdestruct();
+		} else if (which == "flight"){
+			rmFlight.selfdestruct();
+		} else if (which == "hotel"){
+			rmHotel.selfdestruct();
+		} else if (which == "customer"){
+			rmCustomer.selfdestruct();
+		} else if (which == "middelware"){
+			selfdestruct();
+		} else {
+			return false;
+		}
+		
+		return true;
+	}
+
+	private void selfdestruct() {
+		System.exit(1);
+	}
 
 	/*
 	 * lock.Lock will return false only if informations are incorrect. The only
