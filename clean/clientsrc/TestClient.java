@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.Random;
 
 import serversrc.resImpl.InvalidTransactionException;
-import serversrc.resImpl.ServerShutdownException;
 import serversrc.resImpl.TransactionAbortedException;
 import serversrc.resInterface.ResourceManager;
 
@@ -123,8 +122,8 @@ public class TestClient extends client implements Runnable {
 
 	void flightTransaction(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException,
-			InvalidTransactionException, TransactionAbortedException,
-			ServerShutdownException {
+			InvalidTransactionException, TransactionAbortedException
+			 {
 		rm.queryFlight(id, flightNum);
 		rm.addFlight(id, flightNum, flightSeats, flightPrice);
 		rm.queryFlight(id, flightNum);
@@ -137,7 +136,7 @@ public class TestClient extends client implements Runnable {
 
 	void carTransaction(int id, String location, int numberOfCars, int carPrice)
 			throws RemoteException, InvalidTransactionException,
-			TransactionAbortedException, ServerShutdownException {
+			TransactionAbortedException {
 		rm.queryCars(id, location);
 		rm.addCars(id, location, numberOfCars, carPrice);
 		rm.queryCars(id, location);
@@ -149,7 +148,7 @@ public class TestClient extends client implements Runnable {
 
 	void hotelTransaction(int id, String location, int rooms, int price)
 			throws RemoteException, InvalidTransactionException,
-			TransactionAbortedException, ServerShutdownException {
+			TransactionAbortedException{
 		rm.queryRooms(id, location);
 		rm.addRooms(id, location, rooms, price);
 		rm.queryRooms(id, location);
