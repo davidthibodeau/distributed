@@ -136,6 +136,20 @@ public abstract class RMBaseImpl implements RMBase {
     		return new RMInteger(item.getPrice());
     	}
     }
+    
+    public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+    	RMHashtable transaction = null;
+    	synchronized(m_transactionHT){
+    		transaction = (RMHashtable) m_transactionHT.get(id);
+    	}
+    	if(transaction == null){
+    		Trace.warn("RM::commit( " + id + ") failed--Transaction does not exist." );
+    		throw new InvalidTransactionException();
+    	}
+    	//TODO: write transactionht to persistent storage
+    	
+    	return true;
+    }
 
     public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
     	RMHashtable transaction = null;

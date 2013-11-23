@@ -41,6 +41,8 @@ public interface RMCustomer extends Remote {
 	public boolean unreserve(int id, int cid, ReservedItem item)
 			throws RemoteException, TransactionAbortedException;
 	
+	public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+	
 	/**
 	 * Commits the transaction with transactionID
 	 * @param transactionID is the transaction to be committed
