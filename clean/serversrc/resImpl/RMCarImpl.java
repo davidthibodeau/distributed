@@ -32,6 +32,7 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
         try {
             // create a new Server object
             RMCarImpl obj = new RMCarImpl();
+            obj.boot();
             // dynamically generate the stub (client proxy)
             RMCar rm = (RMCar) UnicastRemoteObject.exportObject(obj, 0);
 
@@ -139,6 +140,11 @@ public class RMCarImpl extends RMBaseImpl implements RMCar {
 
 		}.start();
 		return true;
+	}
+
+	@Override
+	protected String rmType() {
+		return "rmcar";
 	}
 
 

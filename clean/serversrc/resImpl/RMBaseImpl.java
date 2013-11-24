@@ -1,10 +1,10 @@
 package serversrc.resImpl;
 
+import java.io.*;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import serversrc.resInterface.*;
 
@@ -16,6 +16,55 @@ public abstract class RMBaseImpl implements RMBase {
 
     // Reads a data item
     protected abstract RMItem readData( int id, String key );
+    
+    protected abstract String rmType();
+    
+    protected boolean boot(){
+    	
+    	try {
+    		FileInputStream fos = new FileInputStream(this.rmType() + "-ht.rm");
+    		ObjectInputStream oos = new ObjectInputStream(fos);
+    		
+    		synchronized(m_itemHT){
+    			m_itemHT = (RMHashtable) oos.readObject();
+    		}
+    		
+    		oos.close();
+    		
+    		BufferedReader br = new BufferedReader(new FileReader(rmType() + "-prepared.rm"));
+    		String line;
+    		while ((line = br.readLine()) != null) {
+    			RMHashtable ht = new RMHashtable();
+    			int id = 0;
+    			Pattern p = Pattern.compile("[0-9]+");
+    			Matcher m = p.matcher(line);
+    			if (m.find()) {
+    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
+    			} else {
+    				br.close();
+    				return false;
+    			}
+        		fos = new FileInputStream(line);
+        		oos = new ObjectInputStream(fos);
+        		
+        		ht = (RMHashtable) oos.readObject();
+        		oos.close();
+        		
+        		synchronized(m_transactionHT){
+        			m_transactionHT.put(id, ht);
+        		}
+    		}
+    		br.close();
+    		return true;
+    		
+    		
+    	} catch (ClassNotFoundException | IOException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    		return false;
+		} 
+    	
+    }
     
     // Writes a data item
     protected void registerData( int id, String key, RMItem value )
@@ -143,10 +192,24 @@ public abstract class RMBaseImpl implements RMBase {
     		transaction = (RMHashtable) m_transactionHT.get(id);
     	}
     	if(transaction == null){
-    		Trace.warn("RM::commit( " + id + ") failed--Transaction does not exist." );
+    		Trace.warn("RM::prepare( " + id + ") failed--Transaction does not exist." );
     		throw new InvalidTransactionException();
     	}
-    	//TODO: write transactionht to persistent storage
+
+    	try {
+    		String line = this.rmType() + "-" + id + ".tmp";
+    		BufferedWriter br = new BufferedWriter(new FileWriter(rmType() + "-prepared.rm"));
+    		br.write(line);
+    		br.newLine();
+    		
+        	FileOutputStream fos = new FileOutputStream(line);
+        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(transaction);
+			oos.close();
+		} catch (IOException e) {
+			Trace.warn("RM::prepare( " + id + ") failed--Could not write hashtable into file." );
+			return false;
+		}
     	
     	return true;
     }
@@ -174,9 +237,23 @@ public abstract class RMBaseImpl implements RMBase {
     				deleteData(id, item1.getKey());
     			else
     				registerData(id, item1.getKey(), item1);
-    		
     		}
     	}
+    	try {
+    		FileOutputStream fos = new FileOutputStream(this.rmType() + "-ht.rm");
+    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+    		synchronized(m_itemHT){
+    			oos.writeObject(m_itemHT);
+    		}
+    		oos.close();
+    	} catch (IOException e) {
+    		Trace.error("RM::Commit( " + id + ") failed--Could not write hashtable to file." );
+    		return false;
+    	}
+		String line = this.rmType() + "-" + id + ".tmp";
+		File file = new File(line);
+		file.delete();
+		removeLineFromFile(rmType() + "-prepared.rm",line);
     	return true;
     }
     
@@ -205,5 +282,55 @@ public abstract class RMBaseImpl implements RMBase {
 	public void selfdestruct() throws RemoteException {
 		System.exit(1);
 	}
+	
+	// method obtained from 
+	// http://stackoverflow.com/questions/1377279/java-find-a-line-in-a-file-and-remove
+	public void removeLineFromFile(String file, String lineToRemove) {
 
+		try {
+
+		  File inFile = new File(file);
+
+		  if (!inFile.isFile()) {
+		    System.out.println("Parameter is not an existing file");
+		    return;
+		  }
+
+		  //Construct the new file that will later be renamed to the original filename.
+		  File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
+
+		  BufferedReader br = new BufferedReader(new FileReader(file));
+		  PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
+
+		  String line = null;
+
+		  //Read from the original file and write to the new
+		  //unless content matches data to be removed.
+		  while ((line = br.readLine()) != null) {
+
+		    if (!line.trim().equals(lineToRemove)) {
+
+		      pw.println(line);
+		      pw.flush();
+		    }
+		  }
+
+		  //Delete the original file
+		  if (!inFile.delete()) {
+		    System.out.println("Could not delete file");
+		    return;
+		  }
+
+		  //Rename the new file to the filename the original file had.
+		  if (!tempFile.renameTo(inFile))
+		    System.out.println("Could not rename file");
+
+		}
+		catch (FileNotFoundException ex) {
+		  ex.printStackTrace();
+		}
+		catch (IOException ex) {
+		  ex.printStackTrace();
+		}
+	}
 }

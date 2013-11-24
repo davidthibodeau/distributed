@@ -99,6 +99,7 @@ public class TMimpl implements TransactionManager {
 		try {
 			while(!t.isReady())
 				wait();
+			 Trace.info("TM::commit(" + transactionID + ") all RM voted yes for commit");
 			if(t.isCarEnlisted())
 				rmCar.commit(transactionID);
 			if(t.isFlightEnlisted())
@@ -117,6 +118,7 @@ public class TMimpl implements TransactionManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (TransactionAbortedException e) {
+			Trace.info("TM::commit(" + transactionID + ") succeeded.");
 			abort(transactionID);
 		}
 		

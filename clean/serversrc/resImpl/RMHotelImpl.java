@@ -29,6 +29,7 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
         try {
             // create a new Server object
             RMHotelImpl obj = new RMHotelImpl();
+            obj.boot();
             // dynamically generate the stub (client proxy)
             RMHotel rm = (RMHotel) UnicastRemoteObject.exportObject(obj, 0);
 
@@ -141,6 +142,11 @@ public class RMHotelImpl extends RMBaseImpl implements RMHotel {
 
 		}.start();
 		return true;
+	}
+
+	@Override
+	protected String rmType() {
+		return "rmhotel";
 	}
 
     

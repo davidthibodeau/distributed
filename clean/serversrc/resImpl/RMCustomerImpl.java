@@ -32,6 +32,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
         try {
             // create a new Server object
             RMCustomerImpl obj = new RMCustomerImpl();
+            obj.boot();
             // dynamically generate the stub (client proxy)
             RMCustomer rm = (RMCustomer) UnicastRemoteObject.exportObject(obj, 0);
 
@@ -226,5 +227,10 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     	}.start();
     	return true;
     }
+
+	@Override
+	protected String rmType() {
+		return "rmcustomer";
+	}
     
 }

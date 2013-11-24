@@ -30,6 +30,7 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
         try {
             // create a new Server object
             RMFlightImpl obj = new RMFlightImpl();
+            obj.boot();
             // dynamically generate the stub (client proxy)
             RMFlight rm = (RMFlight) UnicastRemoteObject.exportObject(obj, 0);
 
@@ -141,6 +142,11 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
 
 		}.start();
 		return true;
+	}
+
+	@Override
+	protected String rmType() {
+		return "rmflight";
 	}
 
 
