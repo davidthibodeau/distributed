@@ -241,8 +241,11 @@ public class TMimpl implements TransactionManager {
 					if(rmCustomer.prepare(tr.id))
 						tr.preparedCustomer();
 				}
-			} catch (RemoteException | InvalidTransactionException
-					| TransactionAbortedException e) {
+			} catch (TransactionAbortedException e) {
+				tr.markAborted();
+			} catch (RemoteException e){
+				tr.markAborted();
+			} catch (InvalidTransactionException e) {
 				tr.markAborted();
 			}
 		}

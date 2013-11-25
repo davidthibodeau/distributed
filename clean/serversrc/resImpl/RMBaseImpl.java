@@ -58,11 +58,15 @@ public abstract class RMBaseImpl implements RMBase {
     		return true;
     		
     		
-    	} catch (ClassNotFoundException | IOException e) {
+    	} catch (IOException e) {
     		// TODO Auto-generated catch block
     		e.printStackTrace();
     		return false;
-		} 
+		} catch(ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+    		e.printStackTrace();
+    		return false;
+		}
     	
     }
     
