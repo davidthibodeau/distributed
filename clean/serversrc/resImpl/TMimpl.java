@@ -79,19 +79,19 @@ public class TMimpl implements TransactionManager {
 		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
-		if(t.isCarEnlisted()){
+		if(t.isEnlisted(RMType.CAR)){
 			PrepareThread th = new PrepareThread(RMType.CAR, t);
 			th.start();
 		}
-		if(t.isFlightEnlisted()){
+		if(t.isEnlisted(RMType.FLIGHT)){
 			PrepareThread th = new PrepareThread(RMType.FLIGHT, t);
 			th.start();
 		}
-		if(t.isHotelEnlisted()){
+		if(t.isEnlisted(RMType.HOTEL)){
 			PrepareThread th = new PrepareThread(RMType.HOTEL, t);
 			th.start();
 		}
-		if(t.isCustomerEnlisted()){
+		if(t.isEnlisted(RMType.CUSTOMER)){
 			PrepareThread th = new PrepareThread(RMType.CUSTOMER, t);
 			th.start();
 		}
@@ -100,13 +100,13 @@ public class TMimpl implements TransactionManager {
 			while(!t.isReady())
 				wait();
 			 Trace.info("TM::commit(" + transactionID + ") all RM voted yes for commit");
-			if(t.isCarEnlisted())
+			if(t.isEnlisted(RMType.CAR))
 				rmCar.commit(transactionID);
-			if(t.isFlightEnlisted())
+			if(t.isEnlisted(RMType.FLIGHT))
 				rmFlight.commit(transactionID);
-			if(t.isHotelEnlisted())
+			if(t.isEnlisted(RMType.HOTEL))
 				rmHotel.commit(transactionID);
-			if(t.isCustomerEnlisted())
+			if(t.isEnlisted(RMType.CUSTOMER))
 				rmCustomer.commit(transactionID);
 			if(t.isAutoCommitting())
 				t.commit();
@@ -131,13 +131,13 @@ public class TMimpl implements TransactionManager {
 		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
-		if(t.isCarEnlisted())
+		if(t.isEnlisted(RMType.CAR))
 			rmCar.abort(transactionID);
-		if(t.isFlightEnlisted())
+		if(t.isEnlisted(RMType.FLIGHT))
 			rmFlight.abort(transactionID);
-		if(t.isHotelEnlisted())
+		if(t.isEnlisted(RMType.HOTEL))
 			rmHotel.abort(transactionID);
-		if(t.isCustomerEnlisted())
+		if(t.isEnlisted(RMType.CUSTOMER))
 			rmCustomer.abort(transactionID);
 		if(t.isAutoCommitting())
 			t.commit();//Does not actually performs commit but clears the enlisted properties.
@@ -154,21 +154,18 @@ public class TMimpl implements TransactionManager {
 		if(t == null)
 			throw new InvalidTransactionException();
 		try {
+			t.enlist(rm);
 			switch(rm){
 			case CAR:
-				t.enlistCar();
 				rmCar.enlist(transactionID);
 				break;
 			case FLIGHT:
-				t.enlistFlight();
 				rmFlight.enlist(transactionID);
 				break;
 			case HOTEL:
-				t.enlistHotel();
 				rmHotel.enlist(transactionID);
 				break;
 			case CUSTOMER:
-				t.enlistCustomer();
 				rmCustomer.enlist(transactionID);
 				break;
 			}
@@ -228,18 +225,17 @@ public class TMimpl implements TransactionManager {
 			try {
 				switch(rm){
 				case CAR:
-					if(rmCar.prepare(tr.id))
-						tr.preparedCar();
+					tr.prepared(rmCar.prepare(tr.id), rm);
 					break;
 				case HOTEL:
-					if(rmHotel.prepare(tr.id))
-						tr.preparedHotel();
+					tr.prepared(rmHotel.prepare(tr.id), rm);
+					break;
 				case FLIGHT:
-					if(rmFlight.prepare(tr.id))
-						tr.preparedFlight();
+					tr.prepared(rmFlight.prepare(tr.id), rm);
+					break;
 				case CUSTOMER:
-					if(rmCustomer.prepare(tr.id))
-						tr.preparedCustomer();
+					tr.prepared(rmCustomer.prepare(tr.id), rm);
+					break;
 				}
 			} catch (TransactionAbortedException e) {
 				tr.markAborted();
@@ -261,14 +257,10 @@ public class TMimpl implements TransactionManager {
 	@SuppressWarnings("serial")
 	public class Transaction implements Serializable {
 
-		private boolean carEnlisted = false;
-		private boolean hotelEnlisted = false;
-		private boolean flightEnlisted = false;
-		private boolean customerEnlisted = false;
-		private boolean carPrepared = false;
-		private boolean hotelPrepared = false;
-		private boolean flightPrepared = false;
-		private boolean customerPrepared = false;
+		private EnlistedRM car;
+		private EnlistedRM hotel;
+		private EnlistedRM flight;
+		private EnlistedRM customer;
 		private boolean aborted = false;
 		private boolean autocommit = false;
 		private TimeToLive ttl;
@@ -347,75 +339,90 @@ public class TMimpl implements TransactionManager {
 		
 		
 		/**
-		 * Tells whether RMCar is enlisted
+		 * Tells whether a particular RM is enlisted
 		 */
-		public boolean isCarEnlisted() {
-			return carEnlisted;
+		public boolean isEnlisted(RMType rm) {
+			switch(rm){
+			case CAR:
+				return car != null;
+			case FLIGHT:
+				return flight != null;
+			case HOTEL:
+				return hotel != null;
+			case CUSTOMER:
+				return customer != null;
+			}
+			return false;
 		}
 		
 		/**
 		 * Adds RMCar to the list of enlisted RMs
 		 */
-		public void enlistCar() {
-			this.carEnlisted = true;
+		public void enlist(RMType rm) {
+			switch(rm){
+			case CAR:
+				car = new EnlistedRM();
+				break;
+			case FLIGHT:
+				flight = new EnlistedRM();
+				break;
+			case HOTEL:
+				hotel = new EnlistedRM();
+				break;
+			case CUSTOMER:
+				customer = new EnlistedRM();
+				break;
+			}
+		}
+		
+		public void prepared(boolean t, RMType rm){
+			if(t){
+				acceptsCommit(rm);
+			} else {
+				refusesCommit(rm);
+			}
 		}
 
-		/**
-		 * Tells whether RMHotel is enlisted
-		 */
-		public boolean isHotelEnlisted() {
-			return hotelEnlisted;
+		private void acceptsCommit(RMType rm) {
+			switch(rm){
+			case CAR:
+				if(car != null)
+					car.accepted();
+				break;
+			case FLIGHT:
+				if(flight != null)
+					flight.accepted();
+				break;
+			case HOTEL:
+				if(hotel != null)
+					hotel.accepted();
+				break;
+			case CUSTOMER:
+				if(customer != null)
+					customer.accepted();
+				break;
+			}
 		}
-
-		/**
-		 * Adds RMHotel to the list of enlisted RMs
-		 */
-		public void enlistHotel() {
-			this.hotelEnlisted = true;
-		}
-
-		/**
-		 * Tells whether RMFlight is enlisted
-		 */
-		public boolean isFlightEnlisted() {
-			return flightEnlisted;
-		}
-
-		/**
-		 * Adds RMFlight to the list of enlisted RMs
-		 */
-		public void enlistFlight() {
-			this.flightEnlisted = true;
-		}
-
-		/**
-		 * Tells whether RMCustomer is enlisted
-		 */
-		public boolean isCustomerEnlisted() {
-			return customerEnlisted;
-		}
-
-		/**
-		 * Adds RMCustomer to the list of enlisted RMs
-		 */
-		public void enlistCustomer() {
-			this.customerEnlisted = true;
-		}
-
-		public void preparedCar() {
-			this.carPrepared = true;
-		}
-
-		public void preparedHotel() {
-			this.hotelPrepared = true;
-		}
-
-		public void preparedFlight() {
-			this.flightPrepared = true;
-		}
-
-		public void preparedCustomer() {
-			this.customerPrepared = true;
+		
+		private void refusesCommit(RMType rm) {
+			switch(rm){
+			case CAR:
+				if(car != null)
+					car.refused();
+				break;
+			case FLIGHT:
+				if(flight != null)
+					flight.refused();
+				break;
+			case HOTEL:
+				if(hotel != null)
+					hotel.refused();
+				break;
+			case CUSTOMER:
+				if(customer != null)
+					customer.refused();
+				break;
+			}
 		}
 		
 		public void markAborted() {
@@ -425,17 +432,17 @@ public class TMimpl implements TransactionManager {
 		public boolean isReady() throws TransactionAbortedException {
 			if(aborted)
 				throw new TransactionAbortedException(id);
-			if (flightEnlisted)
-				if(!flightPrepared)
+			if (flight != null)
+				if(flight.hasReplied())
 					return false;
-			if (carEnlisted)
-				if(!carPrepared)
+			if (car != null)
+				if(car.hasReplied())
 					return false;
-			if (hotelEnlisted)
-				if(!hotelPrepared)
+			if (hotel != null)
+				if(hotel.hasReplied())
 					return false;
-			if (customerEnlisted)
-				if(!customerPrepared)
+			if (customer != null)
+				if(customer.hasReplied())
 					return false;
 			return true;
 			
@@ -446,15 +453,35 @@ public class TMimpl implements TransactionManager {
 		 * Is only used for autocommit transactions.
 		 */
 		public void commit() {
-			flightEnlisted = false;
-			carEnlisted = false;
-			hotelEnlisted = false;
-			customerEnlisted = false;
-			flightPrepared = false;
-			carPrepared = false;
-			hotelPrepared = false;
-			customerPrepared = false;
+			car = null;
+			flight = null;
+			hotel = null;
+			customer = null;
 			aborted = false;
+		}
+		
+		private class EnlistedRM {
+			
+			private boolean repliedPrepared = false;
+			private boolean acceptedPrepared = false;
+			
+			public void accepted(){
+				repliedPrepared = true;
+				acceptedPrepared = true;
+			}
+			
+			public void refused(){
+				repliedPrepared = true;
+				acceptedPrepared = false;
+			}
+			
+			public boolean hasReplied(){
+				return repliedPrepared;
+			}
+			
+			public boolean hasAccepted(){
+				return acceptedPrepared;
+			}
 		}
 	}	
 }
