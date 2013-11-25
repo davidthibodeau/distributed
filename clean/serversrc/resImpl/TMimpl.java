@@ -492,16 +492,33 @@ public class TMimpl implements TransactionManager {
 			if(aborted)
 				throw new TransactionAbortedException(id);
 			if (flight != null)
-				if(flight.hasReplied())
+				if(!flight.hasReplied())
 					return false;
 			if (car != null)
-				if(car.hasReplied())
+				if(!car.hasReplied())
 					return false;
 			if (hotel != null)
-				if(hotel.hasReplied())
+				if(!hotel.hasReplied())
 					return false;
 			if (customer != null)
-				if(customer.hasReplied())
+				if(!customer.hasReplied())
+					return false;
+			return true;
+			
+		}
+		
+		public boolean voteResult() {
+			if (flight != null)
+				if(!flight.hasAccepted())
+					return false;
+			if (car != null)
+				if(!car.hasAccepted())
+					return false;
+			if (hotel != null)
+				if(!hotel.hasAccepted())
+					return false;
+			if (customer != null)
+				if(!customer.hasAccepted())
 					return false;
 			return true;
 			
