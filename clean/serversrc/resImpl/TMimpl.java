@@ -79,6 +79,7 @@ public class TMimpl implements TransactionManager {
 		Transaction t = readData(transactionID);
 		if(t == null)
 			throw new InvalidTransactionException();
+		t.timeoutReset();
 		if(t.isEnlisted(RMType.CAR)){
 			PrepareThread th = new PrepareThread(RMType.CAR, t);
 			th.start();
@@ -97,28 +98,40 @@ public class TMimpl implements TransactionManager {
 		}
 		
 		try {
-			while(!t.isReady())
+			t.timeoutStart();
+			while(!t.isReady()){
+				if(t.isTimedOut()){
+					abort(transactionID);
+					return false;
+				}
 				wait();
-			 Trace.info("TM::commit(" + transactionID + ") all RM voted yes for commit");
-			if(t.isEnlisted(RMType.CAR))
-				rmCar.commit(transactionID);
-			if(t.isEnlisted(RMType.FLIGHT))
-				rmFlight.commit(transactionID);
-			if(t.isEnlisted(RMType.HOTEL))
-				rmHotel.commit(transactionID);
-			if(t.isEnlisted(RMType.CUSTOMER))
-				rmCustomer.commit(transactionID);
-			if(t.isAutoCommitting())
-				t.commit();
-			else{
-				t.cancelTTL();
-				removeData(transactionID);
+			}
+			Trace.info("TM::commit(" + transactionID + ") all replied.");
+			if(t.voteResult()){
+				Trace.info("TM::commit(" + transactionID + ") vote passed.");
+				if(t.isEnlisted(RMType.CAR))
+					rmCar.commit(transactionID);
+				if(t.isEnlisted(RMType.FLIGHT))
+					rmFlight.commit(transactionID);
+				if(t.isEnlisted(RMType.HOTEL))
+					rmHotel.commit(transactionID);
+				if(t.isEnlisted(RMType.CUSTOMER))
+					rmCustomer.commit(transactionID);
+				if(t.isAutoCommitting())
+					t.commit();
+				else{
+					t.cancelTTL();
+					removeData(transactionID);
+				}
+			} else { 
+				Trace.info("TM::commit(" + transactionID + ") vote was rejected.");
+				abort(transactionID);
 			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (TransactionAbortedException e) {
-			Trace.info("TM::commit(" + transactionID + ") succeeded.");
+			Trace.info("TM::commit(" + transactionID + ") An RM returned an error. Transaction is aborted.");
 			abort(transactionID);
 		}
 		
@@ -222,19 +235,28 @@ public class TMimpl implements TransactionManager {
 		}
 
 		public void run(){
+			boolean b;
 			try {
 				switch(rm){
 				case CAR:
-					tr.prepared(rmCar.prepare(tr.id), rm);
+					b = rmCar.prepare(tr.id);
+					if(!tr.isTimedOut())
+						tr.prepared(b, rm);
 					break;
 				case HOTEL:
-					tr.prepared(rmHotel.prepare(tr.id), rm);
+					b = rmHotel.prepare(tr.id);
+					if(!tr.isTimedOut())
+						tr.prepared(b, rm);
 					break;
 				case FLIGHT:
-					tr.prepared(rmFlight.prepare(tr.id), rm);
+					b = rmFlight.prepare(tr.id);
+					if(!tr.isTimedOut())
+						tr.prepared(b, rm);
 					break;
 				case CUSTOMER:
-					tr.prepared(rmCustomer.prepare(tr.id), rm);
+					b = rmCustomer.prepare(tr.id);
+					if(!tr.isTimedOut())
+						tr.prepared(b, rm);
 					break;
 				}
 			} catch (TransactionAbortedException e) {
@@ -261,16 +283,18 @@ public class TMimpl implements TransactionManager {
 		private EnlistedRM hotel;
 		private EnlistedRM flight;
 		private EnlistedRM customer;
+		private boolean timeout = false;
 		private boolean aborted = false;
 		private boolean autocommit = false;
 		private TimeToLive ttl;
+		private Timeout tout;
 		private int id;
 		
 		public Transaction (int id){
 			this.id = id;
 			ttl = new TimeToLive();
 		}
-		
+
 		public Transaction (int id, boolean autocommit){
 			this.autocommit = autocommit;
 			this.id = id;
@@ -425,6 +449,41 @@ public class TMimpl implements TransactionManager {
 			}
 		}
 		
+		public boolean isTimedOut() {
+			return timeout;
+		}
+
+		public void timeIsOut() {
+			this.timeout = true;
+		}
+		
+		public void timeoutReset(){
+			this.timeout = false;
+		}
+		
+		public void timeoutStart() {
+			tout = new Timeout();
+		}
+		
+		class Timeout {
+
+			private Timer timer;
+			private final long life = 60; //in seconds; 1 min.
+
+			Timeout() {
+				timer = new Timer();
+				timer.schedule(new RemindTask(), life*1000);
+			}
+
+			class RemindTask extends TimerTask {
+				public void run() {
+					timeIsOut();
+					timer.cancel(); //Terminate the timer thread
+					tout = null; //sends Timeout object to garbage collection
+				}
+			}	
+		}
+
 		public void markAborted() {
 			aborted = true;
 		}
