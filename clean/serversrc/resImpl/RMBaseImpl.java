@@ -12,7 +12,13 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	protected RMHashtable m_transactionHT = new RMHashtable();
+	protected final String htFileName = this.rmType() + "/ht.rm";
+	protected final String listPrepared = this.rmType() + "/prepared.rm";
 	static int port;
+	
+    private String locationFile(int id) {
+		return this.rmType() + "/" + id + ".tmp";
+	}
 
     // Reads a data item
     protected abstract RMItem readData( int id, String key );
@@ -20,18 +26,35 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     protected abstract String rmType();
     
     protected boolean boot(){
-    	
-    	try {
-    		FileInputStream fos = new FileInputStream(this.rmType() + "-ht.rm");
-    		ObjectInputStream oos = new ObjectInputStream(fos);
-    		
-    		synchronized(m_itemHT){
-    			m_itemHT = (RMHashtable) oos.readObject();
-    		}
-    		
-    		oos.close();
-    		
-    		BufferedReader br = new BufferedReader(new FileReader(rmType() + "-prepared.rm"));
+		FileInputStream fis;
+		ObjectInputStream ois;
+		try {
+			File htFile = new File(htFileName);
+			if (!htFile.exists()) {
+				htFile.createNewFile();
+				FileOutputStream fos = new FileOutputStream(htFile);
+				ObjectOutputStream oos = new ObjectOutputStream(fos);
+				synchronized (m_itemHT) {
+					oos.writeObject(m_itemHT);
+				}
+				oos.close();
+			} else {
+				fis = new FileInputStream(htFile);
+				ois = new ObjectInputStream(fis);
+				synchronized (m_itemHT) {
+					m_itemHT = (RMHashtable) ois.readObject();
+				}
+				ois.close();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	try{
+    		BufferedReader br = new BufferedReader(new FileReader(listPrepared));
     		String line;
     		while ((line = br.readLine()) != null) {
     			RMHashtable ht = new RMHashtable();
@@ -44,11 +67,11 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     				br.close();
     				return false;
     			}
-        		fos = new FileInputStream(line);
-        		oos = new ObjectInputStream(fos);
+        		fis = new FileInputStream(line);
+        		ois = new ObjectInputStream(fis);
         		
-        		ht = (RMHashtable) oos.readObject();
-        		oos.close();
+        		ht = (RMHashtable) ois.readObject();
+        		ois.close();
         		
         		synchronized(m_transactionHT){
         			m_transactionHT.put(id, ht);
@@ -201,16 +224,24 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     	}
 
     	try {
-    		String line = this.rmType() + "-" + id + ".tmp";
-    		BufferedWriter br = new BufferedWriter(new FileWriter(rmType() + "-prepared.rm"));
-    		br.write(line);
+    		String filename = locationFile(id);
+    		BufferedWriter br = new BufferedWriter(new FileWriter(listPrepared));
+    		br.write(filename);
     		br.newLine();
-    		
-        	FileOutputStream fos = new FileOutputStream(line);
-        	ObjectOutputStream oos = new ObjectOutputStream(fos);
-			oos.writeObject(transaction);
-			oos.close();
-		} catch (IOException e) {
+    		br.close();
+
+    		File htFile = new File(htFileName);
+    		if (!htFile.exists()) {
+    			htFile.createNewFile();
+    			FileOutputStream fos = new FileOutputStream(filename);
+    			ObjectOutputStream oos = new ObjectOutputStream(fos);
+    			oos.writeObject(transaction);
+    			oos.close();
+    		} else {
+    			//file does exist. Previous commit has not been cleaned up.
+    			//TODO: do cleanup???
+    		}
+    	} catch (IOException e) {
 			Trace.warn("RM::prepare( " + id + ") failed--Could not write hashtable into file." );
 			return false;
 		}
@@ -218,7 +249,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     	return true;
     }
 
-    public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+	public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
@@ -244,7 +275,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     		}
     	}
     	try {
-    		FileOutputStream fos = new FileOutputStream(this.rmType() + "-ht.rm");
+    		FileOutputStream fos = new FileOutputStream(htFileName);
     		ObjectOutputStream oos = new ObjectOutputStream(fos);
     		synchronized(m_itemHT){
     			oos.writeObject(m_itemHT);
@@ -254,10 +285,10 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     		Trace.error("RM::Commit( " + id + ") failed--Could not write hashtable to file." );
     		return false;
     	}
-		String line = this.rmType() + "-" + id + ".tmp";
-		File file = new File(line);
+		String filename = locationFile(id);
+		File file = new File(filename);
 		file.delete();
-		removeLineFromFile(rmType() + "-prepared.rm",line);
+		removeLineFromFile(listPrepared,filename);
     	return true;
     }
     
@@ -285,7 +316,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		System.exit(1);
 	}
 	
-	// method obtained from 
+	// method adapted from 
 	// http://stackoverflow.com/questions/1377279/java-find-a-line-in-a-file-and-remove
 	public void removeLineFromFile(String file, String lineToRemove) {
 
@@ -316,10 +347,11 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		      pw.flush();
 		    }
 		  }
-
+		  br.close();
+		  pw.close();
 		  //Delete the original file
 		  if (!inFile.delete()) {
-		    System.out.println("Could not delete file");
+		    Trace.error("RemoveLineFromFile()//// Could not delete file:" + file); //this would disastrous.
 		    return;
 		  }
 
@@ -327,9 +359,6 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		  if (!tempFile.renameTo(inFile))
 		    System.out.println("Could not rename file");
 
-		}
-		catch (FileNotFoundException ex) {
-		  ex.printStackTrace();
 		}
 		catch (IOException ex) {
 		  ex.printStackTrace();
