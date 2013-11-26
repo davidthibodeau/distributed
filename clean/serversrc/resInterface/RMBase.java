@@ -15,7 +15,7 @@ public interface RMBase extends Remote {
 	public RMInteger reserveItem(int id, int customerID, String key, String location)
 	    	throws RemoteException, TransactionAbortedException;
 
-	public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+	public boolean prepare(int id) throws RemoteException;
 	
 	/**
 	 * Commits the transaction with transactionID

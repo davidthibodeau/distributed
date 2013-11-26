@@ -190,14 +190,14 @@ public abstract class RMBaseImpl implements RMBase {
     	}
     }
     
-    public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+    public boolean prepare(int id) throws RemoteException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.get(id);
     	}
     	if(transaction == null){
     		Trace.warn("RM::prepare( " + id + ") failed--Transaction does not exist." );
-    		throw new InvalidTransactionException();
+    		return false;
     	}
 
     	try {
