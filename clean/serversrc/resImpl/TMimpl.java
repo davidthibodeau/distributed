@@ -23,6 +23,7 @@ public class TMimpl implements TransactionManager {
 	private LockManager lock;
 
 	// Reads a data item
+
 	private Transaction readData(int id) {
 		synchronized (transactionHT) {
 			return (Transaction) transactionHT.get(id);
@@ -70,23 +71,21 @@ public class TMimpl implements TransactionManager {
 	@Override
 	public int start() throws RemoteException {
 		// Generate a globally unique ID for the new transaction
-		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(
-				Calendar.MILLISECOND))
-				+ String.valueOf(Math.round(Math.random() * 100 + 1)));
+		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+				String.valueOf( Math.round( Math.random() * 100 + 1 )));
 		writeData(tid, new Transaction(tid));
-		Trace.info("TM::start() succeeded. Providing transaction id " + tid);
+		Trace.info("TM::start() succeeded. Providing transaction id " + tid );
 		return tid;
 	}
 
 	@Override
 	public int start(boolean autocommit) throws RemoteException {
 		// Generate a globally unique ID for the new transaction
-		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(
-				Calendar.MILLISECOND))
-				+ String.valueOf(Math.round(Math.random() * 100 + 1)));
+
+		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+				String.valueOf( Math.round( Math.random() * 100 + 1 )));
 		writeData(tid, new Transaction(tid, autocommit));
-		Trace.info("TM::autocommit() succeeded. Providing transaction id "
-				+ tid);
+		Trace.info("TM::autocommit() succeeded. Providing transaction id " + tid );
 		return tid;
 	}
 
@@ -179,8 +178,8 @@ public class TMimpl implements TransactionManager {
 	}
 
 	public boolean shutdown() throws RemoteException {
-		for (Enumeration<Transaction> i = transactionHT.elements(); i
-				.hasMoreElements();) {
+
+		for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
 			Transaction tr = i.nextElement();
 			try {
 				abort(tr.getID());
@@ -205,7 +204,8 @@ public class TMimpl implements TransactionManager {
 		return true;
 	}
 
-	public boolean lives(int id) throws InvalidTransactionException {
+
+	public boolean lives(int id) throws InvalidTransactionException{
 		Transaction tr = readData(id);
 		if (tr == null)
 			throw new InvalidTransactionException();
@@ -218,7 +218,7 @@ public class TMimpl implements TransactionManager {
 		private RMType rm;
 		private Transaction tr;
 
-		PrepareThread(RMType tp, Transaction tr) {
+		PrepareThread(RMType tp, Transaction tr){
 			rm = tp;
 			this.tr = tr;
 		}
@@ -229,12 +229,9 @@ public class TMimpl implements TransactionManager {
 				b = getRMfromType(rm).prepare(tr.getID());
 				if (!tr.isTimedOut())
 					tr.prepared(b, rm);
-			} catch (TransactionAbortedException e) {
-				tr.markAborted();
-			} catch (RemoteException e) {
-				tr.markAborted();
-			} catch (InvalidTransactionException e) {
-				tr.markAborted();
+			} catch (RemoteException e){
+				if(!tr.isTimedOut())
+					tr.prepared(false, rm);
 			}
 		}
 	}
@@ -252,13 +249,13 @@ public class TMimpl implements TransactionManager {
 		private EnlistedRM flight;
 		private EnlistedRM customer;
 		private boolean timeout = false;
-		private boolean aborted = false;
 		private boolean autocommit = false;
 		private TimeToLive ttl;
 		private Timeout tout;
 		private int id;
 
-		public Transaction(int id) {
+
+		public Transaction (int id){
 			this.id = id;
 			ttl = new TimeToLive();
 		}
@@ -271,11 +268,12 @@ public class TMimpl implements TransactionManager {
 				ttl = new TimeToLive();
 		}
 
-		public int getID() {
+
+		public int getID (){
 			return id;
 		}
 
-		public boolean isAutoCommitting() {
+		public boolean isAutoCommitting(){
 			return autocommit;
 		}
 
@@ -303,9 +301,9 @@ public class TMimpl implements TransactionManager {
 					}
 					timer.cancel(); // Terminate the timer thread
 				}
-			}
+			}	
 
-			void reset() {
+			void reset(){
 				timer.cancel();
 				timer = new Timer();
 				timer.schedule(new RemindTask(), life * 1000);
@@ -451,14 +449,8 @@ public class TMimpl implements TransactionManager {
 				}
 			}
 		}
-
-		public void markAborted() {
-			aborted = true;
-		}
-
-		public boolean isReady() throws TransactionAbortedException {
-			if (aborted)
-				throw new TransactionAbortedException(id);
+		
+		public boolean isReady() {
 			if (flight != null)
 				if (!flight.hasReplied())
 					return false;
@@ -488,8 +480,7 @@ public class TMimpl implements TransactionManager {
 			if (customer != null)
 				if (!customer.hasAccepted())
 					return false;
-			return true;
-
+			return true;		
 		}
 
 		/**
@@ -501,7 +492,6 @@ public class TMimpl implements TransactionManager {
 			flight = null;
 			hotel = null;
 			customer = null;
-			aborted = false;
 		}
 
 		private class EnlistedRM {

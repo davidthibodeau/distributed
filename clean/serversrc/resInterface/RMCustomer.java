@@ -41,5 +41,4 @@ public interface RMCustomer extends Remote, RMBase {
 	public boolean unreserve(int id, int cid, ReservedItem item)
 			throws RemoteException, TransactionAbortedException;
 	
-	
 }

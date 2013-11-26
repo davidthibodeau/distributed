@@ -9,8 +9,8 @@ import serversrc.resImpl.RMInteger;
 
 public interface RMBase extends Remote {
 	
-	
-	public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+
+	public boolean prepare(int id) throws RemoteException;
 	
 	/**
 	 * Commits the transaction with transactionID

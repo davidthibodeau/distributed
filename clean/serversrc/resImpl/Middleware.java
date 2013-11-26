@@ -579,12 +579,12 @@ public class Middleware implements ResourceManager  {
 			InvalidTransactionException, TransactionAbortedException {
 		boolean b = false;
 		try{
-		b = tm.commit(id);
+			b = tm.commit(id);
 		} catch(TransactionAbortedException e){
 			throw e;
 		}
 		finally{
-		lock.UnlockAll(id);
+			lock.UnlockAll(id);
 		}
 		return b;
 	}
