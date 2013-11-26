@@ -6,7 +6,7 @@ import java.util.*;
 
 import serversrc.resImpl.TransactionAbortedException;
 
-public interface RMHotel extends Remote, RMBase {
+public interface RMHotel extends Remote, RMBase,RMReservable {
 
 	/* Add rooms to a location.  
      * This should look a lot like addFlight, only keyed on a string location

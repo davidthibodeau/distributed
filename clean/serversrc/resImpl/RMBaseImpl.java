@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 import serversrc.resInterface.*;
 
-public abstract class RMBaseImpl implements RMBase {
+public abstract class RMBaseImpl implements RMBase, RMReservable {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	protected RMHashtable m_transactionHT = new RMHashtable();

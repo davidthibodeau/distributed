@@ -6,7 +6,7 @@ import java.util.*;
 
 import serversrc.resImpl.TransactionAbortedException;
 
-public interface RMFlight extends Remote, RMBase {
+public interface RMFlight extends Remote, RMBase,RMReservable {
 
 	/* Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.

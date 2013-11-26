@@ -9,12 +9,7 @@ import serversrc.resImpl.RMInteger;
 
 public interface RMBase extends Remote {
 	
-	public boolean unreserveItem(int id, String key)
-			throws RemoteException, TransactionAbortedException;
 	
-	public RMInteger reserveItem(int id, int customerID, String key, String location)
-	    	throws RemoteException, TransactionAbortedException;
-
 	public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
 	/**

@@ -13,7 +13,7 @@ import java.util.Vector;
 import LockManager.*;
 import serversrc.resInterface.*;
 
-public class Middleware implements ResourceManager {
+public class Middleware implements ResourceManager  {
 
 	private RMCar rmCar;
 	private RMFlight rmFlight;
@@ -83,6 +83,7 @@ public class Middleware implements ResourceManager {
 		}
 	}
 
+	
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException,
@@ -576,8 +577,15 @@ public class Middleware implements ResourceManager {
 	@Override
 	public boolean commit(int id) throws RemoteException,
 			InvalidTransactionException, TransactionAbortedException {
-		boolean b = tm.commit(id);
+		boolean b = false;
+		try{
+		b = tm.commit(id);
+		} catch(TransactionAbortedException e){
+			throw e;
+		}
+		finally{
 		lock.UnlockAll(id);
+		}
 		return b;
 	}
 
@@ -628,13 +636,13 @@ public class Middleware implements ResourceManager {
 		
 		if(which == "car"){
 			rmCar.selfdestruct();
-		} else if (which == "flight"){
+		} else if (which.toLowerCase() == "flight"){
 			rmFlight.selfdestruct();
-		} else if (which == "hotel"){
+		} else if (which.toLowerCase() == "hotel"){
 			rmHotel.selfdestruct();
-		} else if (which == "customer"){
+		} else if (which.toLowerCase() == "customer"){
 			rmCustomer.selfdestruct();
-		} else if (which == "middelware"){
+		} else if (which.toLowerCase() == "middleware"){
 			selfdestruct();
 		} else {
 			return false;

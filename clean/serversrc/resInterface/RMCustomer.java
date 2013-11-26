@@ -14,7 +14,7 @@ import serversrc.resImpl.ReservedItem;
  *  Customer rm will have these methods. 
  *
  */
-public interface RMCustomer extends Remote {
+public interface RMCustomer extends Remote, RMBase {
 
 	/* new customer just returns a unique customer identifier */
 	public int newCustomer(int id) 
@@ -41,30 +41,5 @@ public interface RMCustomer extends Remote {
 	public boolean unreserve(int id, int cid, ReservedItem item)
 			throws RemoteException, TransactionAbortedException;
 	
-	public boolean prepare(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
-	/**
-	 * Commits the transaction with transactionID
-	 * @param transactionID is the transaction to be committed
-	 * @return true if commit is a success. 
-	 * @throws RemoteException -rmi
-	 * @throws TransactionAbortedException 
-	 * @throws InvalidTransactionException 
-	 */
-	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
-	
-	
-	/**
-	 * Aborts the transaction with transactionID
-	 * @param transactionID
-	 * @throws RemoteException -rmi
-	 * @throws InvalidTransactionException 
-	 */
-	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
-	
-	public boolean shutdown() throws RemoteException;
-	
-	public boolean enlist(int id) throws RemoteException;
-
-	public void selfdestruct() throws RemoteException;
 }

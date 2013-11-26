@@ -6,7 +6,7 @@ import java.util.*;
 
 import serversrc.resImpl.TransactionAbortedException;
 
-public interface RMCar extends RMBase, Remote {
+public interface RMCar extends RMBase,RMReservable, Remote {
 
     /* Add cars to a location.  
      * This should look a lot like addFlight, only keyed on a string location
