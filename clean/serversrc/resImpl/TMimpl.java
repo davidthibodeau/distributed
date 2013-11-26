@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Enumeration;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -111,7 +110,7 @@ public class TMimpl implements TransactionManager {
 					abort(transactionID);
 					throw new TransactionAbortedException(transactionID);
 				}
-				Thread.yield();
+				Thread.sleep(1000);
 			}
 			Trace.info("TM::commit(" + transactionID + ") all replied.");
 			if (t.voteResult()) {
@@ -129,12 +128,18 @@ public class TMimpl implements TransactionManager {
 				Trace.info("TM::commit(" + transactionID
 						+ ") vote was rejected.");
 				abort(transactionID);
+				throw new TransactionAbortedException(transactionID);
 			}
 		} catch (TransactionAbortedException e) {
 			Trace.info("TM::commit(" + transactionID
 					+ ") An RM returned an error. Transaction is aborted.");
 			abort(transactionID);
-		}
+			throw new TransactionAbortedException(transactionID);
+		} catch (InterruptedException e) {
+			//shouldn't happen
+			abort(transactionID);
+			throw new TransactionAbortedException(transactionID);
+		} 
 
 		Trace.info("TM::commit(" + transactionID + ") succeeded.");
 		return true;
@@ -251,7 +256,6 @@ public class TMimpl implements TransactionManager {
 		private boolean timeout = false;
 		private boolean autocommit = false;
 		private TimeToLive ttl;
-		private Timeout tout;
 		private int id;
 
 
@@ -428,7 +432,7 @@ public class TMimpl implements TransactionManager {
 		}
 
 		public void timeoutStart() {
-			tout = new Timeout();
+			new Timeout();
 		}
 
 		class Timeout {
@@ -445,7 +449,6 @@ public class TMimpl implements TransactionManager {
 				public void run() {
 					timeIsOut();
 					timer.cancel(); // Terminate the timer thread
-					tout = null; // sends Timeout object to garbage collection
 				}
 			}
 		}
