@@ -61,5 +61,7 @@ public interface TransactionManager extends Remote {
 	 */
 	public boolean lives(int id) throws InvalidTransactionException;
 
+	public boolean boot();
+
 	
 }

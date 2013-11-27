@@ -20,7 +20,7 @@ public interface RMBase extends Remote {
 	 * @throws TransactionAbortedException 
 	 * @throws InvalidTransactionException 
 	 */
-	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException;
 	
 	
 	/**

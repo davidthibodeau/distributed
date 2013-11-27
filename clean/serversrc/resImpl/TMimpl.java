@@ -1,11 +1,19 @@
 package serversrc.resImpl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import LockManager.LockManager;
 import serversrc.resInterface.*;
@@ -20,9 +28,9 @@ public class TMimpl implements TransactionManager {
 	// lock is passed to the TM so that the TimeToLive can
 	// unlock when aborting an idle transaction
 	private LockManager lock;
+	private final String folder = "tmmanager/";
 
 	// Reads a data item
-
 	private Transaction readData(int id) {
 		synchronized (transactionHT) {
 			return (Transaction) transactionHT.get(id);
@@ -34,14 +42,113 @@ public class TMimpl implements TransactionManager {
 		synchronized (transactionHT) {
 			transactionHT.put(id, value);
 		}
+		File file = new File(locationFile(id));
+		try {
+			if (!file.exists())
+				file.createNewFile();
+			FileOutputStream fos = new FileOutputStream(file);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+			oos.writeObject(value.extractData());
+			oos.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	// Remove the item out of storage
 	protected Transaction removeData(int id) {
+		Transaction tr;
 		synchronized (transactionHT) {
-			return (Transaction) transactionHT.remove(id);
+			tr = (Transaction) transactionHT.remove(id);
 		}
+		File file = new File(locationFile(id));
+		file.delete();
+		return tr;
 	}
+	
+    private String locationFile(int id) {
+		return folder + id + ".tmp";
+	}
+    
+    public boolean boot() {
+    	String files;
+		File folder = new File(this.folder);
+		File[] listOfFiles = folder.listFiles(); 
+
+		for (int i = 0; i < listOfFiles.length; i++)
+		{
+			TransactionData tr;
+			if (listOfFiles[i].isFile()) 
+			{
+				files = listOfFiles[i].getName();
+				if (files.endsWith(".tmp"))
+				{
+					int id = 0;
+					Pattern p = Pattern.compile("[0-9]+");
+	    			Matcher m = p.matcher(files);
+	    			if (m.find()) {
+	    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
+	    			} else {
+	    				return false;
+	    			}
+	    			try{
+	    				FileInputStream fis = new FileInputStream(files);
+	    				ObjectInputStream ois = new ObjectInputStream(fis);
+
+	    				tr = (TransactionData) ois.readObject();
+	    				ois.close();
+	    			} catch (IOException e) {
+	    				// TODO Auto-generated catch block
+	    				e.printStackTrace();
+	    				return false;
+	    			} catch(ClassNotFoundException e) {
+	    				// TODO Auto-generated catch block
+	    				e.printStackTrace();
+	    				return false;
+	    			}
+	    			cleanupTransaction(tr);
+				}
+			}
+		}
+    	return true;
+    }
+    
+    private void cleanupTransaction(TransactionData tr){
+    	if(tr.voteResult()){
+    		for (RMType type : RMType.values()) {
+    			if (tr.isEnlisted(type))
+					try {
+						getRMfromType(type).commit(tr.getID());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InvalidTransactionException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+    		}
+    	} else {
+    		for (RMType type : RMType.values()) {
+    			if (tr.isEnlisted(type))
+					try {
+						getRMfromType(type).abort(tr.getID());
+					} catch (RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InvalidTransactionException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+    		}
+    	}
+    	if (tr.isAutoCommitting())
+    		writeData(tr.getID(), new Transaction(tr.getID(), tr.isAutoCommitting()));
+    
+    	File file = new File(locationFile(tr.getID()));
+		file.delete();
+    }
 
 	public RMBase getRMfromType(RMType type) {
 		switch (type) {
@@ -114,6 +221,7 @@ public class TMimpl implements TransactionManager {
 			}
 			Trace.info("TM::commit(" + transactionID + ") all replied.");
 			if (t.voteResult()) {
+				writeData(t.getID(),t);
 				Trace.info("TM::commit(" + transactionID + ") vote passed.");
 				for (RMType rm : RMType.values())
 					if (t.isEnlisted(rm))
@@ -178,6 +286,7 @@ public class TMimpl implements TransactionManager {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+		writeData(transactionID,t);
 		Trace.info("TM::enlist(" + transactionID + ", " + rm.toString()
 				+ ") succeeded.");
 	}
@@ -214,8 +323,9 @@ public class TMimpl implements TransactionManager {
 		Transaction tr = readData(id);
 		if (tr == null)
 			throw new InvalidTransactionException();
+		boolean b = tr.resetTTL();
 		Trace.info("TM::lives(" + id + ") succeeded.");
-		return tr.resetTTL();
+		return b;
 	}
 
 	private class PrepareThread extends Thread {
@@ -246,40 +356,22 @@ public class TMimpl implements TransactionManager {
 	 * lives as a subclass to be able to have the TTL as a field and have the
 	 * TTL call abort when delay is passed to abort the transaction.
 	 */
-	@SuppressWarnings("serial")
-	public class Transaction implements Serializable {
+	public class Transaction extends TransactionData implements Serializable {
 
-		private EnlistedRM car;
-		private EnlistedRM hotel;
-		private EnlistedRM flight;
-		private EnlistedRM customer;
 		private boolean timeout = false;
-		private boolean autocommit = false;
 		private TimeToLive ttl;
-		private int id;
-
-
+		
 		public Transaction (int id){
-			this.id = id;
+			super(id);
 			ttl = new TimeToLive();
 		}
 
 		public Transaction(int id, boolean autocommit) {
-			this.autocommit = autocommit;
-			this.id = id;
+			super(id, autocommit);
 			// If autocommit is on, then transaction will not expire
 			if (!autocommit)
 				ttl = new TimeToLive();
-		}
-
-
-		public int getID (){
-			return id;
-		}
-
-		public boolean isAutoCommitting(){
-			return autocommit;
-		}
+		}	
 
 		class TimeToLive {
 
@@ -331,66 +423,6 @@ public class TMimpl implements TransactionManager {
 				ttl.cancel();
 			return true;
 		}
-		
-		
-		private EnlistedRM getEnlistedRMfromType(RMType type) {
-			switch (type) {
-			case CAR:
-				return car;
-			case HOTEL:
-				return hotel;
-			case FLIGHT:
-				return flight;
-			case CUSTOMER:
-				return customer;
-			}
-			return null; // shouldn't happen
-		}
-
-		/**
-		 * Tells whether a particular RM is enlisted
-		 */
-		public boolean isEnlisted(RMType rm) {
-			return (getEnlistedRMfromType(rm) != null);
-		}
-
-		/**
-		 * Adds RMCar to the list of enlisted RMs
-		 */
-		public void enlist(RMType rm) {
-			switch (rm) {
-			case CAR:
-				car = new EnlistedRM();
-				break;
-			case FLIGHT:
-				flight = new EnlistedRM();
-				break;
-			case HOTEL:
-				hotel = new EnlistedRM();
-				break;
-			case CUSTOMER:
-				customer = new EnlistedRM();
-				break;
-			}
-		}
-
-		public void prepared(boolean t, RMType rm) {
-			if (t) {
-				acceptsCommit(rm);
-			} else {
-				refusesCommit(rm);
-			}
-		}
-
-		private void acceptsCommit(RMType rm) {
-			if (getEnlistedRMfromType(rm) != null)
-				getEnlistedRMfromType(rm).accepted();
-		}
-
-		private void refusesCommit(RMType rm) {
-			if (getEnlistedRMfromType(rm) != null)
-				getEnlistedRMfromType(rm).refused();
-		}
 
 		public boolean isTimedOut() {
 			return timeout;
@@ -426,58 +458,10 @@ public class TMimpl implements TransactionManager {
 			}
 		}
 		
-		public boolean isReady() {
-			for (RMType rm : RMType.values()) {
-				if (getEnlistedRMfromType(rm) != null)
-					if (!getEnlistedRMfromType(rm).hasReplied())
-						return false;
-			}
-			return true;
-
+		public TransactionData extractData(){
+			return new TransactionData(id, autocommit, car, hotel, flight, customer);
 		}
 
-		public boolean voteResult() {
-			for (RMType rm : RMType.values()) {
-				if (getEnlistedRMfromType(rm) != null)
-					if (!getEnlistedRMfromType(rm).hasAccepted())
-						return false;
-			}
-			return true;
-		}
-
-		/**
-		 * Will simply reset the enlisted RMs. Is only used for autocommit
-		 * transactions.
-		 */
-		public void commit() {
-			car = null;
-			flight = null;
-			hotel = null;
-			customer = null;
-		}
-
-		private class EnlistedRM {
-
-			private boolean repliedPrepared = false;
-			private boolean acceptedPrepared = false;
-
-			public void accepted() {
-				repliedPrepared = true;
-				acceptedPrepared = true;
-			}
-
-			public void refused() {
-				repliedPrepared = true;
-				acceptedPrepared = false;
-			}
-
-			public boolean hasReplied() {
-				return repliedPrepared;
-			}
-
-			public boolean hasAccepted() {
-				return acceptedPrepared;
-			}
-		}
+		
 	}
 }

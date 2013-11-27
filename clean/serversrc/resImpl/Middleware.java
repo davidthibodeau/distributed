@@ -61,6 +61,7 @@ public class Middleware implements ResourceManager  {
 				obj.lock = new LockManager();
 				obj.tm = new TMimpl(obj.rmCar, obj.rmFlight, obj.rmHotel,
 						obj.rmCustomer, obj.lock);
+				obj.tm.boot();
 			} else {
 				System.out.println("Unsuccessful");
 				System.exit(1);

@@ -13,7 +13,6 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	protected RMHashtable m_itemHT = new RMHashtable();
 	protected RMHashtable m_transactionHT = new RMHashtable();
 	protected final String htFileName = this.rmType() + "/ht.rm";
-	protected final String listPrepared = this.rmType() + "/prepared.rm";
 	static int port;
 	
     private String locationFile(int id) {
@@ -54,30 +53,38 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 			e.printStackTrace();
 		}
     	try{
-    		BufferedReader br = new BufferedReader(new FileReader(listPrepared));
-    		String line;
-    		while ((line = br.readLine()) != null) {
+    		String files;
+    		File folder = new File(this.rmType() + "/");
+    		File[] listOfFiles = folder.listFiles(); 
+
+    		for (int i = 0; i < listOfFiles.length; i++)
+    		{
     			RMHashtable ht = new RMHashtable();
-    			int id = 0;
-    			Pattern p = Pattern.compile("[0-9]+");
-    			Matcher m = p.matcher(line);
-    			if (m.find()) {
-    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
-    			} else {
-    				br.close();
-    				return false;
+    			if (listOfFiles[i].isFile()) 
+    			{
+    				files = listOfFiles[i].getName();
+    				if (files.endsWith(".tmp"))
+    				{
+    					int id = 0;
+    					Pattern p = Pattern.compile("[0-9]+");
+    	    			Matcher m = p.matcher(files);
+    	    			if (m.find()) {
+    	    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
+    	    			} else {
+    	    				return false;
+    	    			}
+    	    			fis = new FileInputStream(files);
+    	        		ois = new ObjectInputStream(fis);
+    	        		
+    	        		ht = (RMHashtable) ois.readObject();
+    	        		ois.close();
+    	        		
+    	        		synchronized(m_transactionHT){
+    	        			m_transactionHT.put(id, ht);
+    	        		}
+    				}
     			}
-        		fis = new FileInputStream(line);
-        		ois = new ObjectInputStream(fis);
-        		
-        		ht = (RMHashtable) ois.readObject();
-        		ois.close();
-        		
-        		synchronized(m_transactionHT){
-        			m_transactionHT.put(id, ht);
-        		}
     		}
-    		br.close();
     		return true;
     		
     		
@@ -224,16 +231,10 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     	}
 
     	try {
-    		String filename = locationFile(id);
-    		BufferedWriter br = new BufferedWriter(new FileWriter(listPrepared));
-    		br.write(filename);
-    		br.newLine();
-    		br.close();
-
-    		File htFile = new File(htFileName);
-    		if (!htFile.exists()) {
-    			htFile.createNewFile();
-    			FileOutputStream fos = new FileOutputStream(filename);
+    		File file = new File(locationFile(id));
+    		if (!file.exists()) {
+    			file.createNewFile();
+    			FileOutputStream fos = new FileOutputStream(file);
     			ObjectOutputStream oos = new ObjectOutputStream(fos);
     			oos.writeObject(transaction);
     			oos.close();
@@ -249,7 +250,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     	return true;
     }
 
-	public boolean commit(int id) throws RemoteException, InvalidTransactionException, TransactionAbortedException {
+	public boolean commit(int id) throws RemoteException, InvalidTransactionException {
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
@@ -288,7 +289,6 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		String filename = locationFile(id);
 		File file = new File(filename);
 		file.delete();
-		removeLineFromFile(listPrepared,filename);
     	return true;
     }
     
@@ -316,52 +316,4 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		System.exit(1);
 	}
 	
-	// method adapted from 
-	// http://stackoverflow.com/questions/1377279/java-find-a-line-in-a-file-and-remove
-	public void removeLineFromFile(String file, String lineToRemove) {
-
-		try {
-
-		  File inFile = new File(file);
-
-		  if (!inFile.isFile()) {
-		    System.out.println("Parameter is not an existing file");
-		    return;
-		  }
-
-		  //Construct the new file that will later be renamed to the original filename.
-		  File tempFile = new File(inFile.getAbsolutePath() + ".tmp");
-
-		  BufferedReader br = new BufferedReader(new FileReader(file));
-		  PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
-
-		  String line = null;
-
-		  //Read from the original file and write to the new
-		  //unless content matches data to be removed.
-		  while ((line = br.readLine()) != null) {
-
-		    if (!line.trim().equals(lineToRemove)) {
-
-		      pw.println(line);
-		      pw.flush();
-		    }
-		  }
-		  br.close();
-		  pw.close();
-		  //Delete the original file
-		  if (!inFile.delete()) {
-		    Trace.error("RemoveLineFromFile()//// Could not delete file:" + file); //this would disastrous.
-		    return;
-		  }
-
-		  //Rename the new file to the filename the original file had.
-		  if (!tempFile.renameTo(inFile))
-		    System.out.println("Could not rename file");
-
-		}
-		catch (IOException ex) {
-		  ex.printStackTrace();
-		}
-	}
 }
