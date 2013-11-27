@@ -14,33 +14,31 @@ public interface TransactionManager extends Remote {
 	 * @return The id associated with this transaction. 
 	 *   
 	 */
-	public int start(boolean autocommit) throws RemoteException;
+	public int start(boolean autocommit);
 	
 	/**
 	 * Informs transaction manager that a transaction is starting
 	 * @return The id associated with this transaction. 
 	 *   
 	 */
-	int start() throws RemoteException;
+	int start();
 	
 	/**
 	 * Commits the transaction with transactionID
 	 * @param transactionID is the transaction to be committed
 	 * @return true if commit is a success. 
-	 * @throws RemoteException -rmi
 	 * @throws TransactionAbortedException 
 	 * @throws InvalidTransactionException 
 	 */
-	public boolean commit(int transactionID) throws RemoteException, InvalidTransactionException, TransactionAbortedException;
+	public boolean commit(int transactionID) throws InvalidTransactionException, TransactionAbortedException;
 	
 	
 	/**
 	 * Aborts the transaction with transactionID
 	 * @param transactionID
-	 * @throws RemoteException -rmi
 	 * @throws InvalidTransactionException 
 	 */
-	public void abort(int transactionID) throws RemoteException, InvalidTransactionException;
+	public void abort(int transactionID) throws InvalidTransactionException;
 	
 	/**
 	 * Adds RM into transactionID list of RMs. 
@@ -51,7 +49,7 @@ public interface TransactionManager extends Remote {
 	public void enlist(int transactionID, RMType rm) throws InvalidTransactionException;
 	
 	
-	public boolean shutdown() throws RemoteException;
+	public boolean shutdown();
 
 	/**
 	 * Refreshes the TTL timer.

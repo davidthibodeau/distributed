@@ -122,11 +122,10 @@ public class TMimpl implements TransactionManager {
 					try {
 						getRMfromType(type).commit(tr.getID());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						new ReconnectLoop(type, tr.getID(), true);
 					} catch (InvalidTransactionException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						//if the transaction is invalid, it means
+						//it probably has been handled already
 					}
     		}
     	} else {
@@ -135,11 +134,10 @@ public class TMimpl implements TransactionManager {
 					try {
 						getRMfromType(type).abort(tr.getID());
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						new ReconnectLoop(type, tr.getID(), false);
 					} catch (InvalidTransactionException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						//if the transaction is invalid, it means
+						//it probably has been handled already
 					}
     		}
     	}
@@ -175,7 +173,7 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
-	public int start() throws RemoteException {
+	public int start() {
 		// Generate a globally unique ID for the new transaction
 		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
 				String.valueOf( Math.round( Math.random() * 100 + 1 )));
@@ -185,7 +183,7 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
-	public int start(boolean autocommit) throws RemoteException {
+	public int start(boolean autocommit) {
 		// Generate a globally unique ID for the new transaction
 
 		int tid = Integer.parseInt(String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
@@ -196,8 +194,7 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
-	public boolean commit(int transactionID) throws RemoteException,
-			InvalidTransactionException, TransactionAbortedException {
+	public boolean commit(int transactionID) throws InvalidTransactionException, TransactionAbortedException {
 		Transaction t = readData(transactionID);
 		if (t == null)
 			throw new InvalidTransactionException();
@@ -225,7 +222,11 @@ public class TMimpl implements TransactionManager {
 				Trace.info("TM::commit(" + transactionID + ") vote passed.");
 				for (RMType rm : RMType.values())
 					if (t.isEnlisted(rm))
-						getRMfromType(rm).commit(transactionID);
+						try {
+							getRMfromType(rm).commit(transactionID);
+						} catch (RemoteException e) {
+							new ReconnectLoop(rm, transactionID, true);
+						}
 				if (t.isAutoCommitting())
 					t.commit();
 				else {
@@ -254,14 +255,17 @@ public class TMimpl implements TransactionManager {
 	}
 
 	@Override
-	public void abort(int transactionID) throws RemoteException,
-			InvalidTransactionException {
+	public void abort(int transactionID) throws InvalidTransactionException {
 		Transaction t = readData(transactionID);
 		if (t == null)
 			throw new InvalidTransactionException();
 		for (RMType type : RMType.values()) {
 			if (t.isEnlisted(type))
-				getRMfromType(type).abort(transactionID);
+				try {
+					getRMfromType(type).abort(transactionID);
+				} catch (RemoteException e) {
+					new ReconnectLoop(type, transactionID, false);
+				}
 		}
 		if (t.isAutoCommitting())
 			t.commit();
@@ -291,16 +295,13 @@ public class TMimpl implements TransactionManager {
 				+ ") succeeded.");
 	}
 
-	public boolean shutdown() throws RemoteException {
+	public boolean shutdown() {
 
 		for(Enumeration<Transaction> i = transactionHT.elements(); i.hasMoreElements(); ){
 			Transaction tr = i.nextElement();
 			try {
 				abort(tr.getID());
 				lock.UnlockAll(tr.getID());
-			} catch (RemoteException e) {
-				// Should not happen
-				e.printStackTrace();
 			} catch (InvalidTransactionException e) {
 				// Should not happen
 				e.printStackTrace();
@@ -311,9 +312,21 @@ public class TMimpl implements TransactionManager {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		rmFlight.shutdown();
-		rmHotel.shutdown();
-		rmCustomer.shutdown();
+		try {
+			rmFlight.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			rmHotel.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			rmCustomer.shutdown();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		Trace.info("TM::shutdown() succeeded.");
 		return true;
 	}
@@ -351,6 +364,40 @@ public class TMimpl implements TransactionManager {
 		}
 	}
 
+	private class ReconnectLoop {
+
+		private RMType rm;
+		private int id;
+		private boolean commit; //false means you want to abort
+		private Timer timer;
+		private final long life = 20; // in seconds
+		
+		ReconnectLoop(RMType rm, int id, boolean commit) {
+			this.rm = rm;
+			this.id = id;
+			this.commit = commit;
+			timer = new Timer();
+			timer.schedule(new RemindTask(), life * 1000);
+		}
+
+		class RemindTask extends TimerTask {
+			public void run() {
+				try {
+				if(commit)
+					getRMfromType(rm).commit(id);
+				else
+					getRMfromType(rm).abort(id);
+				} catch (RemoteException e) {
+					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") failed.");
+					timer.schedule(new RemindTask(), life * 1000);
+				} catch (InvalidTransactionException e) {
+					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") failed.");
+					timer.cancel(); // Terminate the timer thread
+				}
+			}
+		}	
+
+	}
 	/**
 	 * Defines the type of transactions as kept in the hashtable. This class
 	 * lives as a subclass to be able to have the TTL as a field and have the
@@ -387,10 +434,7 @@ public class TMimpl implements TransactionManager {
 				public void run() {
 					try {
 						abort(id);
-						lock.UnlockAll(id);
-					} catch (RemoteException e) {
-						// Should not happen
-						e.printStackTrace();
+						lock.UnlockAll(id);	
 					} catch (InvalidTransactionException e) {
 						// Should not happen
 						e.printStackTrace();
