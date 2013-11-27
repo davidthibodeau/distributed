@@ -331,22 +331,27 @@ public class TMimpl implements TransactionManager {
 				ttl.cancel();
 			return true;
 		}
+		
+		
+		private EnlistedRM getEnlistedRMfromType(RMType type) {
+			switch (type) {
+			case CAR:
+				return car;
+			case HOTEL:
+				return hotel;
+			case FLIGHT:
+				return flight;
+			case CUSTOMER:
+				return customer;
+			}
+			return null; // shouldn't happen
+		}
 
 		/**
 		 * Tells whether a particular RM is enlisted
 		 */
 		public boolean isEnlisted(RMType rm) {
-			switch (rm) {
-			case CAR:
-				return car != null;
-			case FLIGHT:
-				return flight != null;
-			case HOTEL:
-				return hotel != null;
-			case CUSTOMER:
-				return customer != null;
-			}
-			return false;
+			return (getEnlistedRMfromType(rm) != null);
 		}
 
 		/**
@@ -378,45 +383,13 @@ public class TMimpl implements TransactionManager {
 		}
 
 		private void acceptsCommit(RMType rm) {
-			switch (rm) {
-			case CAR:
-				if (car != null)
-					car.accepted();
-				break;
-			case FLIGHT:
-				if (flight != null)
-					flight.accepted();
-				break;
-			case HOTEL:
-				if (hotel != null)
-					hotel.accepted();
-				break;
-			case CUSTOMER:
-				if (customer != null)
-					customer.accepted();
-				break;
-			}
+			if (getEnlistedRMfromType(rm) != null)
+				getEnlistedRMfromType(rm).accepted();
 		}
 
 		private void refusesCommit(RMType rm) {
-			switch (rm) {
-			case CAR:
-				if (car != null)
-					car.refused();
-				break;
-			case FLIGHT:
-				if (flight != null)
-					flight.refused();
-				break;
-			case HOTEL:
-				if (hotel != null)
-					hotel.refused();
-				break;
-			case CUSTOMER:
-				if (customer != null)
-					customer.refused();
-				break;
-			}
+			if (getEnlistedRMfromType(rm) != null)
+				getEnlistedRMfromType(rm).refused();
 		}
 
 		public boolean isTimedOut() {
@@ -454,36 +427,22 @@ public class TMimpl implements TransactionManager {
 		}
 		
 		public boolean isReady() {
-			if (flight != null)
-				if (!flight.hasReplied())
-					return false;
-			if (car != null)
-				if (!car.hasReplied())
-					return false;
-			if (hotel != null)
-				if (!hotel.hasReplied())
-					return false;
-			if (customer != null)
-				if (!customer.hasReplied())
-					return false;
+			for (RMType rm : RMType.values()) {
+				if (getEnlistedRMfromType(rm) != null)
+					if (!getEnlistedRMfromType(rm).hasReplied())
+						return false;
+			}
 			return true;
 
 		}
 
 		public boolean voteResult() {
-			if (flight != null)
-				if (!flight.hasAccepted())
-					return false;
-			if (car != null)
-				if (!car.hasAccepted())
-					return false;
-			if (hotel != null)
-				if (!hotel.hasAccepted())
-					return false;
-			if (customer != null)
-				if (!customer.hasAccepted())
-					return false;
-			return true;		
+			for (RMType rm : RMType.values()) {
+				if (getEnlistedRMfromType(rm) != null)
+					if (!getEnlistedRMfromType(rm).hasAccepted())
+						return false;
+			}
+			return true;
 		}
 
 		/**
