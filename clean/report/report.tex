@@ -11,7 +11,7 @@
 \usepackage[square]{natbib}
 %\usepackage[parfill]{parskip}
 \author{David Thibodeau \and Jason Wiener}
-\title{COMP 512: Deliverable 2}
+\title{COMP 512: Deliverable 3}
 \date{\today}
 
 %Declare formatting for theorems, definitions, etc.
@@ -126,7 +126,62 @@
 \begin{document}
 \maketitle
 
-Our work for this deliverable extends our RMI implementation from the previous deliverable. We added to it a lock manager and a transaction manager, both of which handle the correct execution of transaction based writes and read in 2PL with a one-phase commit. Our work for this deliverable extends our RMI implementation from the previous deliverable. Both the transaction manager and the lock manager appear as objects of the middleware which uses them to handle transactions.
+%%%Plan
+% Introduction
+% Discussing Java's RMI and high level view of system
+% Transactions and 2PC
+% - Coordination by the Middleware and TM
+% Shutdown and crash recoveries
+% - Proof of correct recovery
+% Performance Evaluation
+
+Our implementation is split into three layers: the client which takes
+user inputs and formats them into queries that it sends to the server;
+the middleware which receives queries from the client and then redirects and/or
+coordinates the execution of the queries with the ressource managers;
+the ressource managers which each keeps track of a particular
+ressource. There are four ressources: cars, flights, rooms, and
+customers. Some operations such as adding a ressource, deleting a
+ressource (except for customers) or queries informations about them
+only requires the middleware to pass the query to the corresponding
+ressource manager. 
+
+Other operations such as reservations and deletions
+of customers require communicating with both the
+customer RM and the object RMs.
+
+\subsubsection*{Uses of Java's RMI}
+
+Our implementation uses Java's Remote Method Interfaces. We have set up
+ interfaces to indicate to the remote
+program what are the local methods it can use. The middleware
+implements the \java{ResourceManager} interface. The resource managers
+implement one of \java{RMCar}, \java{RMFlight}, \java{RMHotel}, or
+\java{RMCustomer} which all extend the base interface \java{RMBase}.
+\java{RMBase} is the interface used by the base class
+\java{RMBaseImpl} which as parent class for the implementations of
+each of the ressource managers. This class implements the hashtable
+and operations that are common to all the RMs like \java{readData},
+\java{writeData}, and \java{reserveItem}.
+
+To start the implementation, we first need to start the RMs. They take
+as optional input a port number. If none is provided, they assume the
+port 1099 is used for the rmiregistry (which needs to be started on
+the local machine). The middleware then takes as arguments the name of
+the machines running RMCar, RMFlight, RMHotel, and RMCustomer,
+respectively. It also takes a port number as an optional argument. For
+simplicity, it will take a single port number and will try to reach
+all the RMs on this port, in addition to setting himself to listen to
+that port. This limitation requires us to start all the rmiregistries
+on the same port. This, however, simplifies the parsing of the input
+for the middleware. We have had some trouble connecting to a
+rmiregistry that was not already started. In particular, it could not
+see the RMBase interface even if it was there. It seems to be linked to
+having the CLASSPATH variable set when the rmiregistry is started.
+Then, the client is started and takes the name of the server running
+the middleware together with an optional port number.
+
+%Our work for this deliverable extends our RMI implementation from the previous deliverable. We added to it a lock manager and a transaction manager, both of which handle the correct execution of transaction based writes and read in 2PL with a one-phase commit. Our work for this deliverable extends our RMI implementation from the previous deliverable. Both the transaction manager and the lock manager appear as objects of the middleware which uses them to handle transactions.
 
 \subsection*{Lock Manager}
 
