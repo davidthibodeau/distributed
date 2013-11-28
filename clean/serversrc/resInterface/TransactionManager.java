@@ -60,6 +60,14 @@ public interface TransactionManager extends Remote {
 	public boolean lives(int id) throws InvalidTransactionException;
 
 	public boolean boot();
+	
+	public void updateRMCar(RMCar rm);
+	
+	public void updateRMFlight(RMFlight rm);
+	
+	public void updateRMHotel(RMHotel rm);
+	
+	public void updateRMCustomer(RMCustomer rm);
 
 	
 }

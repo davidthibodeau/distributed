@@ -320,4 +320,8 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		System.exit(1);
 	}
 	
+	public boolean heartbeat() throws RemoteException {
+		return true;
+	}
+	
 }

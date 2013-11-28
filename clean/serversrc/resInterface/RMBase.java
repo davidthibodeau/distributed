@@ -36,5 +36,12 @@ public interface RMBase extends Remote {
 	public boolean enlist(int id) throws RemoteException;
 	
 	public void selfdestruct() throws RemoteException;
+	
+	/**
+	 * Used to test whether a connection to the RM can be made or if the RM crashed.
+	 * @return true
+	 * @throws RemoteException
+	 */
+	public boolean heartbeat() throws RemoteException;
 
 }

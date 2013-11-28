@@ -8,6 +8,8 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 
 import LockManager.*;
@@ -21,6 +23,10 @@ public class Middleware implements ResourceManager  {
 	private RMCustomer rmCustomer;
 	private LockManager lock;
 	private TransactionManager tm;
+	static String locationRMCar;
+	static String locationRMFlight;
+	static String locationRMHotel;
+	static String locationRMCustomer;
 	static int port;
 
 	public static void main(String args[]) {
@@ -37,6 +43,10 @@ public class Middleware implements ResourceManager  {
 					.println("Usage: java ResImpl.Middleware rmCar rmFlight rmHotel rmCustomer [port]");
 			System.exit(1);
 		}
+		locationRMCar = args[0];
+		locationRMFlight = args[1];
+		locationRMHotel = args[2];
+		locationRMCustomer = args[3];
 
 		try {
 			// create a new Server object
@@ -45,17 +55,17 @@ public class Middleware implements ResourceManager  {
 			ResourceManager rm = (ResourceManager) UnicastRemoteObject
 					.exportObject(obj, 0);
 			// get a reference to the rmiregistry
-			registry = LocateRegistry.getRegistry(args[0], port);
+			registry = LocateRegistry.getRegistry(locationRMCar, port);
 			// get the proxy and the remote reference by rmiregistry lookup
 			obj.rmCar = (RMCar) registry.lookup("Group2RMCar");
-			registry = LocateRegistry.getRegistry(args[1], port);
+			registry = LocateRegistry.getRegistry(locationRMFlight, port);
 			obj.rmFlight = (RMFlight) registry.lookup("Group2RMFlight");
-			registry = LocateRegistry.getRegistry(args[2], port);
+			registry = LocateRegistry.getRegistry(locationRMHotel, port);
 			obj.rmHotel = (RMHotel) registry.lookup("Group2RMHotel");
-			registry = LocateRegistry.getRegistry(args[3], port);
+			registry = LocateRegistry.getRegistry(locationRMCustomer, port);
 			obj.rmCustomer = (RMCustomer) registry.lookup("Group2RMCustomer");
-			if (obj.rmCar != null && obj.rmFlight != null
-					&& obj.rmHotel != null) {
+			if (obj.rmCar != null && obj.rmFlight != null && obj.rmHotel != null
+					&& obj.rmCustomer != null) {
 				System.out.println("Successful");
 				System.out.println("Connected to RMs");
 				obj.lock = new LockManager();
@@ -83,7 +93,99 @@ public class Middleware implements ResourceManager  {
 			System.setSecurityManager(new RMISecurityManager());
 		}
 	}
-
+	
+	class Heartbeat {
+		
+		private Timer timer;
+		private final long life = 10; // in seconds
+		
+		protected Heartbeat () {
+			timer = new Timer();
+			timer.schedule(new HeartBeatTask(), life * 1000, life * 1000);
+		}
+		
+		class HeartBeatTask extends TimerTask {
+			public void run() {
+				for (RMType rm : RMType.values()){
+					try {
+						getRMfromType(rm).heartbeat();
+					} catch (RemoteException e) {
+						//Couldn't not connect to RM. Trying to reconnect once.
+						reconnect(rm);
+					}
+				}
+			}
+		}	
+		
+		//Tries to reconnect to the RM once. 
+		//If it fails because the rm is not up yet, the next heartbeat will try again.
+		void reconnect(RMType rm) {
+			try {
+				Registry registry;
+				RMBase rmb;
+				switch(rm){
+				case CAR:
+					registry = LocateRegistry.getRegistry(locationRMCar, port);
+					rmb = (RMBase) registry.lookup("Group2RMCar");
+					if(rmb != null){
+						rmCar = (RMCar) rmb;
+						tm.updateRMCar(rmCar);
+						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
+					} else
+						Trace.error("Middleware::reconnect(" + rm + ") failed - The reference was null.");
+					break;
+				case FLIGHT:
+					registry = LocateRegistry.getRegistry(locationRMFlight, port);
+					rmb = (RMBase) registry.lookup("Group2RMFlight");
+					if(rmb != null) {
+						rmFlight = (RMFlight) rmb;
+						tm.updateRMFlight(rmFlight);
+						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
+					} else
+						Trace.error("Middleware::reconnect(" + rm + ") failed - The reference was null.");
+					break;
+				case HOTEL:
+					registry = LocateRegistry.getRegistry(locationRMHotel, port);
+					rmb = (RMBase) registry.lookup("Group2RMHotel");
+					if(rmb != null) {
+						rmHotel = (RMHotel) rmb;
+						tm.updateRMHotel(rmHotel);
+						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
+					} else
+						Trace.error("Middleware::reconnect(" + rm + ") failed - The reference was null.");
+					break;
+				case CUSTOMER:
+					registry = LocateRegistry.getRegistry(locationRMCustomer, port);
+					rmb = (RMBase) registry.lookup("Group2RMCustomer");
+					if(rmb != null) {
+						rmCustomer = (RMCustomer) rmb;
+						tm.updateRMCustomer(rmCustomer);
+						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
+					} else
+						Trace.error("Middleware::reconnect(" + rm + ") failed - The reference was null.");
+					break;
+				}
+			} catch (RemoteException e) {
+				Trace.error("Middleware::reconnect(" + rm + ") failed - Raised RemoteException.");
+			} catch (NotBoundException e) {
+				Trace.error("Middleware::reconnect(" + rm + ") failed - Raised NotBoundException.");
+			}
+		}	
+	}
+	
+	public RMBase getRMfromType(RMType type) {
+		switch (type) {
+		case CAR:
+			return rmCar;
+		case HOTEL:
+			return rmHotel;
+		case FLIGHT:
+			return rmFlight;
+		case CUSTOMER:
+			return rmCustomer;
+		}
+		return null; // shouldn't happen
+	}
 	
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats,
@@ -93,8 +195,7 @@ public class Middleware implements ResourceManager  {
 
 			boolean b = acquireLock(id, RMType.FLIGHT,
 					Flight.getKey(flightNum), LockManager.WRITE);
-			boolean b1 = rmFlight.addFlight(id, flightNum, flightSeats,
-					flightPrice);
+			boolean b1 = rmFlight.addFlight(id, flightNum, flightSeats, flightPrice);
 			if (!b)
 				commit(id);
 			return b1;
@@ -462,19 +563,9 @@ public class Middleware implements ResourceManager  {
 				try {
 					flightnum = getInt(e.nextElement());
 				} catch (Exception ex) {
-					Trace.info("RM::itinerary( "
-							+ id
-							+ ", customer="
-							+ customer
-							+ ", "
-							+ flightNumbers
-							+ ", "
-							+ location
-							+ ", "
-							+ car
-							+ ", "
-							+ room
-							+ " ) -- Expected FlightNumber was not a valid integer. Exception "
+					Trace.info("RM::itinerary( " + id + ", customer=" + customer + ", "
+							+ flightNumbers + ", " + location + ", " + car + ", "
+							+ room	+ " ) -- Expected FlightNumber was not a valid integer. Exception "
 							+ ex + " cached");
 					throw new TransactionAbortedException(id);
 				}

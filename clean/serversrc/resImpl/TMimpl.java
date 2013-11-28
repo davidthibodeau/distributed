@@ -29,7 +29,31 @@ public class TMimpl implements TransactionManager {
 	// unlock when aborting an idle transaction
 	private LockManager lock;
 	private final String folder = "tmmanager/";
+
 	private Crash crashType;
+
+	
+	public void updateRMCar(RMCar rm){
+		if(rm != null)
+			rmCar = rm;
+	}
+
+	public void updateRMFlight(RMFlight rm){
+		if(rm != null)
+			rmFlight = rm;
+	}
+
+	public void updateRMHotel(RMHotel rm){
+		if(rm != null)
+			rmHotel = rm;
+	}
+
+	public void updateRMCustomer(RMCustomer rm){
+		if(rm != null)
+			rmCustomer = rm;
+	}
+
+
 	// Reads a data item
 	private Transaction readData(int id) {
 		synchronized (transactionHT) {
