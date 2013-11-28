@@ -12,6 +12,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import javax.management.timer.TimerMBean;
+
 import LockManager.*;
 import serversrc.resInterface.*;
 
@@ -743,23 +745,53 @@ public class Middleware implements ResourceManager  {
 		return true; 
 	}
 	
-	public boolean testCrash(String when){
-		if (when == "before_vote")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
-		if (when == "before_all_decisions")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
-		if (when == "after_decisions")
-			((TMimpl) tm).setCrashType(Crash.AFTER_DECISIONS);
-		if (when == "before_all_replies")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_REPLIES);
-		if (when == "before_decision")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION);
-		if (when == "before_decision_sent")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
-		if (when == "before_any_replies")
-			((TMimpl) tm).setCrashType(Crash.BEFORE_REPLIES);
-		if (when == "no_crash")
-			((TMimpl) tm).setCrashType(Crash.NO_CRASH);
+	public boolean testCrash(String when, String which){
+		RMBase rm = null;
+		if (which == "flight")
+			rm = getRMfromType(RMType.FLIGHT);
+		else if (which == "car")
+			rm = getRMfromType(RMType.CAR);
+		else if (which == "hotel")
+			rm = getRMfromType(RMType.HOTEL);
+		else if (which == "customer")
+			rm = getRMfromType(RMType.CUSTOMER);
+		
+		if (which == "middleware"){
+			if (when == "before_vote")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
+			else if (when == "before_all_decisions")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
+			else if (when == "after_decisions")
+				((TMimpl) tm).setCrashType(Crash.AFTER_DECISIONS);
+			else if (when == "before_all_replies")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_REPLIES);
+			else if (when == "before_decision")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION);
+			else if (when == "before_decision_sent")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
+			else if (when == "before_any_replies")
+				((TMimpl) tm).setCrashType(Crash.BEFORE_REPLIES);
+			else 
+				((TMimpl) tm).setCrashType(Crash.NO_CRASH);
+		}
+		else{
+			if (when == "before_vote")
+				rm.setCrashType(Crash.BEFORE_VOTE);
+			else if (when == "before_all_decisions")
+				rm.setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
+			else if (when == "after_decisions")
+				rm.setCrashType(Crash.AFTER_DECISIONS);
+			else if (when == "before_all_replies")
+				rm.setCrashType(Crash.BEFORE_ALL_REPLIES);
+			else if (when == "before_decision")
+				rm.setCrashType(Crash.BEFORE_DECISION);
+			else if (when == "before_decision_sent")
+				rm.setCrashType(Crash.BEFORE_DECISION_SENT);
+			else if (when == "before_any_replies")
+				rm.setCrashType(Crash.BEFORE_REPLIES);
+			else 
+				rm.setCrashType(Crash.NO_CRASH);
+		}
 		return true;
 	}
 

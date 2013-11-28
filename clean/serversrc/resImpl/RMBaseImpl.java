@@ -323,5 +323,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	public boolean heartbeat() throws RemoteException {
 		return true;
 	}
-	
+	public void setCrashType(Crash crashType){
+		this.crashType = crashType;
+	}
 }

@@ -492,6 +492,14 @@ public class client
 					String serverName = obj.getString(arguments.elementAt(1));
 					System.out.println("Crashing " + serverName);
 					rm.crash(serverName);
+				case 29: 
+					if(arguments.size()!=3){
+						obj.wrongNumber();
+					}
+					String serverLocation = obj.getString(arguments.elementAt(1));
+					String crashType = obj.getString(arguments.elementAt(2));
+					
+				
 				default:
 					System.out.println("The interface does not support this command.");
 					break;
