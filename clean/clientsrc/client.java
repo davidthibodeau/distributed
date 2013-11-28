@@ -490,7 +490,7 @@ public class client
 						obj.wrongNumber();
 					}
 					String serverName = obj.getString(arguments.elementAt(1));
-					System.out.println("Crashing ");
+					System.out.println("Crashing " + serverName);
 					rm.crash(serverName);
 				default:
 					System.out.println("The interface does not support this command.");
