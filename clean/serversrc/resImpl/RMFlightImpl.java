@@ -36,6 +36,7 @@ public class RMFlightImpl extends RMBaseImpl implements RMFlight {
 
             // Bind the remote object's stub in the registry
             Registry registry = LocateRegistry.getRegistry(port);
+            System.out.println("Binding Server");
             registry.rebind("Group2RMFlight", rm);
 
             System.err.println("Server ready");

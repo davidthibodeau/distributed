@@ -1,4 +1,6 @@
 package serversrc.resInterface;
 
-public enum RMType {CAR, FLIGHT, HOTEL, CUSTOMER}
+import java.io.Serializable;
+
+public enum RMType implements Serializable{CAR, FLIGHT, HOTEL, CUSTOMER}
 

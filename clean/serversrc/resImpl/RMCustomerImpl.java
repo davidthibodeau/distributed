@@ -184,8 +184,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     	if (cust.isDeleted())
     		throw new TransactionAbortedException(id);
     	ReservedItem i = cust.reserve(key, location, price, rtype);
-    	Trace.info("RM::reserve(" + id + ", " + cid + ") writing modified cust to transactionHT." );
-    	writeData(id, key, cust);
+    	writeData(id, Customer.getKey(cid), cust);
     	return i;
     }
 

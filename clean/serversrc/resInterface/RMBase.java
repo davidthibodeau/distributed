@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 import serversrc.resImpl.Crash;
 import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.TransactionAbortedException;
-import serversrc.resImpl.RMInteger;
 
 public interface RMBase extends Remote {
 	
@@ -45,6 +44,6 @@ public interface RMBase extends Remote {
 	 */
 	public boolean heartbeat() throws RemoteException;
 
-	public void setCrashType(Crash crashType);
+	public void setCrashType(Crash crashType) throws RemoteException;
 
 }

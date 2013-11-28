@@ -4,15 +4,21 @@ import java.io.Serializable;
 
 import serversrc.resInterface.RMType;
 
-@SuppressWarnings("serial")
 public class TransactionData implements Serializable {
 	
+	/**
+	 * 
+	 */
 	protected int id;
 	protected EnlistedRM car;
 	protected EnlistedRM hotel;
 	protected EnlistedRM flight;
 	protected EnlistedRM customer;
 	protected boolean autocommit = false;
+	
+	public TransactionData(){
+		
+	}
 	
 	public TransactionData(int id) {
 		this.id = id;
@@ -151,7 +157,7 @@ public class TransactionData implements Serializable {
 		return autocommit;
 	}
 	
-	protected class EnlistedRM implements Serializable {
+	public class EnlistedRM implements Serializable {
 
 		private boolean repliedPrepared = false;
 		private boolean acceptedPrepared = false;

@@ -2,6 +2,8 @@ package serversrc.resImpl;
 
 import java.io.*;
 import java.rmi.RemoteException;
+import java.rmi.registry.*;
+import java.rmi.server.*;
 import java.util.Enumeration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +33,11 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		try {
 			File htFile = new File(htFileName);
 			if (!htFile.exists()) {
-				htFile.createNewFile();
+				File directory = new File(this.rmType());
+				if (directory.mkdirs()) Trace.info("Directory Created:: Directory = " + this.rmType());
+				if(htFile.createNewFile()) Trace.info("File Created:: Filename = " + htFileName);
+				else Trace.info("File couldn't be created file Name:"); //something horrible happened
+					
 				FileOutputStream fos = new FileOutputStream(htFile);
 				ObjectOutputStream oos = new ObjectOutputStream(fos);
 				synchronized (m_itemHT) {
@@ -55,7 +61,8 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		}
     	try{
     		String files;
-    		File folder = new File(this.rmType() + "/");
+    		String fold = this.rmType() + "/";
+    		File folder = new File(fold);
     		File[] listOfFiles = folder.listFiles(); 
 
     		for (int i = 0; i < listOfFiles.length; i++)
@@ -70,11 +77,11 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     					Pattern p = Pattern.compile("[0-9]+");
     	    			Matcher m = p.matcher(files);
     	    			if (m.find()) {
-    	    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
+    	    			  id = Integer.valueOf(m.group(0)).intValue();  // The matched substring
     	    			} else {
     	    				return false;
     	    			}
-    	    			fis = new FileInputStream(files);
+    	    			fis = new FileInputStream(fold + files);
     	        		ois = new ObjectInputStream(fis);
     	        		
     	        		ht = (RMHashtable) ois.readObject();
@@ -321,9 +328,10 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	}
 	
 	public boolean heartbeat() throws RemoteException {
+		Trace.info("RM::Heartbeat() running.");
 		return true;
 	}
-	public void setCrashType(Crash crashType){
+	public void setCrashType(Crash crashType) throws RemoteException{
 		this.crashType = crashType;
 	}
 }

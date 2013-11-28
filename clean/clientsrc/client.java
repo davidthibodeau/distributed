@@ -492,7 +492,7 @@ public class client
 					String serverName = obj.getString(arguments.elementAt(1));
 					System.out.println("Crashing " + serverName);
 					rm.crash(serverName);
-				case 29: 
+				case 29: //crash a server at a time
 					if(arguments.size()!=3){
 						obj.wrongNumber();
 					}
@@ -585,6 +585,10 @@ public class client
 			return 26;
 		else if (argument.compareToIgnoreCase("autocommit")==0)
 			return 27;
+		else if (argument.compareTo("crash")==0)
+			return 28;
+		else if (argument.compareTo("crashTime")==0)
+			return 29;
 		else
 			return 666;
 

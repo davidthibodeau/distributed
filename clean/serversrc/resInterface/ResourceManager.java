@@ -187,6 +187,6 @@ public interface ResourceManager extends Remote
 	 * @param when
 	 * @return
 	 */
-	public boolean testCrash(String when, String where);
+	public boolean testCrash(String when, String where) throws RemoteException;
     			
 }

@@ -18,19 +18,19 @@ import java.util.regex.Pattern;
 import LockManager.LockManager;
 import serversrc.resInterface.*;
 
-public class TMimpl implements TransactionManager {
+public class TMimpl implements TransactionManager, Serializable {
 
-	private RMCar rmCar;
-	private RMFlight rmFlight;
-	private RMHotel rmHotel;
-	private RMCustomer rmCustomer;
-	private RMHashtable transactionHT;
+	private transient RMCar rmCar;
+	private transient RMFlight rmFlight;
+	private transient RMHotel rmHotel;
+	private transient RMCustomer rmCustomer;
+	private transient RMHashtable transactionHT;
 	// lock is passed to the TM so that the TimeToLive can
 	// unlock when aborting an idle transaction
-	private LockManager lock;
-	private final String folder = "tmmanager/";
+	private transient LockManager lock;
+	private transient final String folder = "tmmanager/";
 
-	private Crash crashType;
+	private transient Crash crashType;
 
 	
 	public void updateRMCar(RMCar rm){
@@ -67,13 +67,19 @@ public class TMimpl implements TransactionManager {
 			transactionHT.put(id, value);
 		}
 		File file = new File(locationFile(id));
+		File directory = new File(folder);
+		if (!directory.exists()){ 
+			directory.mkdirs();
+			Trace.info("Directory not found, creating it now");
+		}
 		try {
 			if (!file.exists())
-				file.createNewFile();
+				file.createNewFile(); 
 			FileOutputStream fos = new FileOutputStream(file);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-			oos.writeObject(value.extractData());
+			TransactionData td = value.extractData();
+			oos.writeObject(td);
 			oos.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -100,7 +106,10 @@ public class TMimpl implements TransactionManager {
     	String files;
 		File folder = new File(this.folder);
 		File[] listOfFiles = folder.listFiles(); 
-
+		if (listOfFiles == null){
+			System.out.println("No files found");
+			return true;
+		}
 		for (int i = 0; i < listOfFiles.length; i++)
 		{
 			TransactionData tr;
@@ -113,12 +122,12 @@ public class TMimpl implements TransactionManager {
 					Pattern p = Pattern.compile("[0-9]+");
 	    			Matcher m = p.matcher(files);
 	    			if (m.find()) {
-	    			  id = Integer.valueOf(m.group(1)).intValue();  // The matched substring
+	    			  id = Integer.valueOf(m.group(0)).intValue();  // The matched substring
 	    			} else {
 	    				return false;
 	    			}
 	    			try{
-	    				FileInputStream fis = new FileInputStream(files);
+	    				FileInputStream fis = new FileInputStream(this.folder + files);
 	    				ObjectInputStream ois = new ObjectInputStream(fis);
 
 	    				tr = (TransactionData) ois.readObject();
@@ -301,6 +310,8 @@ public class TMimpl implements TransactionManager {
 					getRMfromType(type).abort(transactionID);
 				} catch (RemoteException e) {
 					new ReconnectLoop(type, transactionID, false);
+				} catch (InvalidTransactionException e){
+					//Already aborted. We just ignore.
 				}
 		}
 		if (t.isAutoCommitting())
@@ -450,7 +461,7 @@ public class TMimpl implements TransactionManager {
 	public class Transaction extends TransactionData implements Serializable {
 
 		private boolean timeout = false;
-		private TimeToLive ttl;
+		private transient TimeToLive ttl;
 		
 		public Transaction (int id){
 			super(id);

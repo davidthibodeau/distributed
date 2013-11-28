@@ -1,11 +1,12 @@
 package serversrc.resInterface;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import serversrc.resImpl.RMInteger;
 import serversrc.resImpl.TransactionAbortedException;
 
-public interface RMReservable {
+public interface RMReservable extends Remote {
 	public boolean unreserveItem(int id, String key)
 			throws RemoteException, TransactionAbortedException;
 	

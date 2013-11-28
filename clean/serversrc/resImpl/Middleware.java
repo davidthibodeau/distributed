@@ -25,6 +25,7 @@ public class Middleware implements ResourceManager  {
 	private RMCustomer rmCustomer;
 	private LockManager lock;
 	private TransactionManager tm;
+	private Heartbeat lifeline;
 	static String locationRMCar;
 	static String locationRMFlight;
 	static String locationRMHotel;
@@ -74,6 +75,7 @@ public class Middleware implements ResourceManager  {
 				obj.tm = new TMimpl(obj.rmCar, obj.rmFlight, obj.rmHotel,
 						obj.rmCustomer, obj.lock);
 				obj.tm.boot();
+				obj.beat();
 			} else {
 				System.out.println("Unsuccessful");
 				System.exit(1);
@@ -108,6 +110,7 @@ public class Middleware implements ResourceManager  {
 		
 		class HeartBeatTask extends TimerTask {
 			public void run() {
+				Trace.info("Middleware::HeartBeatTask() running.");
 				for (RMType rm : RMType.values()){
 					try {
 						getRMfromType(rm).heartbeat();
@@ -130,6 +133,7 @@ public class Middleware implements ResourceManager  {
 					registry = LocateRegistry.getRegistry(locationRMCar, port);
 					rmb = (RMBase) registry.lookup("Group2RMCar");
 					if(rmb != null){
+						rmb.heartbeat();
 						rmCar = (RMCar) rmb;
 						tm.updateRMCar(rmCar);
 						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
@@ -140,6 +144,7 @@ public class Middleware implements ResourceManager  {
 					registry = LocateRegistry.getRegistry(locationRMFlight, port);
 					rmb = (RMBase) registry.lookup("Group2RMFlight");
 					if(rmb != null) {
+						rmb.heartbeat();
 						rmFlight = (RMFlight) rmb;
 						tm.updateRMFlight(rmFlight);
 						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
@@ -150,6 +155,7 @@ public class Middleware implements ResourceManager  {
 					registry = LocateRegistry.getRegistry(locationRMHotel, port);
 					rmb = (RMBase) registry.lookup("Group2RMHotel");
 					if(rmb != null) {
+						rmb.heartbeat();
 						rmHotel = (RMHotel) rmb;
 						tm.updateRMHotel(rmHotel);
 						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
@@ -160,6 +166,7 @@ public class Middleware implements ResourceManager  {
 					registry = LocateRegistry.getRegistry(locationRMCustomer, port);
 					rmb = (RMBase) registry.lookup("Group2RMCustomer");
 					if(rmb != null) {
+						rmb.heartbeat();
 						rmCustomer = (RMCustomer) rmb;
 						tm.updateRMCustomer(rmCustomer);
 						Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
@@ -173,6 +180,10 @@ public class Middleware implements ResourceManager  {
 				Trace.error("Middleware::reconnect(" + rm + ") failed - Raised NotBoundException.");
 			}
 		}	
+	}
+	
+	private void beat(){
+		lifeline = new Heartbeat();
 	}
 	
 	public RMBase getRMfromType(RMType type) {
@@ -293,7 +304,6 @@ public class Middleware implements ResourceManager  {
 	public boolean deleteCars(int id, String location) throws RemoteException,
 			InvalidTransactionException, TransactionAbortedException {
 		try {
-
 			boolean b = acquireLock(id, RMType.CAR, Car.getKey(location),
 					LockManager.WRITE);
 			boolean b1 = rmCar.deleteCars(id, location);
@@ -745,7 +755,7 @@ public class Middleware implements ResourceManager  {
 		return true; 
 	}
 	
-	public boolean testCrash(String when, String which){
+	public boolean testCrash(String when, String which) throws RemoteException {
 		RMBase rm = null;
 		if (which == "flight")
 			rm = getRMfromType(RMType.FLIGHT);
