@@ -59,8 +59,30 @@ public class TransactionData implements Serializable {
 		return true;
 
 	}
-
+	/**
+	 * This is used to simulate a crash before receiving all votes.
+	 * @param crashType
+	 * @return
+	 */
+	public boolean voteResult(boolean crashDuringVote) {
+		int crashBefore = 0;
+		if(crashDuringVote){
+			crashBefore = (int)(Math.random()*RMType.values().length);
+		}
+		for (RMType rm : RMType.values()) {
+			if(crashDuringVote && --crashBefore < 0) System.exit(1);
+			if (getEnlistedRMfromType(rm) != null)
+				if (!getEnlistedRMfromType(rm).hasAccepted())
+					return false;
+		}
+		return true;
+	}
+	/**
+	 * gets the result of the vote from each rm
+	 * @return
+	 */
 	public boolean voteResult() {
+		
 		for (RMType rm : RMType.values()) {
 			if (getEnlistedRMfromType(rm) != null)
 				if (!getEnlistedRMfromType(rm).hasAccepted())

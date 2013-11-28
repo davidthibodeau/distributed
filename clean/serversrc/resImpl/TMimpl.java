@@ -29,7 +29,7 @@ public class TMimpl implements TransactionManager {
 	// unlock when aborting an idle transaction
 	private LockManager lock;
 	private final String folder = "tmmanager/";
-
+	private Crash crashType;
 	// Reads a data item
 	private Transaction readData(int id) {
 		synchronized (transactionHT) {
@@ -202,14 +202,17 @@ public class TMimpl implements TransactionManager {
 		if (t == null)
 			throw new InvalidTransactionException();
 		t.timeoutReset();
-
+		if(crashType == Crash.BEFORE_VOTE) System.exit(1);
 		for (RMType rm : RMType.values()) {
 			if (t.isEnlisted(rm)) {
 				PrepareThread th = new PrepareThread(rm, t);
 				th.start();
 			}
 		}
-
+		if(crashType == Crash.BEFORE_REPLIES) System.exit(1);
+		if(crashType == Crash.BEFORE_ALL_REPLIES) System.exit(1);
+		
+		//should be the same because it hasn't started sending commit messages yet. 
 		try {
 			t.timeoutStart();
 			while (!t.isReady()) {
@@ -220,31 +223,36 @@ public class TMimpl implements TransactionManager {
 				Thread.sleep(1000);
 			}
 			Trace.info("TM::commit(" + transactionID + ") all replied.");
-			if (t.voteResult()) {
-				writeData(t.getID(),t);
+			if (t.voteResult(crashType == Crash.BEFORE_DECISION)) {
+				//if we crash here, RMs don't know about the vote result. Transaction hasn't been
+				//stored to memory either. This transaction should be saved on start as well.
+				//Transaction comes back up and either aborts the transaction, or restarts vote request. 
+				writeData(t.getID(),t); 
 				Trace.info("TM::commit(" + transactionID + ") vote passed.");
-				for (RMType rm : RMType.values())
+				if (crashType == Crash.BEFORE_DECISION_SENT) System.exit(1);
+				int crashNumber =(int) Math.random()*RMType.values().length; //used only in crash case
+				for (RMType rm : RMType.values()){
+					if(crashType==Crash.BEFORE_ALL_DECISION_SENT && --crashNumber <= 0) System.exit(1);
 					if (t.isEnlisted(rm))
 						getRMfromType(rm).commit(transactionID);
+				}
 				if (t.isAutoCommitting())
 					t.commit();
 				else {
 					t.cancelTTL();
 					removeData(transactionID);
 				}
+				if (crashType == Crash.AFTER_DECISIONS) System.exit(1);
 			} else {
 				Trace.info("TM::commit(" + transactionID
 						+ ") vote was rejected.");
 				abort(transactionID);
-				throw new TransactionAbortedException(transactionID);
+				if (crashType == Crash.AFTER_DECISIONS) System.exit(1);
+				throw new TransactionAbortedException(transactionID); 
 			}
-		} catch (TransactionAbortedException e) {
-			Trace.info("TM::commit(" + transactionID
-					+ ") An RM returned an error. Transaction is aborted.");
-			abort(transactionID);
-			throw new TransactionAbortedException(transactionID);
 		} catch (InterruptedException e) {
-			//shouldn't happen
+			//shouldn't happen only system.exit will interrupt the sleep
+			//that would be too late to abort. 
 			abort(transactionID);
 			throw new TransactionAbortedException(transactionID);
 		} 
@@ -259,7 +267,9 @@ public class TMimpl implements TransactionManager {
 		Transaction t = readData(transactionID);
 		if (t == null)
 			throw new InvalidTransactionException();
+		int crashNumber = (int) Math.random() * RMType.values().length;
 		for (RMType type : RMType.values()) {
+			if(crashType==Crash.BEFORE_ALL_DECISION_SENT && --crashNumber <= 0) System.exit(1);
 			if (t.isEnlisted(type))
 				getRMfromType(type).abort(transactionID);
 		}
@@ -326,6 +336,14 @@ public class TMimpl implements TransactionManager {
 		boolean b = tr.resetTTL();
 		Trace.info("TM::lives(" + id + ") succeeded.");
 		return b;
+	}
+
+	public Crash getCrashType() {
+		return crashType;
+	}
+
+	public void setCrashType(Crash crashType) {
+		this.crashType = crashType;
 	}
 
 	private class PrepareThread extends Thread {
