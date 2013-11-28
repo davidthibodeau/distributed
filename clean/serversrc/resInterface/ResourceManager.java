@@ -173,5 +173,14 @@ public interface ResourceManager extends Remote
 	 * @throws  
 	 */
 	public int autocommit() throws RemoteException;
+	
+	/**
+	 * Forces the server to simulate a crash on a server. 
+	 * @param which
+	 * @return
+	 * @throws RemoteException
+	 */
+	public boolean crash(String which) throws RemoteException;
+	
     			
 }

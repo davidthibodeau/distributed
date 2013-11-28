@@ -649,6 +649,26 @@ public class Middleware implements ResourceManager  {
 			return false;
 		}
 		
+		return true; 
+	}
+	
+	public boolean testCrash(String when){
+		if (when == "before_vote")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
+		if (when == "before_all_decisions")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
+		if (when == "after_decisions")
+			((TMimpl) tm).setCrashType(Crash.AFTER_DECISIONS);
+		if (when == "before_all_replies")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_REPLIES);
+		if (when == "before_decision")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION);
+		if (when == "before_decision_sent")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
+		if (when == "before_any_replies")
+			((TMimpl) tm).setCrashType(Crash.BEFORE_REPLIES);
+		if (when == "no_crash")
+			((TMimpl) tm).setCrashType(Crash.NO_CRASH);
 		return true;
 	}
 

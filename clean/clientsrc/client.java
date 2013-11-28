@@ -484,7 +484,14 @@ public class client
 						tid = rm.autocommit();
 						System.out.println("new transaction id:"+tid);
 					break;
-					
+				
+				case 28: //Crash a server
+					if(arguments.size()!=2){
+						obj.wrongNumber();
+					}
+					String serverName = obj.getString(arguments.elementAt(1));
+					System.out.println("Crashing ");
+					rm.crash(serverName);
 				default:
 					System.out.println("The interface does not support this command.");
 					break;
