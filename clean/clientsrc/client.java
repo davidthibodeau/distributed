@@ -20,7 +20,7 @@ public class client
 		client obj = new client();
 		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 		String command = "";
-		Vector arguments  = new Vector();
+		Vector<String> arguments  = new Vector<String>();
 		int Id, Cid;
 		int flightNum;
 		int flightPrice;
@@ -136,7 +136,7 @@ public class client
 					System.out.println("Add Number of Cars: "+arguments.elementAt(3));
 					System.out.println("Set Price: "+arguments.elementAt(4));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						numCars = obj.getInt(arguments.elementAt(3));
 						price = obj.getInt(arguments.elementAt(4));
 						if(rm.addCars(Id,location,numCars,price))
@@ -155,7 +155,7 @@ public class client
 					System.out.println("Add Number of Rooms: "+arguments.elementAt(3));
 					System.out.println("Set Price: "+arguments.elementAt(4));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						numRooms = obj.getInt(arguments.elementAt(3));
 						price = obj.getInt(arguments.elementAt(4));
 						if(rm.addRooms(Id,location,numRooms,price))
@@ -198,7 +198,7 @@ public class client
 					System.out.println("Deleting the cars from a particular location  using id: "+arguments.elementAt(1));
 					System.out.println("Car Location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 
 						if(rm.deleteCars(Id,location))
 							System.out.println("Cars Deleted");
@@ -214,7 +214,7 @@ public class client
 					System.out.println("Deleting all rooms from a particular location  using id: "+arguments.elementAt(1));
 					System.out.println("Room Location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						if(rm.deleteRooms(Id,location))
 							System.out.println("Rooms Deleted");
 						else
@@ -257,7 +257,7 @@ public class client
 					System.out.println("Querying a car location using id: "+arguments.elementAt(1));
 					System.out.println("Car location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						numCars=rm.queryCars(Id,location);
 						System.out.println("number of Cars at this location:"+numCars);
 					break;
@@ -270,7 +270,7 @@ public class client
 					System.out.println("Querying a room location using id: "+arguments.elementAt(1));
 					System.out.println("Room location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						numRooms=rm.queryRooms(Id,location);
 						System.out.println("number of Rooms at this location:"+numRooms);
 					break;
@@ -310,7 +310,7 @@ public class client
 					System.out.println("Querying a car price using id: "+arguments.elementAt(1));
 					System.out.println("Car location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						price=rm.queryCarsPrice(Id,location);
 						System.out.println("Price of a car at this location:"+price);              
 					break;
@@ -323,7 +323,7 @@ public class client
 					System.out.println("Querying a room price using id: "+arguments.elementAt(1));
 					System.out.println("Room Location: "+arguments.elementAt(2));
 						Id = obj.getInt(arguments.elementAt(1));
-						location = obj.getString(arguments.elementAt(2));
+						location = arguments.elementAt(2);
 						price=rm.queryRoomsPrice(Id,location);
 						System.out.println("Price of Rooms at this location:"+price);
 					break;
@@ -356,7 +356,7 @@ public class client
 
 						Id = obj.getInt(arguments.elementAt(1));
 						customer = obj.getInt(arguments.elementAt(2));
-						location = obj.getString(arguments.elementAt(3));
+						location = arguments.elementAt(3);
 
 						if(rm.reserveCar(Id,customer,location))
 							System.out.println("Car Reserved");
@@ -374,7 +374,7 @@ public class client
 					System.out.println("Location: "+arguments.elementAt(3));
 						Id = obj.getInt(arguments.elementAt(1));
 						customer = obj.getInt(arguments.elementAt(2));
-						location = obj.getString(arguments.elementAt(3));
+						location = arguments.elementAt(3);
 
 						if(rm.reserveRoom(Id,customer,location))
 							System.out.println("Room Reserved");
@@ -396,10 +396,10 @@ public class client
 					System.out.println("Room to book?:"+arguments.elementAt(arguments.size()-1));
 						Id = obj.getInt(arguments.elementAt(1));
 						customer = obj.getInt(arguments.elementAt(2));
-						Vector flightNumbers = new Vector();
+						Vector<String> flightNumbers = new Vector<String>();
 						for(int i=0;i<arguments.size()-6;i++)
 							flightNumbers.addElement(arguments.elementAt(3+i));
-						location = obj.getString(arguments.elementAt(arguments.size()-3));
+						location = arguments.elementAt(arguments.size()-3);
 						Car = obj.getBoolean(arguments.elementAt(arguments.size()-2));
 						Room = obj.getBoolean(arguments.elementAt(arguments.size()-1));
 
@@ -489,15 +489,15 @@ public class client
 					if(arguments.size()!=2){
 						obj.wrongNumber();
 					}
-					String serverName = obj.getString(arguments.elementAt(1));
+					String serverName = arguments.elementAt(1);
 					System.out.println("Crashing " + serverName);
 					rm.crash(serverName);
 				case 29: //crash a server at a time
 					if(arguments.size()!=3){
 						obj.wrongNumber();
 					}
-					String serverLocation = obj.getString(arguments.elementAt(1));
-					String crashType = obj.getString(arguments.elementAt(2));
+					String serverLocation = arguments.elementAt(1);
+					String crashType = arguments.elementAt(2);
 					
 				
 				default:
@@ -516,9 +516,9 @@ public class client
 		}//end of while(true)
 	}
 
-	public Vector parse(String command)
+	public Vector<String> parse(String command)
 	{
-		Vector arguments = new Vector();
+		Vector<String> arguments = new Vector<String>();
 		StringTokenizer tokenizer = new StringTokenizer(command,",");
 		String argument ="";
 		while (tokenizer.hasMoreTokens())
@@ -604,6 +604,7 @@ public class client
 		System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
 		System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");
 		System.out.println("start\nautocommit\ncommit\nabort\nshutdown");
+		System.out.println("crash\ncrashTime");
 		System.out.println("\nquit");
 		System.out.println("\ntype help, <commandname> for detailed info(NOTE the use of comma).");
 	}
@@ -843,30 +844,12 @@ public class client
 
 
 
-	public int getInt(Object temp) throws Exception {
-		try {
-			return (new Integer((String)temp)).intValue();
-		}
-		catch(Exception e) {
-			throw e;
-		}
+	public int getInt(String temp) throws NumberFormatException{
+			return Integer.parseInt(temp);
 	}
 
-	public boolean getBoolean(Object temp) throws Exception {
-		try {
-			return (new Boolean((String)temp)).booleanValue();
-		}
-		catch(Exception e) {
-			throw e;
-		}
+	public boolean getBoolean(String temp){
+			return Boolean.getBoolean(temp);
 	}
 
-	public String getString(Object temp) throws Exception {
-		try {    
-			return (String)temp;
-		}
-		catch (Exception e) {
-			throw e;
-		}
-	}
 }
