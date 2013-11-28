@@ -18,7 +18,8 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     private String locationFile(int id) {
 		return this.rmType() + "/" + id + ".tmp";
 	}
-
+    private Crash crashType = Crash.NO_CRASH;
+    
     // Reads a data item
     protected abstract RMItem readData( int id, String key );
     
@@ -230,6 +231,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     		return false;
     	}
 
+    	if (crashType == Crash.BEFORE_VOTE) selfdestruct();
     	try {
     		File file = new File(locationFile(id));
     		if (!file.exists()) {
@@ -246,12 +248,13 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 			Trace.warn("RM::prepare( " + id + ") failed--Could not write hashtable into file." );
 			return false;
 		}
-    	
+    	if (crashType == Crash.BEFORE_REPLIES) selfdestruct(); //in slightly wrong place
     	return true;
     }
 
 	public boolean commit(int id) throws RemoteException, InvalidTransactionException {
-    	RMHashtable transaction = null;
+    	if (crashType == Crash.AFTER_DECISIONS) selfdestruct();
+		RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
     	}
@@ -293,6 +296,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     }
     
     public void abort(int id) throws RemoteException, InvalidTransactionException{
+    	if (crashType == Crash.AFTER_DECISIONS) selfdestruct();
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
