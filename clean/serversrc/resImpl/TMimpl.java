@@ -257,13 +257,12 @@ public class TMimpl implements TransactionManager, Serializable {
 				writeData(t.getID(),t); 
 				Trace.info("TM::commit(" + transactionID + ") vote passed.");
 				if (crashType == Crash.BEFORE_DECISION_SENT) System.exit(1);
-				int crashNumber =(int) Math.random()*RMType.values().length; //used only in crash case
 				for (RMType rm : RMType.values()) {
-					if (crashType == Crash.DURING_DECISION_SEND && --crashNumber <= 0)
-						System.exit(1);
 					if (t.isEnlisted(rm))
 						try {
 							getRMfromType(rm).commit(transactionID);
+							if (crashType == Crash.DURING_DECISION_SEND)
+								System.exit(1);
 						} catch (RemoteException e) {
 							new ReconnectLoop(rm, transactionID, true);
 						}
