@@ -236,7 +236,7 @@ public class TMimpl implements TransactionManager, Serializable {
 		for (RMType rm : RMType.values()) {
 			if (t.isEnlisted(rm)) {
 				PrepareThread th = new PrepareThread(rm, t);
-				th.start();
+				th.start(); //asks every enlisted RM to prepare and vote
 			}
 		}
 		if(crashType == Crash.BEFORE_REPLIES) System.exit(1);
@@ -245,16 +245,16 @@ public class TMimpl implements TransactionManager, Serializable {
 		//should be the same because it hasn't started sending commit messages yet. 
 		try {
 			t.timeoutStart();
-			while (!t.isReady()) {
+			while (!t.isReady()) {// Not all RMs have voted
 				if(crashType == Crash.BEFORE_ALL_REPLIES) System.exit(1);
 				if (t.isTimedOut()) {
-					abort(transactionID);
+					abort(transactionID); //Time is out. Aborting 
 					throw new TransactionAbortedException(transactionID);
 				}
 				Thread.sleep(1000);
 			}
 			Trace.info("TM::commit(" + transactionID + ") all replied.");
-			if (t.voteResult(crashType == Crash.BEFORE_DECISION)) {
+			if (t.voteResult(crashType == Crash.BEFORE_DECISION)) { //All RMs voted, what is the result?
 				//if we crash here, RMs don't know about the vote result. Transaction hasn't been
 				//stored to memory either. This transaction should be saved on start as well.
 				//Transaction comes back up and either aborts the transaction, or restarts vote request. 

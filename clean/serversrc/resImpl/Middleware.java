@@ -12,8 +12,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
-import javax.management.timer.TimerMBean;
-
 import LockManager.*;
 import serversrc.resInterface.*;
 
@@ -25,6 +23,7 @@ public class Middleware implements ResourceManager  {
 	private RMCustomer rmCustomer;
 	private LockManager lock;
 	private TransactionManager tm;
+	private Heartbeat lifeline;
 	static String locationRMCar;
 	static String locationRMFlight;
 	static String locationRMHotel;
@@ -119,7 +118,11 @@ public class Middleware implements ResourceManager  {
 					}
 				}
 			}
-		}	
+		}
+		
+		void stop() {
+			timer.cancel();
+		}
 		
 		//Tries to reconnect to the RM once. 
 		//If it fails because the rm is not up yet, the next heartbeat will try again.
@@ -182,7 +185,7 @@ public class Middleware implements ResourceManager  {
 	}
 	
 	private void beat(){
-		new Heartbeat();
+		lifeline = new Heartbeat();
 	}
 	
 	public RMBase getRMfromType(RMType type) {
@@ -702,11 +705,7 @@ public class Middleware implements ResourceManager  {
 	@Override
 	public boolean shutdown() throws RemoteException {
 
-		Trace.info("shutdown() initiated. Waiting to unexport the object.");
-		// while(UnicastRemoteObject.unexportObject(this, false)) {}
-		Trace.info("shutdown() unexported middleware.");
-
-		Trace.info("quit");
+		Trace.info("Shutdown() initiated.");
 		Registry registry = LocateRegistry.getRegistry(port);
 		try {
 			registry.unbind("Group2Middleware");
@@ -715,6 +714,7 @@ public class Middleware implements ResourceManager  {
 			throw new RemoteException(
 					"Could not unregister service, quiting anyway", e);
 		} finally {
+			lifeline.stop();
 			tm.shutdown();
 		}
 
