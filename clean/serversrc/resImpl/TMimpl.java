@@ -71,7 +71,7 @@ public class TMimpl implements TransactionManager, Serializable {
 		File directory = new File(folder);
 		if (!directory.exists()){ 
 			directory.mkdirs();
-			Trace.info("Directory not found, creating it now");
+			Trace.info("writeData() - Directory not found, creating it now");
 		}
 		try {
 			if (!file.exists())
@@ -347,6 +347,8 @@ public class TMimpl implements TransactionManager, Serializable {
 			try {
 				abort(tr.getID());
 				lock.UnlockAll(tr.getID());
+				//used to remove the autocommitted transactions from persistent storage.
+				removeData(tr.getID()); 
 			} catch (InvalidTransactionException e) {
 				// Should not happen
 				e.printStackTrace();
@@ -431,12 +433,13 @@ public class TMimpl implements TransactionManager, Serializable {
 					getRMfromType(rm).commit(id);
 				else
 					getRMfromType(rm).abort(id);
+				timer.cancel(); // Terminate the timer thread
 				Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") succeeded.");
 				} catch (RemoteException e) {
 					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") failed.");
 					timer.schedule(new RemindTask(), life * 1000);
 				} catch (InvalidTransactionException e) {
-					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") failed.");
+					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") Transaction does not exist in RM.");
 					timer.cancel(); // Terminate the timer thread
 				}
 			}

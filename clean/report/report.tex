@@ -199,7 +199,7 @@ Transactions are used to be able to make sure a series of operations is
 handled together. To do this, we use a lock manager, and we implement
 two-phase commits through a transaction manager.
 
-\subsection*{From the RMs' Point of View\label{sec:rm}}
+\subsection{From the RMs' Point of View\label{sec:rm}}
 
 Write operations are done lazily in the RMs. The base class for the RMs, 
 \java{RMBaseImpl} contains a new hashtable \java{m_transactionHT} which 
@@ -208,8 +208,8 @@ hashtables contain the changes made to the items by the existing
 transactions. When the transaction manager tells them to commit a 
 transaction, the RM will simply write to the main hashtale the content 
 of the hashtable of the particular transaction. Then, it will write
-the main hashtable to a file for recovery as it is explained in the
-recovery section %TODO put ref
+the main hashtable to a file for recovery as it is explained in
+section~\ref{sec:recrm}.
 
 The method \java{readData} will try to find the item in the hashtable 
 of the transaction first. If it isn't there, it will do a deep copy of 
@@ -277,7 +277,7 @@ coordinate the commits and aborts of the transactions with the RMs.
 
 The TM uses \java{Transaction} objects which extend the class 
 \java{TransactionData}. The latter only keeps persistent informations
-as explained in the recovery section. %TODO: put ref
+as explained in section~\ref{sec:rectm}.
 The former is implemented as an inner class of the TM to give to
 the Time-To-Live mechanism (TTL) the access to some fields kept by
 the TM. The details are presented in section~\ref{sec:ttl}.
@@ -307,8 +307,7 @@ protocol. It will first ask every resource manager involved in the
 transaction whether they are ready to commit through the \java{prepare}. 
 The resource managers will write to a file the hashtable containing 
 all the modified objects for this particular transaction, as presented 
-in section~\ref{sec:rm}. This is used for crash recovery as presented
-in section. %TODO: put ref
+in section~\ref{sec:rm}.
 
 The TM will call the \java{prepare} in different threads which will set 
 flags in the transaction object. There are two flags that are used: the
@@ -417,6 +416,9 @@ The server implements an autocommitting mechanism. A client can use the autocomm
 
 This autocommit feature appears as a flag in the transaction object. Such object does not have a TTL timer since they are noone possibly waiting for this transaction to finish. Moreover, committing or aborting any of its transactions will not remove the transaction object and so the ID can be used to do any number of autocommitting operations.  
 
+\section{Coordination from the Middleware}
+
+The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
 
 \begin{figureone}{\java{deleteCars} method in Middleware.java \label{fig:operation}}
 \begin{lstlisting}
@@ -435,11 +437,6 @@ public boolean deleteCars(int id, String location)
 }
 \end{lstlisting}
 \end{figureone}
-
-
-\section{Coordination from the Middleware}
-
-The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
 
 The obtention of the lock is done through the method \java{acquireLock} which is presented in figure~\ref{fig:acquireLock}. This method will tell the transaction manager that the transaction is still alive (resetting its TTL timer), then will verify if a lock can be given. If the lock can be given, and it is a write lock, it will tell the transaction manager to enlist the corresponding RM. If it cannot obtain the lock, a \java{DeadlockException} will be raised and it will then abort the whole transaction by raising \java{TransactionAbortedException}. The method returns a boolean obtained from \java{tm.lives} indicating whether or not the operation is done for a transaction in autocommitted mode. This mode is described in a subsection below.
 
@@ -469,11 +466,33 @@ private boolean acquireLock(int id, RMType type, String key, int lockType)
 
 The middleware also receives the start/commit/abort requests from the client. For the start operation, it simply forwards the query to the transaction manager, gettin from it a transaction ID that is sent back to the client. During commit/abort operations, it simply unlocks all the locks held by the transaction, then passes control to the transaction manager to handle the rest of the commit/abort.
 
-\section{Shutting Down the Server}
+\section{Recovery Mechanisms}
 
-The server can go in shutdown mode if a client uses the shutdown command. The middleware will unbind itself from the RMI registry to prevent new transactions. Then, it will pass the control to the transaction manager which will abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply unbind their registry and create a thread to wait for exit since there is no opened transactions and the system does not yet implement recovery mechanisms. When control will be passed back to the Middleware, it will create a new thread that will wait before exiting.
+The system implements saving to and loading from persistent storage to 
+ensure recovery of data after a shutdown or a crash. It is done at two 
+different places. The first one is at the transaction manager side where 
+we keep track of the transaction data necessary to handle commits or 
+aborts of preexisting transactions on reboot. The second place is in the 
+resource managers where we save not only the hashtable containing all 
+the resources handled by the RM, but also the modifications done by
+a transaction that is prepared to be committed.
 
-We create this new thread to make sure the client has time to get back an answer from the middleware before any of them exists. The solution to this specific problem, which appears in figure~\ref{fig:shutdown} was found on Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
+\subsection{Shutting Down the Server}
+
+The server can go in shutdown mode if a client uses the shutdown command. 
+The middleware will unbind itself from the RMI registry to prevent new 
+transactions. Then, it will pass the control to the transaction manager 
+which will abort all remaining transactions. It will then tell the RMs 
+to shutdown. The RMs will simply unbind their registry and create a 
+thread to wait for exit since there is no opened transactions and the 
+system does not yet implement recovery mechanisms. When control will be 
+passed back to the Middleware, it will create a new thread that will wait 
+before exiting.
+
+We create this new thread to make sure the client has time to get back an 
+answer from the middleware before any of them exists. The solution to this 
+specific problem, which appears in figure~\ref{fig:shutdown} was found on 
+Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
 
 \begin{figureone}{\java{shutdown} method in RMCar.java (solution from Stack Overflow) \label{fig:shutdown}}
 \begin{lstlisting}
@@ -506,228 +525,174 @@ We create this new thread to make sure the client has time to get back an answer
 \end{lstlisting}
 \end{figureone}
 
+Since all transactions are committed before shutdown, the only things
+that will stay in persistent storage are the RMs' main hashtable
+containing all the items currently handled by the resource manager.
+There will not be anything save by the transaction manager since
+they only keep in storage informations about ongoing transactions.
 
+On restart after a shutdown, the saved hashtables will be loaded
+back into the resource managers' memory and the user will be able
+to administer any of the currently existing resource just as
+it was before the server shutdown.
 
+\subsection{Crash and Recovery of a Resource Manager\label{sec:recrm}}
 
-%% Our implementation is split into three layers: the client which takes
-%% user inputs and formats them into queries that it sends to the server;
-%% the middleware which receives queries from the client and then redirects and/or
-%% coordinates the execution of the queries with the ressource managers;
-%% the ressource managers which each keeps track of a particular
-%% ressource. There are four ressources: cars, flights, rooms, and
-%% customers. Some operations such as adding a ressource, deleting a
-%% ressource (except for customers) or queries informations about them
-%% only requires the middleware to pass the query to the corresponding
-%% ressource manager. 
+As presented above, RMs save their committed data into disk to make
+sure they can be recovered from crashes. Most of the time, if a crash
+occurs, the current transactions will simply be discarded and any
+attempt to commit any of the transactions will lead up to its abortion.
 
-%% Other operations such as reservations and deletions
-%% of customers require communicating with both the
-%% customer RM and the object RMs.
+However, to maintain consistency, we need to make sure that, once an RM
+has voted to commit, it is able to carry on with this commit even if
+a crash would be to happen before it is actually done. To do so, it 
+writes the hashtable containing all the changes done during this
+transaction to file during the prepare phase, then it sends its vote to
+the transaction manager. Hence, if a crash occurs after it sent its
+vote, the recovery on boot will reload the changes done by the
+transaction into memory and wait for the transaction manager to tell
+him what to do with it.
 
-%% \subsubsection*{Uses of Java's RMI}
+If the resource manager is not available when the transaction manager 
+tells it to commit or abort (and so throws a \java{RemoteException}), 
+the TM will start a reconnect loop sending the query again at a given
+interval until it succeeds or until it raises an \java{InvalidTransactionException}
+which indicates the transaction does not exist anymore in the RM.
+We note that, in the case of an abort, we simply want to discard the
+modifications and so this exception tells us it already has been
+discarded. On the other hand, if we want to do a commit, it means
+the RM voted yes in the prepare phase and so saved a copy of the 
+modifications which are then recovered before making the RM available
+again to the middleware. Hence, the transaction will exist and
+the exception will not be raised. The only case where this could
+fail is if the writing or reading to a file failed which we do not
+consider in this project. Thus, the data will remain consistent through
+crashes on the RM side.
 
-%% Our implementation uses Java's Remote Method Interfaces. We have set up
-%%  interfaces to indicate to the remote program what are the local methods it can use. 
-%% The middleware implements the \java{ResourceManager} interface. The resource managers
-%% implement one of \java{RMCar}, \java{RMFlight}, \java{RMHotel}, or
-%% \java{RMCustomer} which all extend the base interface \java{RMBase}.
-%% \java{RMBase} is the interface used by the base class
-%% \java{RMBaseImpl} which as parent class for the implementations of
-%% each of the ressource managers. This class implements the hashtable
-%% and operations that are common to all the RMs like \java{readData},
-%% \java{writeData}, and \java{reserveItem}.
+To be able to resend the query, the transaction manager needs to be able to
+reconnect to the resource manager through the RMI interfacce. This is
+done through the heartbeat mechanism described in section~\ref{sec:heart}.
 
-%% To start the implementation, we first need to start the RMs. They take
-%% as optional input a port number. If none is provided, they assume the
-%% port 1099 is used for the rmiregistry (which needs to be started on
-%% the local machine). The middleware then takes as arguments the name of
-%% the machines running RMCar, RMFlight, RMHotel, and RMCustomer,
-%% respectively. It also takes a port number as an optional argument. For
-%% simplicity, it will take a single port number and will try to reach
-%% all the RMs on this port, in addition to setting himself to listen to
-%% that port. This limitation requires us to start all the rmiregistries
-%% on the same port. This, however, simplifies the parsing of the input
-%% for the middleware. We have had some trouble connecting to a
-%% rmiregistry that was not already started. In particular, it could not
-%% see the RMBase interface even if it was there. It seems to be linked to
-%% having the CLASSPATH variable set when the rmiregistry is started.
-%% Then, the client is started and takes the name of the server running
-%% the middleware together with an optional port number.
+\subsubsection{Heartbeat Mechanism\label{sec:heart}}
 
-%% %Our work for this deliverable extends our RMI implementation from the previous deliverable. We added to it a lock manager and a transaction manager, both of which handle the correct execution of transaction based writes and read in 2PL with a one-phase commit. Our work for this deliverable extends our RMI implementation from the previous deliverable. Both the transaction manager and the lock manager appear as objects of the middleware which uses them to handle transactions.
+\begin{figureone}{\java{reconnect} method from the \java{Heartbeat} in Middleware.java \label{fig:heartbeat}}
+\begin{lstlisting}
+void reconnect(RMType rm) {
+  try {
+    Registry registry;
+    RMBase rmb;
+    switch(rm){
+      case CAR:
+      registry = LocateRegistry.getRegistry(locationRMCar, port);
+      rmb = (RMBase) registry.lookup("Group2RMCar");
+      if(rmb != null){
+	rmb.heartbeat();
+	rmCar = (RMCar) rmb;
+	tm.updateRMCar(rmCar);
+	Trace.info("Middleware::reconnect(" + rm + ") succeeded.");
+      } else
+      Trace.error("Middleware::reconnect(" + rm + ") failed - The reference was null.");
+      break;
+    //other cases for different RMs
+    }
+  } //Catch statements printing only an error message.
+\end{lstlisting}
+\end{figureone}
 
-%% \subsection*{Lock Manager}
+We want the middleware to try to reconnect to the resource managers
+whenever they go down. To make sure this test is done consistently,
+we have a heartbeat mechanism, that is, a thread that will run on
+a regular interval and simply call a method that does nothing but
+verifies that the connection can be established. If it cannot,
+it will try to reconnect once and then go on with the heartbeat.
+If the connection fails, then the next beat will try again to reconnect.
+The reconnect method is shown in figure~\ref{fig:heartbeat}.
 
-%% The lock manager follows mostly the provided code. It indexes locks it gives to objects in two ways: the object that is being locked and the transaction holding the lock. It has a waiting list for the transactions that want a lock and it will raise a deadlock exception if a given delay is passed. We extended the lock manager to handle the upgrade of locks from read lock to write lock.
+This mechanism allows the transaction manager to go into a reconnect
+loop only handling the commit or abort of a specific transaction; Once 
+the connection will be established again, the query from the TM will be 
+executed and the transaction will be committed or aborted in the RM.
 
-%% \subsection*{Transaction Manager}
+\subsection{Crash and Recovery of the Transaction Manager\label{sec:rectm}}
 
-%% The transaction manager handles the transactions. The class contains an inner class \java{Transaction} which contains all the information about a particular one. It is defined as an inner class to give access to abort method from the transaction manager. The reason for this requirement is explained in the Time To Live mechanism (TTL) subsection. 
+In order to ensure consistency of transactions in case of crash from the TM,
+it saves the necessary data about the existing transaction to file whenever
+a modification is done to it. The write to file in \java{writeData} which
+also adds to transaction to the hashtable of transactions. The implementation
+of \java{writeData} is shown in figure~\ref{fig:writeData}. The informations
+written to file are the one contained in the a \java{TransactionData} object
+which is a simplified version of an actual transaction object. It contains the
+ID, whether it is an autocommitting transaction, a list of the enlisted 
+resource managers, whether they answered to a prepare phase and their answer 
+to the vote, if they answered. It does not need to know about the TTL or the
+timeout status so they appear in the \java{Transaction} object instead of a 
+\java{TransactionData} object.
 
-%% A transaction object contains the transaction ID, together with a boolean for each of the RMs telling us whether or not the transaction involve this RM. It also contains the TTL presented below.
+\begin{figureone}{\java{writeData} method in TMImpl.java \label{fig:writeData}}
+\begin{lstlisting}
+private void writeData(int id, Transaction value) {
+  synchronized (transactionHT) {
+    transactionHT.put(id, value);
+  }
+  File file = new File(locationFile(id));
+  File directory = new File(folder);
+  if (!directory.exists()){ 
+    directory.mkdirs();
+    Trace.info("TM :: writeData() - Directory not found, creating it now");
+  }
+  try {
+    if (!file.exists())
+    file.createNewFile(); 
+    FileOutputStream fos = new FileOutputStream(file);
+    ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-%% The transaction manager stores all transactions in an hashtable using the transaction ID as key. It also keeps the RMI objects for each RM obtained from the Middleware when the transaction manager is created. The RMIs are used to coordinate with them to commit/abort/shutdown.
+    TransactionData td = value.extractData();
+    oos.writeObject(td);
+    oos.close();
+  } catch (IOException e) {
+    // TODO Auto-generated catch block
+    e.printStackTrace();
+  }
+}
+\end{lstlisting}
+\end{figureone}
 
-%% It creates a new transaction object when its \java{start} method is called, giving it a new unique ID that is sent back to the Middleware, then to the client. It can commit and abort transactions with the corresponding methods. Those methods will simply remove the transaction object from the hashtable and call the commit or abort method, respectively, from the enlisted RMs to have them discard or register the writes they kept in store.
+During recovery after a crash, all existing transactions will be terminated
+since we do not have informations to allow the client to make additional
+queries to it. This can be explained by the fact that we do not write
+locks to file because we believe the overhead for keeping tracks of all
+the locks would be too big for the benefits. Hence, on boot, the transaction
+manager will read every transaction file and will abort them, unless it
+received positive votes from every RM enlisted and can therefore safely
+proceed to the commit. If a transaction was autocommitting, it will create
+a new transaction object and add it to its list of ongoing transactions
+so a client using an autocommitting transaction ID will still be able to
+use it.
 
-%% \subsubsection*{Time To Live Mechanism}
+This cleanup phase will catch possible \java{RemoteException} and will
+start a reconnect loop as presented in section~\ref{sec:recrm}. It
+will also catch any \java{InvalidTransactionException} which indicates
+that the operation has already been done and that there is nothing more
+to do. This occurs if the transaction manager crashes while sending
+commit or abort instructions to the RMs. In this case, it will try
+to do it again because it does not know what RMs actually received
+the query. 
 
-%% The transaction manager handles a (TTL) which is used to abort inactive transactions from crashed or idle clients. It is defined as an inner class within the Transaction class and contains a timer and an extension of the class \java{TimerTask}. On tick, the timer task will run and abort the transaction, giving up all the locks the transactions held. 
-
-%% Each time an operation involves this transaction, the \java{lives} method from the transaction manager will retreive the transaction and call its \java{resetTTL} method. This method will cancel the current timer, preventing it from start the scheduled task, and create another one, rescheduling the task.
-
-%% The inactivity delay is defined by the constant life. The current implementation sets it to 10 minutes (600 seconds) but it can easily be modified.
-
-%% \begin{figureone}{\java{TimeToLive} class in TMimpl.java \label{fig:ttl}}
-%% \begin{lstlisting}
-%% class TimeToLive {
-
-%%   private Timer timer;
-%%   private final long life = 600; //in seconds; 10 min.
+The recovery mechanism interacts well with the two-phase commit. If
+will go on with the two-phase commit procedure. When it has received
+all the votes, it will write them to disk then proceed to the commit
+or the abort according to the result of the vote. Thus, if the
+transaction manager fails before recording that all the votes have
+been received, it will simply abort the transaction. If the
+transaction manager fails after recording to file that all
+the votes have been received, it will decide whether to commit
+or abort based on the result of the vote. In any case, the
+data will remain consistent amongst all the resource managers.
+%TODO: actually do it and change this sentence
+An optimization we could have done is to register to disk
+that a vote will occur and if the votes have not been recorded
+before the crash, the transaction manager would run the vote again.
+However, we did not have time to add it once we realized this was
+a possibility.
   
-%%   TimeToLive() {
-%%     timer = new Timer();
-%%     timer.schedule(new RemindTask(), life*1000);
-%%   }
-  
-%%   class RemindTask extends TimerTask {
-%%     public void run() {
-%%       try {
-%% 	synchronized(lock){
-%% 	  lock.UnlockAll(id);
-%% 	}
-%% 	abort(id);
-%%       } catch (Exception e) {
-%% 	// Should not happen
-%% 	e.printStackTrace();
-%%       }
-%%       timer.cancel(); //Terminate the timer thread
-%%     }
-%%   }	
-  
-%%   void reset(){
-%%     timer.cancel();
-%%     timer = new Timer();
-%%     timer.schedule(new RemindTask(), life*1000);
-%%   }
-%% }
-%% \end{lstlisting}
-%% \end{figureone}
-
-
-%% \subsection*{Coordination from the Middleware}
-
-%% The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
-
-%% The obtenion of the lock is done through the method \java{acquireLock} which is presented in figure~\ref{fig:acquireLock}. This method will tell the transaction manager that the transaction is still alive (resetting its TTL timer), then will verify if a lock can be given. If the lock can be given, and it is a write lock, it will tell the transaction manager to enlist the corresponding RM. If it cannot obtain the lock, a \java{DeadlockException} will be raised and it will then abort the whole transaction by raising \java{TransactionAbortedException}. The method returns a boolean obtained from \java{tm.lives} indicating whether or not the operation is done for a transaction in autocommitted mode. This mode is described in a subsection below.
-
-%% \begin{figureone}{\java{acquireLock} method in Middleware.java \label{fig:acquireLock}}
-%% \begin{lstlisting}
-%% private boolean acquireLock(int id, RMType type, String key, int lockType) 
-%%     throws TransactionAbortedException, InvalidTransactionException {
-%%   try {
-%%     boolean b = tm.lives(id);
-%%     boolean locked = false;
-%%     synchronized(lock){
-%%       locked = lock.Lock(id, key, lockType);
-%%     }
-%%     if (locked) {
-%%       if(lockType == LockManager.WRITE)
-%%       tm.enlist(id, type);
-%%       return b;
-%%     } else{
-%%       throw new InvalidTransactionException();
-%%     }
-%%   } catch (DeadlockException e) {
-%%     throw new TransactionAbortedException(id);
-%%   }
-%% }
-%% \end{lstlisting}
-%% \end{figureone}
-
-%% The middleware also receives the start/commit/abort requests from the client. For the start operation, it simply forwards the query to the transaction manager, gettin from it a transaction ID that is sent back to the client. During commit/abort operations, it simply unlocks all the locks held by the transaction, then passes control to the transaction manager to handle the rest of the commit/abort.
-
-%% \subsubsection*{Shutting Down the Server}
-
-%% The server can go in shutdown mode if a client uses the shutdown command. The middleware will unbind itself from the RMI registry to prevent new transactions. Then, it will pass the control to the transaction manager which will abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply unbind their registry and create a thread to wait for exit since there is no opened transactions and the system does not yet implement recovery mechanisms. When control will be passed back to the Middleware, it will create a new thread that will wait before exiting.
-
-%% We create this new thread to make sure the client has time to get back an answer from the middleware before any of them exists. The solution to this specific problem, which appears in figure~\ref{fig:shutdown} was found on Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
-
-%% \begin{figureone}{\java{shutdown} method in RMCar.java (solution from Stack Overflow) \label{fig:shutdown}}
-%% \begin{lstlisting}
-%%   public boolean shutdown() throws RemoteException {
-%%     Trace.info("quit");
-%%     Registry registry = LocateRegistry.getRegistry(port);
-%%     try {
-%%       registry.unbind("Group2RMCar");
-%%       UnicastRemoteObject.unexportObject(this, false);
-%%     } catch (NotBoundException e) {
-%%       throw new RemoteException("Could not unregister service, quiting anyway", e);
-%%     }
-
-%%     new Thread() {
-%%       @Override
-%%       public void run() {
-%% 	Trace.info("Shutting down...");
-%% 	try {
-%% 	  sleep(2000);
-%% 	} catch (InterruptedException e) {
-%% 	  // I don't care
-%% 	}
-%% 	Trace.info("done");
-%% 	System.exit(0);
-%%       }
-
-%%     }.start();
-%%     return true;
-%%   }
-%% \end{lstlisting}
-%% \end{figureone}
-
-%% \subsubsection*{Autocommitting Transactions}
-
-%% The server implements an autocommitting mechanism. A client can use the autocommit command to obtain a transaction ID that will perform autocommitting transactions, that is, each query will form its own transaction. It will obtain the necessary locks, perform the operations, then the middleware will ask the transaction manager to commit those changes and will release the locks. 
-
-%% This autocommit feature appears as a flag in the transaction object. Such object does not have a TTL timer since they are noone possibly waiting for this transaction to finish. Moreover, committing or aborting any of its transactions will not remove the transaction object and so the ID can be used to do any number of autocommitting operations.  
-
-
-%% \begin{figureone}{\java{deleteCars} method in Middleware.java \label{fig:operation}}
-%% \begin{lstlisting}
-%% public boolean deleteCars(int id, String location)
-%%     throws RemoteException, InvalidTransactionException, TransactionAbortedException {
-%%   try{
-%%     boolean b = acquireLock(id, RMType.CAR, Car.getKey(location), LockManager.WRITE);
-%%     boolean b1 = rmCar.deleteCars(id, location);
-%%     if(!b)
-%%       commit(id);
-%%     return b1;
-%%   } catch (TransactionAbortedException i) {
-%%     abort(id);
-%%     throw new TransactionAbortedException(id);
-%%   }
-%% }
-%% \end{lstlisting}
-%% \end{figureone}
-
-
-%% \subsection*{Transactions from the RMs' Point of View}
-
-%% Write operations are done lazily in the RMs. The base class for the RMs, \java{RMBaseImpl} contains a new hashtable \java{m_transactionHT} which uses transaction IDs as keys, and contains hashtables as values. Those hashtables contain the changes made to the items by the existing transactions. When the transaction manager tells them to commit a transaction, the RM will simply write to the main hashtale the content of the hashtable of the particular transaction.
-
-%% The method \java{readData} will try to find the item in the hashtable of the transaction first. If it isn't there, it will do a deep copy of the item and gives this copy back. Then, if the RM modifies the item, the original one will stay the same. The method \java{writeData} will simply write the item to the hashtable of the transaction. The method \java{removeData} will simply flag the item to be deleted and add it to the transaction hashtable.
-
-%% If the transaction is aborted, its hashtable is simply discarded. If it is committed, the commit will write all elements of the hashtable of the transaction to the main hashtable. The items with the deleted tags will simply be removed from the main hashtable.
-
-%% We note that if someone does modify an item, then noone else will try to access it is committed since noone else has a reading lock. It is thus safe to have a hashtable by id since there will be only one modified copy in only one of the hashtables and it is the only one that will be accessed. If multiple have a copy in their hashtable, then those copies will only be read.
-
-%% \section*{Performance Evaluation}
-%% Performance of this system is evaluated based on average latency for a request. The throughput of the system should be relatively constant under many conditions. Throughput would remain relatively stable unless many transactions require the same object and at least one write is present. For a single client the lock manager will not get in the way. However it's presence has a slight performance penalty. This lock manager works in O(c), however with many transactions this can be noticeable. 
-
-%% For several clients the system's throughput would remain constant on average, however it may drop from time to time if a deeadlock is detected. Transactions are meant to be short, and they have a short time out. However the average delay that a client receives will grow due to minor fluctuations. Since the operations are carried out in a FIFO manner this only creates significant delay in the event of a sudden burst of activity. 
-
-%% Since the testing is done locally, the network latency is extremely low and is unlikely to cause a problem. The middleware itself takes all the requests so it is a good candidate for where a bottleneck could be. The requests the middleware do are small and often involve only passing messages from one system to another. The distribution of the three different resources allows for a more evenly distribution of the processing and data loading. 
-
-%% While this does slightly take the load away from the main system, the benefits of this is to allow concurrent requests. One transaction can happen on one machine while another happens on another machine. The benefits of this are removed when considering offset loads. That is to say, if one RM receives more requests than the others. In our system we have a Customer RM. This is used in more of the possible operations than the rest and thus could cause a penalty in resource usage, and latency.  
-
-%% The test script that could be used for this testing is in two files, one called TestClient, and one called Test, TestClient is a runnable Client, that can run transactions that it defines. Test creates several threads to create a number of clients. Each TestClient takes as parameter a load rate, a load to set on the system, and the number of clients. If the rate is set to 0, the TestClient will run as many threads as it can. A third parameter gives the length of the experiment, and the last parameter is the connection information. These are all command line arguments to Test. At the end of the test, a summary charachterizing all of this is printed.  
 \end{document}
