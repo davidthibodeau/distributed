@@ -11,7 +11,7 @@ import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.TransactionAbortedException;
 import serversrc.resInterface.ResourceManager;
 
-public class TestClient extends client implements Runnable {
+public class TestClient extends Client implements Runnable {
 	static Random rand = new Random();
 	int transactionTime; // in milliseconds.
 	int totalResponseTime; // in milliseconds.

@@ -10,14 +10,14 @@ import java.util.*;
 import java.io.*;
 
 
-public class client
+public class Client
 {
 	static String message = "blank";
 	static ResourceManager rm = null;
 
 	public static void main(String args[])
 	{
-		client obj = new client();
+		Client obj = new Client();
 		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 		String command = "";
 		Vector<String> arguments  = new Vector<String>();
@@ -498,6 +498,7 @@ public class client
 					}
 					String serverLocation = arguments.elementAt(1);
 					String crashType = arguments.elementAt(2);
+					rm.testCrash(serverLocation, crashType);
 					
 				
 				default:
