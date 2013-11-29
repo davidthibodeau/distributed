@@ -213,11 +213,34 @@ recovery section %TODO put ref
 
 The method \java{readData} will try to find the item in the hashtable 
 of the transaction first. If it isn't there, it will do a deep copy of 
-the item and gives this copy back. Then, if the RM modifies the item, 
+the item and gives this copy back. The \java{readData} method appears
+in figure~\ref{fig:readdata}. Then, if the RM modifies the item, 
 the original one will stay the same. The method \java{writeData} will 
 simply write the item to the hashtable of the transaction. The method 
 \java{removeData} will simply flag the item to be deleted and add it 
 to the transaction hashtable.
+
+\begin{figureone}{\java{readData} method in RMCarImpl.java \label{fig:readdata}}
+\begin{lstlisting}
+protected RMItem readData( int id, String key )
+{
+  synchronized(m_transactionHT){
+    RMHashtable trHT = (RMHashtable) m_transactionHT.get(id);
+    if(trHT != null){
+      RMItem item = (RMItem) trHT.get(key);
+      if(item != null)
+      return item;
+    }
+  }
+  synchronized(m_itemHT) {
+    Car c = (Car) m_itemHT.get(key);
+    if (c != null)
+    return new Car(c);
+    return null;
+  }
+}
+\end{lstlisting}
+\end{figureone}
 
 If the transaction is aborted, its hashtable is simply discarded. If 
 it is committed, the commit will write all elements of the hashtable 
@@ -292,7 +315,42 @@ flags in the transaction object. There are two flags that are used: the
 first one tells the TM that a given RM has answered while the second
 tells it what the answers is. The TM will wait in a loop until all
 the enlisted RMs have replied, or until a timeout is reached. If the 
-timeout is reached, it will abort the transaction.
+timeout is reached, it will abort the transaction. This is shown in
+figure~\ref{fig:prep}.
+
+\begin{figureone}{\java{commit} method in TMimpl.java \label{fig:prep}}
+\begin{lstlisting}
+public boolean commit(int transactionID) 
+      throws InvalidTransactionException, TransactionAbortedException {
+  Transaction t = readData(transactionID);
+  if (t == null)
+  throw new InvalidTransactionException();
+  t.timeoutReset();
+  for (RMType rm : RMType.values()) {
+    if (t.isEnlisted(rm)) {
+      PrepareThread th = new PrepareThread(rm, t);
+      th.start(); //asks every enlisted RM to prepare and vote
+    }
+  }
+  
+  try {
+    t.timeoutStart();
+    while (!t.isReady()) { // Not all RMs have voted
+      if (t.isTimedOut()) { 
+        abort(transactionID); //Time is out. Aborting 
+        throw new TransactionAbortedException(transactionID);
+      }
+    Thread.sleep(1000);
+    }
+    Trace.info("TM::commit(" + transactionID + ") all replied.");
+    if (t.voteResult()) { //All RMs voted, what is the result?
+      //handling of commit in case of passed vote
+    } else { //handling of abort in case of failed vote
+    }
+  } //Some catch statement afterward
+}
+\end{lstlisting}
+\end{figureone}
 
 Once it gets all the votes, it will tell them to commit, or abort, the 
 transaction if the vote passes, or fails, respectively. The resource
@@ -321,7 +379,7 @@ modified.
 class TimeToLive {
 
   private Timer timer;
-  private final long life = 600; //in seconds; 10 min.
+  private final long life = 120; //in seconds; 2 min.
   
   TimeToLive() {
     timer = new Timer();
@@ -353,7 +411,7 @@ class TimeToLive {
 \end{figureone}
 
 
-\subsubsection*{Autocommitting Transactions}
+\subsubsection{Autocommitting Transactions}
 
 The server implements an autocommitting mechanism. A client can use the autocommit command to obtain a transaction ID that will perform autocommitting transactions, that is, each query will form its own transaction. It will obtain the necessary locks, perform the operations, then the middleware will ask the transaction manager to commit those changes and will release the locks. 
 
