@@ -190,5 +190,7 @@ public interface ResourceManager extends Remote
 	public boolean testCrash(String when, String where) throws RemoteException;
 
 	public boolean isConnected() throws RemoteException;
+	
+	public void toggleHeartbeatVerbosity() throws RemoteException;
     			
 }

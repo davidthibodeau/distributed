@@ -1,6 +1,8 @@
 package clientsrc;
 
+import serversrc.resImpl.Crash;
 import serversrc.resImpl.InvalidTransactionException;
+import serversrc.resImpl.TMimpl;
 import serversrc.resImpl.TransactionAbortedException;
 import serversrc.resInterface.*;
 
@@ -505,7 +507,16 @@ public class Client
 					}
 					String serverLocation = arguments.elementAt(1);
 					String crashType = arguments.elementAt(2);
-					rm.testCrash(serverLocation, crashType);
+					if(!rm.testCrash(serverLocation, crashType)){
+						System.out.println("Invalid Selection, No crash will occur");;
+					}
+					break;
+				case 30:
+					if(arguments.size()!=1){
+						obj.wrongNumber();
+						break;
+					}
+					rm.toggleHeartbeatVerbosity();
 					break;
 				
 				default:
@@ -618,14 +629,13 @@ public class Client
 			return 26;
 		else if (argument.compareToIgnoreCase("autocommit")==0)
 			return 27;
-		else if (argument.compareToIgnoreCase("crash")==0){
-			System.out.println("Crash Selected");
+		else if (argument.compareToIgnoreCase("crash")==0)
 			return 28;
-		}
-		else if (argument.compareToIgnoreCase("crashtime")==0){
-			System.out.println("CrashTime Selected");
+		else if (argument.compareToIgnoreCase("crashtime")==0)
 			return 29;
-		}
+		else if (argument.compareToIgnoreCase("toggleverbose")==0)
+			return 30;
+		
 		else
 			return 666;
 
@@ -641,7 +651,7 @@ public class Client
 		System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
 		System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");
 		System.out.println("start\nautocommit\ncommit\nabort\nshutdown");
-		System.out.println("crash\ncrashTime");
+		System.out.println("crash\ncrashTime\ntoggleverbose");
 		System.out.println("\nquit");
 		System.out.println("\ntype help, <commandname> for detailed info(NOTE the use of comma).");
 	}
@@ -873,7 +883,17 @@ public class Client
 			System.out.println("Crashes the server specified in the parameter");
 			System.out.println("\nUsage:");
 			System.out.println("\tcrash,[middleware,car,hotel,flight,customer]");
-
+			break;
+		
+		case 29: //Crash a server during commit
+			System.out.println("Simulates a crash on a server during a 2PC");
+			System.out.println("Purpose:");
+			System.out.println("Crashes the server specified in the parameter, at the time in the other");
+			System.out.println("\nUsage:");
+			System.out.println("\tcrashtime,[crashtype],[middleware,car,hotel,flight,customer]");
+			System.out.println("\tcrashtypes: before_vote during_decision_send after_decisions during_reply\n" +
+			"before_decision before_decision_sent before_reply");
+			break;
 		default:
 			System.out.println(command);
 			System.out.println("The interface does not support this command.");

@@ -21,6 +21,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 		return this.rmType() + "/" + id + ".tmp";
 	}
     private Crash crashType = Crash.NO_CRASH;
+	private boolean verbose = true;
     
     // Reads a data item
     protected abstract RMItem readData( int id, String key );
@@ -332,7 +333,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	}
 	
 	public boolean heartbeat() throws RemoteException {
-		Trace.info("RM::Heartbeat() running.");
+		if(verbose) Trace.info("RM::Heartbeat() running.");
 		return true;
 	}
 	public void setCrashType(Crash crashType) throws RemoteException{
@@ -340,5 +341,8 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	}
 	public Crash getCrashType() throws RemoteException{
 		return crashType;
+	}
+	public void toggleHeart(boolean verbose){
+		this.verbose = verbose;
 	}
 }

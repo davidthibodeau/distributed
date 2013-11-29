@@ -196,7 +196,7 @@ public class RMCustomerImpl extends RMBaseImpl implements RMCustomer{
     	if (cust.isDeleted()) 
     		throw new TransactionAbortedException(id);
     	cust.unreserve(item.getKey());
-    	writeData(id, cust.getKey(), cust);
+    	writeData(id, Customer.getKey(cid), cust);
     	return true;
     }
 

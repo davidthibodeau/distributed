@@ -100,15 +100,20 @@ public class Middleware implements ResourceManager  {
 		
 		private Timer timer;
 		private final long life = 10; // in seconds
+		private boolean verbose = true;
 		
 		protected Heartbeat () {
 			timer = new Timer();
 			timer.schedule(new HeartBeatTask(), life * 1000, life * 1000);
 		}
 		
+		public void setVerbose(boolean verbose){
+			this.verbose = verbose;
+		}
+		
 		class HeartBeatTask extends TimerTask {
 			public void run() {
-				Trace.info("Middleware::HeartBeatTask() running.");
+				if(verbose) Trace.info("Middleware::HeartBeatTask() running.");
 				for (RMType rm : RMType.values()){
 					try {
 						getRMfromType(rm).heartbeat();
@@ -758,7 +763,7 @@ public class Middleware implements ResourceManager  {
 	}
 	
 	public boolean testCrash(String when, String which) throws RemoteException {
-		if (which.equals("middleware")){
+		if (which.equals("middleware")) {
 			if (when.equals("before_vote"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
 			else if (when.equals("during_decision_send"))
@@ -773,10 +778,11 @@ public class Middleware implements ResourceManager  {
 				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
 			else if (when.equals("before_reply"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_REPLY);
-			else 
+			else {
 				((TMimpl) tm).setCrashType(Crash.NO_CRASH);
-		}
-		else{
+				return false;
+			}
+		} else {
 			RMBase rm = null;
 			if (which.equals("flight"))
 				rm = getRMfromType(RMType.FLIGHT);
@@ -786,8 +792,9 @@ public class Middleware implements ResourceManager  {
 				rm = getRMfromType(RMType.HOTEL);
 			else if (which.equals("customer"))
 				rm = getRMfromType(RMType.CUSTOMER);
-			else return false;
-			
+			else
+				return false;
+
 			if (when.equals("before_vote"))
 				rm.setCrashType(Crash.BEFORE_VOTE);
 			else if (when.equals("before_vote"))
@@ -802,13 +809,22 @@ public class Middleware implements ResourceManager  {
 				rm.setCrashType(Crash.BEFORE_DECISION_SENT);
 			else if (when.equals("before_reply"))
 				rm.setCrashType(Crash.BEFORE_REPLY);
-			else 
-					rm.setCrashType(Crash.NO_CRASH);
-			
+			else {
+				rm.setCrashType(Crash.NO_CRASH);
+				return false;
+			}
+
 		}
 		return true;
 	}
+	
+	public void toggleHeartbeatVerbosity() throws RemoteException{
+		lifeline.verbose = !lifeline.verbose;
+		for(RMType r : RMType.values()){
+			getRMfromType(r).toggleHeart(lifeline.verbose);
+		}
 
+	}
 	private void selfdestruct() {
 		System.exit(1);
 	}

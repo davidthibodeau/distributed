@@ -48,4 +48,6 @@ public interface RMBase extends Remote {
 	
 	public Crash getCrashType() throws RemoteException;
 
+	public void toggleHeart(boolean verbose) throws RemoteException;
+
 }
