@@ -229,6 +229,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     }
     
     public boolean prepare(int id) throws RemoteException {
+       	Trace.info("Voting on transaction with id: " + id);
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.get(id);
@@ -241,26 +242,28 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     	if (crashType == Crash.BEFORE_VOTE) selfdestruct();
     	try {
     		File file = new File(locationFile(id));
-    		if (!file.exists()) {
+    		if (!file.exists())
     			file.createNewFile();
-    			FileOutputStream fos = new FileOutputStream(file);
-    			ObjectOutputStream oos = new ObjectOutputStream(fos);
-    			oos.writeObject(transaction);
-    			oos.close();
-    		} else {
-    			//file does exist. Previous commit has not been cleaned up.
-    			//TODO: do cleanup???
+    		else{
+    			file.delete();
+    			file.createNewFile();
     		}
+    		FileOutputStream fos = new FileOutputStream(file);
+    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+    		oos.writeObject(transaction);
+    		oos.close();
+
     	} catch (IOException e) {
 			Trace.warn("RM::prepare( " + id + ") failed--Could not write hashtable into file." );
 			return false;
 		}
-    	if (crashType == Crash.BEFORE_REPLIES) selfdestruct(); //in slightly wrong place
     	return true;
     }
 
 	public boolean commit(int id) throws RemoteException, InvalidTransactionException {
-    	if (crashType == Crash.AFTER_DECISIONS) selfdestruct();
+       	Trace.info("Commiting transaction with id: " + id);
+
+		if (crashType == Crash.AFTER_DECISIONS) selfdestruct();
 		RMHashtable transaction = null;
     	synchronized(m_transactionHT){
     		transaction = (RMHashtable) m_transactionHT.remove(id);
@@ -303,6 +306,7 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
     }
     
     public void abort(int id) throws RemoteException, InvalidTransactionException{
+       	Trace.info("Aborting transaction with id: " + id);
     	if (crashType == Crash.AFTER_DECISIONS) selfdestruct();
     	RMHashtable transaction = null;
     	synchronized(m_transactionHT){
@@ -333,5 +337,8 @@ public abstract class RMBaseImpl implements RMBase, RMReservable {
 	}
 	public void setCrashType(Crash crashType) throws RemoteException{
 		this.crashType = crashType;
+	}
+	public Crash getCrashType() throws RemoteException{
+		return crashType;
 	}
 }

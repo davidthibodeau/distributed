@@ -45,5 +45,7 @@ public interface RMBase extends Remote {
 	public boolean heartbeat() throws RemoteException;
 
 	public void setCrashType(Crash crashType) throws RemoteException;
+	
+	public Crash getCrashType() throws RemoteException;
 
 }

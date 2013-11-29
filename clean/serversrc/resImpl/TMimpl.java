@@ -240,12 +240,13 @@ public class TMimpl implements TransactionManager, Serializable {
 			}
 		}
 		if(crashType == Crash.BEFORE_REPLIES) System.exit(1);
-		if(crashType == Crash.BEFORE_ALL_REPLIES) System.exit(1);
+
 		
 		//should be the same because it hasn't started sending commit messages yet. 
 		try {
 			t.timeoutStart();
 			while (!t.isReady()) {
+				if(crashType == Crash.BEFORE_ALL_REPLIES) System.exit(1);
 				if (t.isTimedOut()) {
 					abort(transactionID);
 					throw new TransactionAbortedException(transactionID);
@@ -410,6 +411,9 @@ public class TMimpl implements TransactionManager, Serializable {
 			boolean b;
 			try {
 				b = getRMfromType(rm).prepare(tr.getID());
+				if(getRMfromType(rm).getCrashType() == Crash.BEFORE_DECISION){
+					getRMfromType(rm).selfdestruct();
+				}
 				if (!tr.isTimedOut())
 					tr.prepared(b, rm);
 			} catch (RemoteException e){
@@ -425,7 +429,7 @@ public class TMimpl implements TransactionManager, Serializable {
 		private int id;
 		private boolean commit; //false means you want to abort
 		private Timer timer;
-		private final long life = 20; // in seconds
+		private final long life = 10; // in seconds
 		
 		ReconnectLoop(RMType rm, int id, boolean commit) {
 			this.rm = rm;
@@ -442,6 +446,7 @@ public class TMimpl implements TransactionManager, Serializable {
 					getRMfromType(rm).commit(id);
 				else
 					getRMfromType(rm).abort(id);
+				Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") succeeded.");
 				} catch (RemoteException e) {
 					Trace.info("TM::ReconnectLoop(" + id + " at " + rm + ") failed.");
 					timer.schedule(new RemindTask(), life * 1000);
