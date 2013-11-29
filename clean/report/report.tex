@@ -417,6 +417,9 @@ The server implements an autocommitting mechanism. A client can use the autocomm
 
 This autocommit feature appears as a flag in the transaction object. Such object does not have a TTL timer since they are noone possibly waiting for this transaction to finish. Moreover, committing or aborting any of its transactions will not remove the transaction object and so the ID can be used to do any number of autocommitting operations.  
 
+\section{Coordination from the Middleware}
+
+The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
 
 \begin{figureone}{\java{deleteCars} method in Middleware.java \label{fig:operation}}
 \begin{lstlisting}
@@ -435,11 +438,6 @@ public boolean deleteCars(int id, String location)
 }
 \end{lstlisting}
 \end{figureone}
-
-
-\section{Coordination from the Middleware}
-
-The middleware, as before, acts as coordinator between the client and the resources managers. It receives the queries from the clients and will use the lock manager to give locks for the given transactions. Figure~\ref{fig:operation} shows the \java{deleteCars} method and illustrates the coordination done by the middleware. If the locks can be given, it will tell the RMs to do the given operations. 
 
 The obtention of the lock is done through the method \java{acquireLock} which is presented in figure~\ref{fig:acquireLock}. This method will tell the transaction manager that the transaction is still alive (resetting its TTL timer), then will verify if a lock can be given. If the lock can be given, and it is a write lock, it will tell the transaction manager to enlist the corresponding RM. If it cannot obtain the lock, a \java{DeadlockException} will be raised and it will then abort the whole transaction by raising \java{TransactionAbortedException}. The method returns a boolean obtained from \java{tm.lives} indicating whether or not the operation is done for a transaction in autocommitted mode. This mode is described in a subsection below.
 
@@ -469,11 +467,33 @@ private boolean acquireLock(int id, RMType type, String key, int lockType)
 
 The middleware also receives the start/commit/abort requests from the client. For the start operation, it simply forwards the query to the transaction manager, gettin from it a transaction ID that is sent back to the client. During commit/abort operations, it simply unlocks all the locks held by the transaction, then passes control to the transaction manager to handle the rest of the commit/abort.
 
-\section{Shutting Down the Server}
+\section{Recovery Mechanisms}
 
-The server can go in shutdown mode if a client uses the shutdown command. The middleware will unbind itself from the RMI registry to prevent new transactions. Then, it will pass the control to the transaction manager which will abort all remaining transactions. It will then tell the RMs to shutdown. The RMs will simply unbind their registry and create a thread to wait for exit since there is no opened transactions and the system does not yet implement recovery mechanisms. When control will be passed back to the Middleware, it will create a new thread that will wait before exiting.
+The system implements saving to and loading from persistent storage to 
+ensure recovery of data after a shutdown or a crash. It is done at two 
+different places. The first one is at the transaction manager side where 
+we keep track of the transaction data necessary to handle commits or 
+aborts of preexisting transactions on reboot. The second place is in the 
+resource managers where we save not only the hashtable containing all 
+the resources handled by the RM, but also the modifications done by
+a transaction that is prepared to be committed.
 
-We create this new thread to make sure the client has time to get back an answer from the middleware before any of them exists. The solution to this specific problem, which appears in figure~\ref{fig:shutdown} was found on Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
+\subsection{Shutting Down the Server}
+
+The server can go in shutdown mode if a client uses the shutdown command. 
+The middleware will unbind itself from the RMI registry to prevent new 
+transactions. Then, it will pass the control to the transaction manager 
+which will abort all remaining transactions. It will then tell the RMs 
+to shutdown. The RMs will simply unbind their registry and create a 
+thread to wait for exit since there is no opened transactions and the 
+system does not yet implement recovery mechanisms. When control will be 
+passed back to the Middleware, it will create a new thread that will wait 
+before exiting.
+
+We create this new thread to make sure the client has time to get back an 
+answer from the middleware before any of them exists. The solution to this 
+specific problem, which appears in figure~\ref{fig:shutdown} was found on 
+Stack Overflow\footnote{http://stackoverflow.com/questions/241034/how-to-remotely-shutdown-a-java-rmi-server}.
 
 \begin{figureone}{\java{shutdown} method in RMCar.java (solution from Stack Overflow) \label{fig:shutdown}}
 \begin{lstlisting}
@@ -506,8 +526,33 @@ We create this new thread to make sure the client has time to get back an answer
 \end{lstlisting}
 \end{figureone}
 
+Since all transactions are committed before shutdown, the only things
+that will stay in persistent storage are the RMs' main hashtable
+containing all the items currently handled by the resource manager.
+There will not be anything save by the transaction manager since
+they only keep in storage informations about ongoing transactions.
 
+On restart after a shutdown, the saved hashtables will be loaded
+back into the resource managers' memory and the user will be able
+to administer any of the currently existing resource just as
+it was before the server shutdown.
 
+\subsection{Crash and Recovery of a Resource Manager}
+
+As presented above, RMs save their committed data into disk to make
+sure they can be recovered from crashes. Most of the time, if a crash
+occurs, the current transactions will simply be discarded and any
+attempt to commit any of the transactions will lead up to its abortion.
+
+However, to maintain consistency, we need to make sure that, once an RM
+has voted to commit, it is able to carry on with this commit even if
+a crash would be to happen before it is actually done. To do so, it 
+writes the hashtable containing all the changes done during this
+transaction to file during the prepare phase, then it sends its vote to
+the transaction manager. Hence, if a crash occurs after it sent its
+vote, the recovery on boot will reload the changes done by the
+transaction into memory and wait for the transaction manager to tell
+him what to do with it.
 
 %% Our implementation is split into three layers: the client which takes
 %% user inputs and formats them into queries that it sends to the server;
