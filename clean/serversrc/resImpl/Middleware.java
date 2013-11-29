@@ -25,7 +25,6 @@ public class Middleware implements ResourceManager  {
 	private RMCustomer rmCustomer;
 	private LockManager lock;
 	private TransactionManager tm;
-	private Heartbeat lifeline;
 	static String locationRMCar;
 	static String locationRMFlight;
 	static String locationRMHotel;
@@ -183,7 +182,7 @@ public class Middleware implements ResourceManager  {
 	}
 	
 	private void beat(){
-		lifeline = new Heartbeat();
+		new Heartbeat();
 	}
 	
 	public RMBase getRMfromType(RMType type) {
@@ -737,70 +736,75 @@ public class Middleware implements ResourceManager  {
 	}
 	
 	public boolean crash(String which) throws RemoteException {
-		
-		if(which == "car"){
-			rmCar.selfdestruct();
-		} else if (which.toLowerCase() == "flight"){
-			rmFlight.selfdestruct();
-		} else if (which.toLowerCase() == "hotel"){
-			rmHotel.selfdestruct();
-		} else if (which.toLowerCase() == "customer"){
-			rmCustomer.selfdestruct();
-		} else if (which.toLowerCase() == "middleware"){
-			selfdestruct();
-		} else {
-			return false;
+		Trace.info("Crashing [" + which +"]");
+		try{
+			if(which.equals("car")){
+				rmCar.selfdestruct();
+			} else if (which.equals("flight")){
+				rmFlight.selfdestruct();
+			} else if (which.equals("hotel")){
+				rmHotel.selfdestruct();
+			} else if (which.equals("customer")){
+				rmCustomer.selfdestruct();
+			} else if (which.equals("middleware")){
+				selfdestruct();
+			} else {
+				System.out.println("Not a valid server to crash");
+				return false;
+			}
 		}
-		
+		catch(RemoteException e){};
 		return true; 
 	}
 	
 	public boolean testCrash(String when, String which) throws RemoteException {
-		RMBase rm = null;
-		if (which == "flight")
-			rm = getRMfromType(RMType.FLIGHT);
-		else if (which == "car")
-			rm = getRMfromType(RMType.CAR);
-		else if (which == "hotel")
-			rm = getRMfromType(RMType.HOTEL);
-		else if (which == "customer")
-			rm = getRMfromType(RMType.CUSTOMER);
-		
-		if (which == "middleware"){
-			if (when == "before_vote")
+		if (which.equals("middleware")){
+			if (when.equals("before_vote"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
-			else if (when == "before_all_decisions")
+			else if (when.equals("before_all_decisions"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
-			else if (when == "after_decisions")
+			else if (when.equals("after_decisions"))
 				((TMimpl) tm).setCrashType(Crash.AFTER_DECISIONS);
-			else if (when == "before_all_replies")
+			else if (when.equals("before_all_replies"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_REPLIES);
-			else if (when == "before_decision")
+			else if (when.equals("before_decision"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION);
-			else if (when == "before_decision_sent")
+			else if (when.equals("before_decision_sent"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
-			else if (when == "before_any_replies")
+			else if (when.equals("before_any_replies"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_REPLIES);
 			else 
 				((TMimpl) tm).setCrashType(Crash.NO_CRASH);
 		}
 		else{
-			if (when == "before_vote")
+			RMBase rm = null;
+			if (which.equals("flight"))
+				rm = getRMfromType(RMType.FLIGHT);
+			else if (which.equals("car"))
+				rm = getRMfromType(RMType.CAR);
+			else if (which.equals("hotel"))
+				rm = getRMfromType(RMType.HOTEL);
+			else if (which.equals("customer"))
+				rm = getRMfromType(RMType.CUSTOMER);
+			else return false;
+			
+			if (when.equals("before_vote"))
 				rm.setCrashType(Crash.BEFORE_VOTE);
-			else if (when == "before_all_decisions")
+			else if (when.equals("before_all_decisions"))
 				rm.setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
-			else if (when == "after_decisions")
+			else if (when.equals("after_decisions"))
 				rm.setCrashType(Crash.AFTER_DECISIONS);
-			else if (when == "before_all_replies")
+			else if (when.equals("before_all_replies"))
 				rm.setCrashType(Crash.BEFORE_ALL_REPLIES);
-			else if (when == "before_decision")
+			else if (when.equals("before_decision"))
 				rm.setCrashType(Crash.BEFORE_DECISION);
-			else if (when == "before_decision_sent")
+			else if (when.equals("before_decision_sent"))
 				rm.setCrashType(Crash.BEFORE_DECISION_SENT);
-			else if (when == "before_any_replies")
+			else if (when.equals("before_any_replies"))
 				rm.setCrashType(Crash.BEFORE_REPLIES);
 			else 
-				rm.setCrashType(Crash.NO_CRASH);
+					rm.setCrashType(Crash.NO_CRASH);
+			
 		}
 		return true;
 	}
@@ -834,5 +838,10 @@ public class Middleware implements ResourceManager  {
 		} catch (DeadlockException e) {
 			throw new TransactionAbortedException(id);
 		}
+	}
+
+	@Override
+	public boolean isConnected() throws RemoteException{
+		return true;
 	}
 }

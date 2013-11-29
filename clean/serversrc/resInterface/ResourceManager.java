@@ -188,5 +188,7 @@ public interface ResourceManager extends Remote
 	 * @return
 	 */
 	public boolean testCrash(String when, String where) throws RemoteException;
+
+	public boolean isConnected() throws RemoteException;
     			
 }

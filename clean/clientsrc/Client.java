@@ -4,6 +4,8 @@ import serversrc.resImpl.InvalidTransactionException;
 import serversrc.resImpl.TransactionAbortedException;
 import serversrc.resInterface.*;
 
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.*;
@@ -96,12 +98,12 @@ public class Client
 			arguments=obj.parse(command);
 			try{
 				//decide which of the commands this was
-				switch(obj.findChoice((String)arguments.elementAt(0))){
+				switch(obj.findChoice(arguments.elementAt(0))){
 				case 1: //help section
 					if(arguments.size()==1)   //command was "help"
 						obj.listCommands();
 					else if (arguments.size()==2)  //command was "help <commandname>"
-						obj.listSpecific((String)arguments.elementAt(1));
+						obj.listSpecific(arguments.elementAt(1));
 					else  //wrong use of help command
 						System.out.println("Improper use of help command. Type help or help, <commandname>");
 					break;
@@ -474,6 +476,7 @@ public class Client
 						System.exit(0);
 					} else
 						System.out.println("Server shutdown has failed. Client shutdown has been cancelled.");
+					break;
 					
 				case 27: //Start an autocommitted sequence of transactions
 					if(arguments.size()!=1){
@@ -488,28 +491,57 @@ public class Client
 				case 28: //Crash a server
 					if(arguments.size()!=2){
 						obj.wrongNumber();
+						break;
 					}
 					String serverName = arguments.elementAt(1);
 					System.out.println("Crashing " + serverName);
 					rm.crash(serverName);
+					break;
+					
 				case 29: //crash a server at a time
 					if(arguments.size()!=3){
 						obj.wrongNumber();
+						break;
 					}
 					String serverLocation = arguments.elementAt(1);
 					String crashType = arguments.elementAt(2);
 					rm.testCrash(serverLocation, crashType);
-					
+					break;
 				
 				default:
 					System.out.println("The interface does not support this command.");
 					break;
+					
 				}//end of switch
 			} catch(InvalidTransactionException e){
 				System.out.println("The transaction you asked for does not exists. Maybe it was aborted because of inactivity.");
 			} catch (TransactionAbortedException e) {
 				System.out.println("The request you made for this transaction could not be completed and the transaction has been aborted.");
-			} catch (Exception e) {
+			} catch (RemoteException e){
+				System.out.println("Remote server crashed unexpectedly");
+				System.out.println("attempting to reconnect");
+			
+					boolean connected = false;
+					while(!connected){
+						try {
+						Thread.sleep(1000);
+						Registry registry = LocateRegistry.getRegistry(server,port);
+						// get the proxy and the remote reference by rmiregistry
+						// lookup
+						rm = (ResourceManager) registry.lookup("Group2Middleware");
+						if (rm != null) connected = rm.isConnected();
+						} catch (InterruptedException e1) {
+							//try again
+						}
+						catch (RemoteException e1){
+							//try again
+						} catch (NotBoundException e1) {
+							//try again
+						}
+				}
+				}
+		
+			catch (Exception e) {
 				System.out.println("EXCEPTION:");
 				System.out.println(e.getMessage());
 				e.printStackTrace();
@@ -586,10 +618,14 @@ public class Client
 			return 26;
 		else if (argument.compareToIgnoreCase("autocommit")==0)
 			return 27;
-		else if (argument.compareTo("crash")==0)
+		else if (argument.compareToIgnoreCase("crash")==0){
+			System.out.println("Crash Selected");
 			return 28;
-		else if (argument.compareTo("crashTime")==0)
+		}
+		else if (argument.compareToIgnoreCase("crashtime")==0){
+			System.out.println("CrashTime Selected");
 			return 29;
+		}
 		else
 			return 666;
 
@@ -830,6 +866,13 @@ public class Client
 			System.out.println("\nUsage:");
 			System.out.println("\tstart");
 			break;
+		
+		case 28: //Crash a server
+			System.out.println("Simulates a crash on a server");
+			System.out.println("Purpose:");
+			System.out.println("Crashes the server specified in the parameter");
+			System.out.println("\nUsage:");
+			System.out.println("\tcrash,[middleware,car,hotel,flight,customer]");
 
 		default:
 			System.out.println(command);
