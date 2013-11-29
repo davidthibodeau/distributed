@@ -71,15 +71,12 @@ public class TransactionData implements Serializable {
 	 * @return
 	 */
 	public boolean voteResult(boolean crashDuringVote) {
-		int crashBefore = 0;
-		if(crashDuringVote){
-			crashBefore = (int)(Math.random()*RMType.values().length);
-		}
 		for (RMType rm : RMType.values()) {
-			if(crashDuringVote && --crashBefore < 0) System.exit(1);
+			
 			if (getEnlistedRMfromType(rm) != null)
 				if (!getEnlistedRMfromType(rm).hasAccepted())
 					return false;
+			if(crashDuringVote) System.exit(1); //crashes after first vote (if it was an accept)
 		}
 		return true;
 	}

@@ -609,7 +609,7 @@ public class Middleware implements ResourceManager  {
 	 * Since the client sends a Vector of objects, we need this unsafe function
 	 * that retrieves the int from the vector.
 	 */
-	public int getInt(Object temp) throws Exception {
+	private int getInt(Object temp) throws Exception {
 		try {
 			return (new Integer((String) temp)).intValue();
 		} catch (Exception e) {
@@ -761,18 +761,18 @@ public class Middleware implements ResourceManager  {
 		if (which.equals("middleware")){
 			if (when.equals("before_vote"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_VOTE);
-			else if (when.equals("before_all_decisions"))
-				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
+			else if (when.equals("during_decision_send"))
+				((TMimpl) tm).setCrashType(Crash.DURING_DECISION_SEND);
 			else if (when.equals("after_decisions"))
 				((TMimpl) tm).setCrashType(Crash.AFTER_DECISIONS);
-			else if (when.equals("before_all_replies"))
-				((TMimpl) tm).setCrashType(Crash.BEFORE_ALL_REPLIES);
+			else if (when.equals("during_reply"))
+				((TMimpl) tm).setCrashType(Crash.DURING_REPLY);
 			else if (when.equals("before_decision"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION);
 			else if (when.equals("before_decision_sent"))
 				((TMimpl) tm).setCrashType(Crash.BEFORE_DECISION_SENT);
-			else if (when.equals("before_any_replies"))
-				((TMimpl) tm).setCrashType(Crash.BEFORE_REPLIES);
+			else if (when.equals("before_reply"))
+				((TMimpl) tm).setCrashType(Crash.BEFORE_REPLY);
 			else 
 				((TMimpl) tm).setCrashType(Crash.NO_CRASH);
 		}
@@ -790,18 +790,18 @@ public class Middleware implements ResourceManager  {
 			
 			if (when.equals("before_vote"))
 				rm.setCrashType(Crash.BEFORE_VOTE);
-			else if (when.equals("before_all_decisions"))
-				rm.setCrashType(Crash.BEFORE_ALL_DECISION_SENT);
-			else if (when.equals("after_decisions"))
+			else if (when.equals("before_vote"))
+				rm.setCrashType(Crash.DURING_DECISION_SEND);
+			else if (when.equals("druing_decision_send"))
 				rm.setCrashType(Crash.AFTER_DECISIONS);
-			else if (when.equals("before_all_replies"))
-				rm.setCrashType(Crash.BEFORE_ALL_REPLIES);
+			else if (when.equals("during_reply"))
+				rm.setCrashType(Crash.DURING_REPLY);
 			else if (when.equals("before_decision"))
 				rm.setCrashType(Crash.BEFORE_DECISION);
 			else if (when.equals("before_decision_sent"))
 				rm.setCrashType(Crash.BEFORE_DECISION_SENT);
-			else if (when.equals("before_any_replies"))
-				rm.setCrashType(Crash.BEFORE_REPLIES);
+			else if (when.equals("before_reply"))
+				rm.setCrashType(Crash.BEFORE_REPLY);
 			else 
 					rm.setCrashType(Crash.NO_CRASH);
 			

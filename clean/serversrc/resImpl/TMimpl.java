@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import LockManager.LockManager;
 import serversrc.resInterface.*;
 
+@SuppressWarnings("serial")
 public class TMimpl implements TransactionManager, Serializable {
 
 	private transient RMCar rmCar;
@@ -82,7 +83,6 @@ public class TMimpl implements TransactionManager, Serializable {
 			oos.writeObject(td);
 			oos.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -133,11 +133,9 @@ public class TMimpl implements TransactionManager, Serializable {
 	    				tr = (TransactionData) ois.readObject();
 	    				ois.close();
 	    			} catch (IOException e) {
-	    				// TODO Auto-generated catch block
 	    				e.printStackTrace();
 	    				return false;
 	    			} catch(ClassNotFoundException e) {
-	    				// TODO Auto-generated catch block
 	    				e.printStackTrace();
 	    				return false;
 	    			}
@@ -233,37 +231,35 @@ public class TMimpl implements TransactionManager, Serializable {
 			throw new InvalidTransactionException();
 		t.timeoutReset();
 		if(crashType == Crash.BEFORE_VOTE) System.exit(1);
+		Trace.info("Initiating Vote Request");
 		for (RMType rm : RMType.values()) {
 			if (t.isEnlisted(rm)) {
 				PrepareThread th = new PrepareThread(rm, t);
 				th.start(); //asks every enlisted RM to prepare and vote
 			}
 		}
-		if(crashType == Crash.BEFORE_REPLIES) System.exit(1);
-
+		if(crashType == Crash.BEFORE_REPLY) System.exit(1);
 		
-		//should be the same because it hasn't started sending commit messages yet. 
+		Trace.info("Receiving Votes: "); 
 		try {
 			t.timeoutStart();
 			while (!t.isReady()) {// Not all RMs have voted
-				if(crashType == Crash.BEFORE_ALL_REPLIES) System.exit(1);
+				if(crashType == Crash.DURING_REPLY) System.exit(1);
 				if (t.isTimedOut()) {
 					abort(transactionID); //Time is out. Aborting 
 					throw new TransactionAbortedException(transactionID);
 				}
-				Thread.sleep(1000);
+				Thread.sleep(10);
 			}
-			Trace.info("TM::commit(" + transactionID + ") all replied.");
-			if (t.voteResult(crashType == Crash.BEFORE_DECISION)) { //All RMs voted, what is the result?
-				//if we crash here, RMs don't know about the vote result. Transaction hasn't been
-				//stored to memory either. This transaction should be saved on start as well.
-				//Transaction comes back up and either aborts the transaction, or restarts vote request. 
+			Trace.info("TM::commit(" + transactionID + ") all replied.\n Tallying votes: ");
+			if(crashType == Crash.BEFORE_DECISION) System.exit(1); 
+			if (t.voteResult()) { 
 				writeData(t.getID(),t); 
 				Trace.info("TM::commit(" + transactionID + ") vote passed.");
 				if (crashType == Crash.BEFORE_DECISION_SENT) System.exit(1);
 				int crashNumber =(int) Math.random()*RMType.values().length; //used only in crash case
 				for (RMType rm : RMType.values()) {
-					if (crashType == Crash.BEFORE_ALL_DECISION_SENT && --crashNumber <= 0)
+					if (crashType == Crash.DURING_DECISION_SEND && --crashNumber <= 0)
 						System.exit(1);
 					if (t.isEnlisted(rm))
 						try {
@@ -281,9 +277,11 @@ public class TMimpl implements TransactionManager, Serializable {
 				}
 				if (crashType == Crash.AFTER_DECISIONS) System.exit(1);
 			} else {
-				Trace.info("TM::commit(" + transactionID
-						+ ") vote was rejected.");
+				if (crashType == Crash.BEFORE_DECISION_SENT) System.exit(1);
+				Trace.info("TM::commit(" + transactionID + ") vote was rejected.\nSending abort to RMs:");
+				if (crashType == Crash.BEFORE_DECISION_SENT) System.exit(1);
 				abort(transactionID);
+				Trace.info("TM::commit(" + transactionID + ") Abort message sent to all enlisted RMs");
 				if (crashType == Crash.AFTER_DECISIONS) System.exit(1);
 				throw new TransactionAbortedException(transactionID); 
 			}
@@ -303,12 +301,12 @@ public class TMimpl implements TransactionManager, Serializable {
 		Transaction t = readData(transactionID);
 		if (t == null)
 			throw new InvalidTransactionException();
-		int crashNumber = (int) Math.random() * RMType.values().length;
 		for (RMType type : RMType.values()) {
-			if(crashType==Crash.BEFORE_ALL_DECISION_SENT && --crashNumber <= 0) System.exit(1);
 			if (t.isEnlisted(type))
 				try {
 					getRMfromType(type).abort(transactionID);
+					Trace.info("TM::abort(" + transactionID + ") aborting: " + type.toString());
+					if(crashType==Crash.DURING_DECISION_SEND) System.exit(1); //one success than a crash
 				} catch (RemoteException e) {
 					new ReconnectLoop(type, transactionID, false);
 				} catch (InvalidTransactionException e){
@@ -355,25 +353,12 @@ public class TMimpl implements TransactionManager, Serializable {
 				e.printStackTrace();
 			}
 		}
-		try {
-			rmCar.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			rmFlight.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			rmHotel.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			rmCustomer.shutdown();
-		} catch (Exception e) {
-			e.printStackTrace();
+		for (RMType r : RMType.values()) {
+			try {
+				getRMfromType(r).shutdown();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		Trace.info("TM::shutdown() succeeded.");
 		return true;
@@ -420,6 +405,7 @@ public class TMimpl implements TransactionManager, Serializable {
 				if(!tr.isTimedOut())
 					tr.prepared(false, rm);
 			}
+			Trace.info("PrepareThread() Received vote from: " + rm.toString());
 		}
 	}
 
